@@ -4,18 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>تواصل معنا | سند SANAD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<style>
-.logo-img{width:44px;height:44px}
-</style>
 </head>
 <body>
 <header class="site-header">
-  <div class="container">
-    <a class="logo" href="index.html">
-      <img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44">
-      <span>سند</span>
-      <span>SANAD</span>
+  <div class="header-inner">
+        <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند SANAD" height="44">
+      <span class="logo-text"><span class="logo-name">سند</span><span class="logo-latin">SANAD</span></span>
     </a>
     <nav class="main-nav">
       <a class="nav-link" href="index.html">الرئيسية</a>
@@ -39,13 +38,11 @@
     <p>رأيك يهمّنا — أرسل رسالتك، أو بلّغ عن خطأ، أو اقترح مادة أو درساً، أو اطلب إضافة كتاب.</p>
   </section>
 
-  <div class="alert alert-warn">
-    خدمة إرسال الرسائل إلى الإدارة لم تُفعَّل بعد. رسالتك تُحفظ على جهازك فقط في الوقت الحالي، وستُرسل إلى الإدارة عند تفعيل خدمة الرسائل.
+  <div class="alert alert-info" id="contact-success" hidden>
+    شكراً — وصلت رسالتك إلى الإدارة وسنرد عليك قريباً.
   </div>
 
-  <div class="alert alert-info" id="contact-success" hidden>
-    شكراً — حُفظت رسالتك على جهازك وستُرسل إلى الإدارة عند تفعيل خدمة الرسائل.
-  </div>
+  <div class="alert alert-warn" id="contact-error" hidden></div>
 
   <form id="contact-form" class="card">
     <p>
@@ -71,7 +68,7 @@
       <textarea class="form-input" id="contact-message" name="message" rows="6" required></textarea>
     </p>
     <p>
-      <button class="btn btn-gold" type="submit">حفظ الرسالة</button>
+      <button class="btn btn-gold" id="contact-submit" type="submit">إرسال الرسالة</button>
     </p>
   </form>
 
@@ -90,7 +87,7 @@
       </article>
       <article class="card">
         <h2>التواصل مع الإدارة</h2>
-        <p>اختر «التواصل مع الإدارة» من قائمة الموضوع أعلاه، وستُحفظ رسالتك على جهازك حتى تفعيل خدمة الرسائل.</p>
+        <p>اختر «التواصل مع الإدارة» من قائمة الموضوع أعلاه واكتب رسالتك.</p>
         <p><a class="btn btn-outline" href="about.html">من نحن</a></p>
       </article>
     </div>
@@ -125,45 +122,124 @@
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
 <script>
 (function () {
+  /* إرسال حقيقي إلى جدول contact_messages في Supabase.
+     لا حاجة لتسجيل الدخول — الضيوف يرسلون أيضاً (إدخال مجهول)،
+     وإن كان الزائر مسجّلاً يُرفَق معرّف حسابه إن توفّر.
+     مهلة الإرسال: 60 ثانية بين رسالة ناجحة وأخرى من المتصفح نفسه.
+     يُحفَظ في المتصفح طابع زمني فقط، وليس نص الرسالة أبداً. */
+  var COOLDOWN_MS = 60 * 1000;
+  var LAST_SENT_KEY = 'sanad_contact_last_sent';
+
   document.addEventListener('DOMContentLoaded', function () {
     var form = document.getElementById('contact-form');
     var success = document.getElementById('contact-success');
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var message = {
-        subject: document.getElementById('contact-subject').value,
-        name: document.getElementById('contact-name').value.trim(),
-        email: document.getElementById('contact-email').value.trim(),
-        message: document.getElementById('contact-message').value.trim(),
-        date: new Date().toISOString()
-      };
-      if (!message.name || !message.email || !message.message) return;
-      var stored = [];
+    var errorBox = document.getElementById('contact-error');
+    var submitBtn = document.getElementById('contact-submit');
+
+    function showError(msg) {
+      errorBox.textContent = msg;
+      errorBox.hidden = false;
+      success.hidden = true;
       try {
-        stored = JSON.parse(localStorage.getItem('sanad_contact_messages') || '[]');
-        if (!Array.isArray(stored)) stored = [];
-      } catch (err) {
-        stored = [];
-      }
-      stored.push(message);
-      try {
-        localStorage.setItem('sanad_contact_messages', JSON.stringify(stored));
-      } catch (err) {
-        return;
-      }
-      form.reset();
+        if (typeof errorBox.scrollIntoView === 'function') {
+          errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } catch (err) {}
+    }
+    function showSuccess() {
+      errorBox.hidden = true;
       success.hidden = false;
       try {
         if (typeof success.scrollIntoView === 'function') {
           success.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       } catch (err) {}
+    }
+    function lastSentAt() {
+      try {
+        var v = parseInt(window.localStorage.getItem(LAST_SENT_KEY) || '0', 10);
+        return isNaN(v) ? 0 : v;
+      } catch (err) { return 0; }
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var name = document.getElementById('contact-name').value.trim();
+      var email = document.getElementById('contact-email').value.trim();
+      var subject = document.getElementById('contact-subject').value;
+      var message = document.getElementById('contact-message').value.trim();
+
+      if (!name || !email || !message) {
+        showError('املأ الاسم والبريد الإلكتروني والرسالة قبل الإرسال.');
+        return;
+      }
+      if (name.length > 100 || email.length > 150 || subject.length > 150 || message.length > 2000) {
+        showError('رسالتك أطول من الحد المسموح (الاسم 100 حرف، البريد 150 حرفاً، الرسالة 2000 حرف).');
+        return;
+      }
+      if (email.indexOf('@') === -1 || email.indexOf('.') === -1) {
+        showError('اكتب بريداً إلكترونياً صحيحاً.');
+        return;
+      }
+
+      var waitMs = COOLDOWN_MS - (Date.now() - lastSentAt());
+      if (waitMs > 0) {
+        showError('أرسلت رسالة قبل قليل — انتظر ' + Math.ceil(waitMs / 1000) + ' ثانية قبل إرسال رسالة أخرى.');
+        return;
+      }
+
+      var supa = (window.SANAD && window.SANAD.supabase) || null;
+      if (!supa) {
+        showError('تعذّر الاتصال بخدمة الرسائل — تحقق من اتصالك بالإنترنت وحاول مجدداً. رسالتك ما زالت في النموذج.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'جارٍ الإرسال…';
+
+      var userId = null;
+      var done = function () {
+        var payload = {
+          name: name,
+          email: email,
+          subject: subject,
+          message: message,
+          user_id: userId
+        };
+        supa.from('contact_messages').insert(payload).then(function (res) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'إرسال الرسالة';
+          if (res.error) {
+            try { console.error('contact insert failed', res.error); } catch (err) {}
+            showError('تعذّر إرسال رسالتك — تحقق من اتصالك وحاول مجدداً. رسالتك ما زالت في النموذج.');
+            return;
+          }
+          try { window.localStorage.setItem(LAST_SENT_KEY, String(Date.now())); } catch (err) {}
+          form.reset();
+          showSuccess();
+        }).catch(function (err) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'إرسال الرسالة';
+          try { console.error('contact insert failed', err); } catch (e2) {}
+          showError('تعذّر إرسال رسالتك — تحقق من اتصالك وحاول مجدداً. رسالتك ما زالت في النموذج.');
+        });
+      };
+
+      /* إن كان الزائر مسجّلاً، أرفق معرّف حسابه؛ وإن لم يكن، أرسل كضيف. */
+      if (window.SANAD && typeof window.SANAD.getSessionUser === 'function') {
+        window.SANAD.getSessionUser().then(function (user) {
+          if (user && user.id) { userId = user.id; }
+          done();
+        }).catch(function () { done(); });
+      } else {
+        done();
+      }
     });
   });
 })();

@@ -4,19 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>لوحة الإدارة | سند SANAD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<style>
-.admin-section { margin-bottom: 16px; }
-.admin-section[hidden] { display: none; }
-</style>
 </head>
 <body>
 <header class="site-header">
-  <div class="container">
-    <a class="logo" href="index.html">
-      <img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44">
-      <span>سند</span>
-      <span>SANAD</span>
+  <div class="header-inner">
+        <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند SANAD" height="44">
+      <span class="logo-text"><span class="logo-name">سند</span><span class="logo-latin">SANAD</span></span>
     </a>
     <nav class="main-nav" aria-label="التنقل الرئيسي">
       <a class="nav-link" href="index.html">الرئيسية</a>
@@ -41,6 +39,7 @@
   <section class="card" id="adminGate">
     <h1 class="section-title">لوحة الإدارة — تسجيل الدخول مطلوب</h1>
     <p>هذه الصفحة مخصصة لإدارة منصة سند فقط، وتتطلب تسجيل الدخول بحساب سند.</p>
+    <p id="adminDenied" class="alert alert-warn" hidden>تعذّر التحقق من صلاحياتك — تم رفض الوصول إلى لوحة الإدارة. تحقق من اتصالك بالإنترنت وحاول مجدداً.</p>
     <p><a class="btn btn-gold" href="login.html">تسجيل الدخول</a></p>
   </section>
 
@@ -226,6 +225,13 @@
       <div id="reportsList"></div>
     </section>
 
+    <!-- رسائل تواصل معنا (من جدول contact_messages في Supabase) -->
+    <section class="card admin-section" data-roles="admin" data-title="رسائل تواصل معنا">
+      <h2 class="section-title">رسائل تواصل معنا</h2>
+      <p class="alert alert-info">رسائل الزوار المُرسلة من صفحة «تواصل معنا» — تُقرأ مباشرة من جدول contact_messages.</p>
+      <div id="contactMessagesList"></div>
+    </section>
+
     <!-- إدارة الإعلانات والرعايات -->
     <section class="card admin-section" data-roles="admin" data-title="الإعلانات والرعايات">
       <h2 class="section-title">إدارة الإعلانات والرعايات</h2>
@@ -289,7 +295,7 @@
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
@@ -323,9 +329,12 @@
     }
     return FALLBACK_STAGES;
   }
-  /* ---------- الجلسة والدور (Supabase) ---------- */
+  /* ---------- الجلسة والدور (Supabase) ----------
+     ملاحظة أمنية: هذا التقييد في الواجهة فقط — التنفيذ الحقيقي للصلاحيات
+     يكون عبر سياسات RLS في Supabase، وليس عبر هذه الصفحة.
+     عند أي فشل في قراءة الدور يُرفض الوصول (fail-closed) ولا يُمنح دور افتراضي. */
   var currentUser = null;
-  var currentRoleValue = 'admin';
+  var currentRoleValue = null;
   var roleFromTable = false;
   function getSupa() {
     return (window.SANAD && window.SANAD.supabase) || null;
@@ -340,16 +349,16 @@
   }
   async function fetchRole(user) {
     var supa = getSupa();
-    if (!supa) { return { role: 'admin', fromTable: false }; }
+    if (!supa) { return { role: null, denied: true }; }
     try {
       var res = await supa.from('profiles').select('role').eq('id', user.id).single();
-      if (res.error || !res.data || !res.data.role) { return { role: 'admin', fromTable: false }; }
+      if (res.error || !res.data || !res.data.role) { return { role: null, denied: true }; }
       var raw = String(res.data.role);
       var map = { 'مدير عام': 'admin', 'مشرف محتوى': 'content', 'مدرس': 'teacher', 'مراجع': 'reviewer' };
       if (map[raw]) { return { role: map[raw], fromTable: true }; }
       if (ROLE_LABELS[raw]) { return { role: raw, fromTable: true }; }
-      return { role: 'admin', fromTable: false };
-    } catch (e) { return { role: 'admin', fromTable: false }; }
+      return { role: null, denied: true };
+    } catch (e) { return { role: null, denied: true }; }
   }
   function logAction(action) {
     var log = read('sanad_admin_log', []);
@@ -447,9 +456,14 @@
 
   function renderBooks() {
     renderSimpleList('booksList', 'sanad_books', function (b) {
+      /* كتاب مضاف محلياً برابط PDF يُفتح داخل قارئ سند؛ غير PDF يبقى رابطه كما هو. */
+      var bookHref = b.url;
+      if (b.url && /\.pdf(\?|#|$)/i.test(b.url) && window.SANAD && window.SANAD.readerUrl) {
+        bookHref = window.SANAD.readerUrl(b.url, { title: b.title, year: b.year });
+      }
       return '<strong>' + esc(b.title) + '</strong> — ' + esc(b.subject) + ' / ' + esc(b.grade) +
         (b.author ? ' — ' + esc(b.author) : '') + (b.year ? ' (' + esc(b.year) + ')' : '') +
-        (b.url ? ' — <a href="' + esc(b.url) + '" target="_blank" rel="noopener">رابط الكتاب</a>' : '');
+        (b.url ? ' — <a href="' + esc(bookHref) + '" target="_blank" rel="noopener">رابط الكتاب</a>' : '');
     }, 'لا توجد كتب مضافة محلياً بعد.', 'الكتب');
   }
   function renderLessons() {
@@ -566,6 +580,58 @@
     });
   }
 
+  /* ---------- رسائل تواصل معنا (جدول contact_messages) ----------
+     تُقرأ من Supabase مباشرة؛ أي تعذّر في القراءة يُعرض كخطأ صريح ولا يُختلق محتوى. */
+  function renderContactMessages() {
+    var el = document.getElementById('contactMessagesList');
+    if (!el) return;
+    var supa = getSupa();
+    if (!supa) {
+      el.innerHTML = '<p class="alert alert-warn">تعذّر الاتصال بخدمة الرسائل — تحقق من اتصالك بالإنترنت وحاول مجدداً.</p>';
+      return;
+    }
+    el.innerHTML = '<p class="empty-state">جارٍ تحميل الرسائل…</p>';
+    supa.from('contact_messages').select('id,name,email,subject,message,status,created_at').order('created_at', { ascending: false }).then(function (res) {
+      if (res.error) {
+        el.innerHTML = '<p class="alert alert-warn">تعذّر تحميل الرسائل — تحقق من الاتصال وحاول مجدداً.</p>';
+        return;
+      }
+      var rows = res.data || [];
+      if (!rows.length) { el.innerHTML = '<p class="empty-state">لا توجد رسائل بعد.</p>'; return; }
+      el.innerHTML = rows.map(function (m) {
+        var status = m.status || 'جديد';
+        var done = status === 'تمت المعالجة';
+        return '<div class="card"><p><strong>' + esc(m.name || '') + '</strong> · <span dir="ltr">' + esc(m.email || '') + '</span></p>' +
+          '<p><span class="chip">' + esc(m.subject || '') + '</span> <span class="chip">' + esc(status) + '</span></p>' +
+          '<p>' + esc(m.message || '') + '</p>' +
+          '<p>' + esc(m.created_at || '') + '</p>' +
+          (done ? '' : '<button type="button" class="btn btn-teal" data-mark-done="' + esc(m.id || '') + '">تمت المعالجة</button>') +
+          '</div>';
+      }).join('');
+      el.querySelectorAll('[data-mark-done]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-mark-done');
+          btn.disabled = true;
+          supa.from('contact_messages').update({ status: 'تمت المعالجة' }).eq('id', id).then(function (upd) {
+            if (upd.error) {
+              btn.disabled = false;
+              toast('تعذّر تحديث الحالة — تحقق من الاتصال وحاول مجدداً');
+              return;
+            }
+            logAction('معالجة رسالة تواصل');
+            toast('تم تحديث الحالة إلى «تمت المعالجة»');
+            renderContactMessages();
+          }).catch(function () {
+            btn.disabled = false;
+            toast('تعذّر تحديث الحالة — تحقق من الاتصال وحاول مجدداً');
+          });
+        });
+      });
+    }).catch(function () {
+      el.innerHTML = '<p class="alert alert-warn">تعذّر تحميل الرسائل — تحقق من الاتصال وحاول مجدداً.</p>';
+    });
+  }
+
   /* ---------- السجل ---------- */
   function renderLog() {
     var log = read('sanad_admin_log', []).slice().reverse();
@@ -580,7 +646,7 @@
   function renderAll() {
     renderStats(); renderStages(); renderBooks(); renderLessons();
     renderQuestions(); renderExams(); renderUnis(); renderScholars(); renderReports();
-    renderAds(); renderTeachers(); renderLog();
+    renderAds(); renderTeachers(); renderLog(); renderContactMessages();
   }
 
   /* ---------- النماذج ---------- */
@@ -733,6 +799,13 @@
     }
     currentUser = user;
     var r = await fetchRole(user);
+    if (r.denied || !r.role) {
+      /* فشل التحقق من الدور (خطأ، أو لا صف، أو لا اتصال) — رفض الوصول، بلا دور افتراضي */
+      document.getElementById('adminDenied').hidden = false;
+      document.getElementById('adminGate').hidden = false;
+      document.getElementById('adminDashboard').hidden = true;
+      return;
+    }
     currentRoleValue = r.role;
     roleFromTable = r.fromTable;
     logAction('دخول لوحة الإدارة بدور ' + (ROLE_LABELS[currentRoleValue] || currentRoleValue));

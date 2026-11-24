@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>قارئ الكتب — سند SANAD</title>
+<meta name="description" content="اقرأ الكتب الرسمية والملازم داخل منصة سند — قارئ PDF مدمج مع زر تنزيل.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند SANAD" height="44">
+      <span class="logo-text"><span class="logo-name">سند</span><span class="logo-latin">SANAD</span></span>
+    </a>
+    <nav class="main-nav">
+      <a class="nav-link" href="index.html">الرئيسية</a>
+      <a class="nav-link" href="stages.html">المراحل</a>
+      <a class="nav-link" href="library.html">المكتبة</a>
+      <a class="nav-link" href="exams.html">الامتحانات</a>
+      <a class="nav-link" href="lessons.html">الدروس</a>
+      <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="schedule.html">الجدول</a>
+      <a class="nav-link" href="universities.html">الجامعات</a>
+      <a class="nav-link" href="scholarships.html">المنح</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
+      <a class="nav-link" href="search.html">بحث</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <p><a id="reader-back" href="library.html">← رجوع</a></p>
+  <h1 class="section-title" id="reader-title">قارئ الكتب</h1>
+  <p class="reader-meta" id="reader-meta"></p>
+
+  <div id="reader-missing" class="empty-state" style="display:none">
+    <h2>لم يُحدَّد ملف للقراءة</h2>
+    <p>افتح كتاباً أو ملزمة من المكتبة أو من صفك الدراسي ليظهر هنا داخل قارئ سند.</p>
+    <a class="btn btn-outline" href="library.html">العودة إلى المكتبة</a>
+  </div>
+
+  <div id="reader-main" style="display:none">
+    <div class="reader-bar" role="group" aria-label="أدوات القارئ">
+      <button type="button" class="btn btn-outline" id="zoom-out" aria-label="تصغير العرض">− تصغير</button>
+      <span class="reader-zoom-label" id="zoom-label" aria-live="polite">100%</span>
+      <button type="button" class="btn btn-outline" id="zoom-in" aria-label="تكبير العرض">+ تكبير</button>
+      <button type="button" class="btn btn-outline" id="zoom-reset">عرض عادي</button>
+      <a class="btn btn-gold" id="reader-download" href="" download>تنزيل PDF</a>
+    </div>
+    <p class="reader-meta" id="reader-pages"></p>
+
+    <div class="reader-viewer">
+      <iframe id="reader-frame" src="" title="عارض الكتاب" allowfullscreen></iframe>
+    </div>
+    <p class="reader-meta">التنقل بين الصفحات والتكبير بالإصبعين متاحان من عارض PDF نفسه. ملاحظة: زر «تنزيل PDF» يحفظ نسخة من الملف؛ وإذا كان الكتاب مستضافاً على نطاق آخر فقد يفتحه المتصفح في تبويب جديد بدل تنزيله مباشرة — احفظه حينها من قائمة عارض PDF.</p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <nav class="footer-links">
+      <a href="index.html">الرئيسية</a>
+      <a href="stages.html">المراحل</a>
+      <a href="library.html">المكتبة</a>
+      <a href="exams.html">الامتحانات</a>
+      <a href="lessons.html">الدروس</a>
+      <a href="teacher.html">المعلم الذكي</a>
+      <a href="revisions.html">المراجعات المركزة</a>
+      <a href="schedule.html">الجدول</a>
+      <a href="universities.html">الجامعات</a>
+      <a href="scholarships.html">المنح</a>
+      <a href="profile.html">ملفي</a>
+      <a href="search.html">بحث</a>
+      <a href="about.html">من نحن</a>
+      <a href="contact.html">تواصل معنا</a>
+      <a href="privacy.html">سياسة الخصوصية</a>
+      <a href="terms.html">شروط الاستخدام</a>
+      <a href="copyright.html">حقوق النشر</a>
+      <a href="faq.html">الأسئلة الشائعة</a>
+      <a href="report.html">الإبلاغ عن محتوى</a>
+      <a href="sitemap.html">خريطة المنصة</a>
+    </nav>
+    <p class="footer-note"><span class="footer-tagline">سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</span> · جميع الحقوق محفوظة © <span data-year>2026</span></p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+/* سند SANAD — قارئ PDF داخل الموقع.
+   يأخذ الكتاب من رابط الصفحة: ?pdf= (مسار ملف PDF) + ?title= + ?source= + ?rights= + ?year=
+   وأي حقل ناقص يُكمَّل بالبحث عن مسار PDF في data.js (كتب SANAD_CONTENT وملازمها
+   وSANAD_DATA المشتقة). العرض بعَارِض PDF الأصلي في المتصفح (iframe) — آيفون سفاري
+   يعرض ملفات PDF أصلياً داخل الصفحة مع التكبير بالإصبعين والتنقل بين الصفحات،
+   فلا حاجة إلى PDF.js أو أي مكتبة ثقيلة. */
+(function () {
+  'use strict';
+
+  var params = new URLSearchParams(window.location.search);
+  var pdf = params.get('pdf') || '';
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  /* زر الرجوع: يعود للصفحة السابقة إن وُجدت، وإلا يفتح المكتبة (رابطه الأصلي). */
+  var backLink = document.getElementById('reader-back');
+  backLink.addEventListener('click', function (e) {
+    if (window.history.length > 1) {
+      e.preventDefault();
+      window.history.back();
+    }
+  });
+
+  var missingEl = document.getElementById('reader-missing');
+  var mainEl = document.getElementById('reader-main');
+  if (!pdf) {
+    document.getElementById('reader-title').textContent = 'لا يوجد ملف للقراءة';
+    missingEl.style.display = '';
+    return;
+  }
+
+  /* البحث عن الكتاب في data.js بمسار PDF لملء الحقول الناقصة. */
+  function findInData(pdfPath) {
+    var content = window.SANAD_CONTENT || { books: [], malazim: [] };
+    var data = window.SANAD_DATA || {};
+    var hit = null;
+    var i;
+    var books = content.books || [];
+    for (i = 0; i < books.length; i++) {
+      if (books[i].pdf === pdfPath || books[i].url === pdfPath) { hit = books[i]; break; }
+    }
+    if (!hit) {
+      var malazim = content.malazim || [];
+      for (i = 0; i < malazim.length; i++) {
+        if (malazim[i].pdf === pdfPath) { hit = malazim[i]; break; }
+      }
+    }
+    if (!hit) {
+      var derived = data.books || [];
+      for (i = 0; i < derived.length; i++) {
+        if (derived[i].viewUrl === pdfPath || derived[i].downloadUrl === pdfPath) { hit = derived[i]; break; }
+      }
+    }
+    return hit;
+  }
+
+  var hit = findInData(pdf);
+  var title = params.get('title') || (hit && hit.title) || 'كتاب';
+  var source = params.get('source') || (hit && hit.source) || '';
+  var rights = params.get('rights') || (hit && hit.rights) || source;
+  var year = params.get('year') || (hit && hit.year) || '';
+  var pages = (hit && hit.pages) || '';
+
+  document.title = title + ' — سند SANAD';
+  document.getElementById('reader-title').textContent = title;
+
+  var metaParts = [];
+  if (source) metaParts.push((rights && rights === source ? 'المصدر والحقوق: ' : 'المصدر: ') + source);
+  if (year) metaParts.push('طبعة ' + year);
+  if (rights && rights !== source) metaParts.push('الحقوق: ' + rights);
+  document.getElementById('reader-meta').textContent = metaParts.join(' · ');
+
+  var pagesEl = document.getElementById('reader-pages');
+  if (pages) {
+    pagesEl.textContent = 'عدد الصفحات: ' + pages + ' — تنقّل بين الصفحات من عارض PDF أدناه.';
+  } else {
+    pagesEl.textContent = 'التنقل بين الصفحات متاح من عارض PDF أدناه.';
+  }
+
+  var frame = document.getElementById('reader-frame');
+  frame.setAttribute('src', pdf);
+  frame.setAttribute('title', title);
+
+  var dl = document.getElementById('reader-download');
+  dl.setAttribute('href', pdf);
+  var baseName = pdf.split('/').pop().split('?')[0].split('#')[0] || 'book.pdf';
+  dl.setAttribute('download', baseName);
+
+  /* التكبير: يوسّع عرض العارض داخل حاوية قابلة للتمرير الأفقي —
+     100% ← 125% ← 150% ← 200%. التكبير بالإصبعين يوفره عارض PDF نفسه. */
+  var ZOOMS = [100, 125, 150, 200];
+  var zoomIdx = 0;
+  var zoomLabel = document.getElementById('zoom-label');
+  var zoomInBtn = document.getElementById('zoom-in');
+  var zoomOutBtn = document.getElementById('zoom-out');
+  var zoomResetBtn = document.getElementById('zoom-reset');
+  function applyZoom() {
+    var level = ZOOMS[zoomIdx];
+    frame.style.width = level + '%';
+    zoomLabel.textContent = level + '%';
+    zoomInBtn.disabled = zoomIdx >= ZOOMS.length - 1;
+    zoomOutBtn.disabled = zoomIdx <= 0;
+  }
+  zoomInBtn.addEventListener('click', function () {
+    if (zoomIdx < ZOOMS.length - 1) { zoomIdx++; applyZoom(); }
+  });
+  zoomOutBtn.addEventListener('click', function () {
+    if (zoomIdx > 0) { zoomIdx--; applyZoom(); }
+  });
+  zoomResetBtn.addEventListener('click', function () {
+    zoomIdx = 0; applyZoom();
+  });
+  applyZoom();
+
+  mainEl.style.display = '';
+})();
+</script>
+</body>
+</html>

@@ -4,15 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>إنشاء حساب | سند SANAD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="site-header">
-  <div class="container">
-    <a class="logo" href="index.html">
-      <img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44">
-      <span>سند</span>
-      <span>SANAD</span>
+  <div class="header-inner">
+        <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند SANAD" height="44">
+      <span class="logo-text"><span class="logo-name">سند</span><span class="logo-latin">SANAD</span></span>
     </a>
     <nav class="main-nav" aria-label="التنقل الرئيسي">
       <a class="nav-link" href="index.html">الرئيسية</a>
@@ -49,6 +51,17 @@
       <select class="form-input" id="signupStage" required></select>
       <label class="form-label" for="signupGrade">الصف الدراسي</label>
       <select class="form-input" id="signupGrade" required></select>
+      <label class="form-label" for="signupDob">تاريخ الميلاد</label>
+      <input class="form-input" type="date" id="signupDob" required>
+      <div id="guardianBlock" class="alert alert-warn" hidden>
+        <p>عمر الطالب أقل من 13 سنة — يلزم موافقة ولي الأمر للتسجيل.</p>
+        <p>
+          <label>
+            <input type="checkbox" id="guardianConsent">
+            أنا ولي الأمر وأوافق على تسجيل الطالب
+          </label>
+        </p>
+      </div>
       <p>
         <label>
           <input type="checkbox" id="agreeTerms" required>
@@ -93,7 +106,7 @@
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
@@ -126,6 +139,37 @@
   var stageSel = document.getElementById('signupStage');
   var gradeSel = document.getElementById('signupGrade');
   var err = document.getElementById('signupError');
+  var dobInput = document.getElementById('signupDob');
+  var guardianBlock = document.getElementById('guardianBlock');
+  var guardianConsent = document.getElementById('guardianConsent');
+
+  /* التحقق من العمر: دون 13 سنة يلزم موافقة ولي الأمر.
+     يُحسب العمر بمقارنة التاريخ المدخل بتاريخ اليوم (سنة/شهر/يوم). */
+  function isUnder13(dobStr) {
+    if (!dobStr) return false;
+    var parts = dobStr.split('-');
+    if (parts.length !== 3) return false;
+    var dob = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    if (isNaN(dob.getTime())) return false;
+    var today = new Date();
+    var age = today.getFullYear() - dob.getFullYear();
+    var m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    return age < 13;
+  }
+  function isFutureDate(dobStr) {
+    if (!dobStr) return false;
+    var today = new Date();
+    var t = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    return new Date(dobStr + 'T00:00:00').getTime() > t;
+  }
+  function updateGuardian() {
+    var under13 = dobInput.value ? isUnder13(dobInput.value) : false;
+    guardianBlock.hidden = !under13;
+    if (!under13) guardianConsent.checked = false;
+  }
+  dobInput.addEventListener('change', updateGuardian);
+  dobInput.addEventListener('input', updateGuardian);
 
   function fillStages() {
     stageSel.innerHTML = '';
@@ -158,7 +202,11 @@
     var password = document.getElementById('signupPassword').value;
     var stage = stageSel.value;
     var grade = gradeSel.value;
+    var dob = dobInput.value;
     if (!name || !email || !password) { err.hidden = false; err.textContent = 'يرجى ملء جميع الحقول المطلوبة.'; return; }
+    if (!dob) { err.hidden = false; err.textContent = 'يرجى إدخال تاريخ الميلاد.'; return; }
+    if (isFutureDate(dob)) { err.hidden = false; err.textContent = 'تاريخ الميلاد لا يمكن أن يكون في المستقبل.'; return; }
+    if (isUnder13(dob) && !guardianConsent.checked) { err.hidden = false; err.textContent = 'الطالب دون 13 سنة — يلزم موافقة ولي الأمر: ضع علامة في مربع موافقة ولي الأمر أولاً.'; return; }
     if (password.length < 6) { err.hidden = false; err.textContent = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل.'; return; }
     if (!document.getElementById('agreeTerms').checked) { err.hidden = false; err.textContent = 'يرجى الموافقة على شروط الاستخدام وسياسة الخصوصية أولاً.'; return; }
     var supa = getSupa();
@@ -168,7 +216,7 @@
         email: email,
         password: password,
         options: {
-          data: { name: name, stage: stage, grade: grade },
+          data: { name: name, stage: stage, grade: grade, dob: dob },
           emailRedirectTo: 'https://muqtada-pages.neocities.org/sanad/profile.html'
         }
       });

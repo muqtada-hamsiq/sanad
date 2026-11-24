@@ -7,7 +7,7 @@
 <meta name="description" content="سند — منصة تعليمية عراقية مجانية: دروس وملخصات وامتحانات وزارية لجميع المراحل من الابتدائية إلى الجامعة.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -42,40 +42,10 @@
   <h2 class="section-title">اختر مرحلتك الدراسية</h2>
   <div class="grid" id="home-stages"></div>
 
-  <h2 class="section-title">المراجعات المركزة</h2>
-  <div class="card">
-    <span class="badge">مراجعة مركزة</span>
-    <h3>المراجعة المركزة — الكتاب كامل بمحاضرة أو كل فصل بمحاضرة</h3>
-    <p>مراجعات مركزة موثقة من قنوات المدرسين الرسمية، مرتبة حسب المدرس والصف والمادة — تشاهدها داخل الموقع مباشرة.</p>
-    <a class="btn btn-gold" href="revisions.html">عرض المراجعات المركزة</a>
-  </div>
-
-  <h2 class="section-title">أحدث الكتب والملخصات</h2>
-  <div class="grid" id="home-books"></div>
-  <div class="empty-state" id="home-books-empty">لا توجد كتب بعد — تضاف قريباً</div>
-
-  <h2 class="section-title">الاختبارات المضافة حديثاً</h2>
-  <div class="grid">
-    <article class="card">
-      <span class="badge">وزاري</span>
-      <h3>رياضيات — الثالث المتوسط — الدور الثالث 2025/2026</h3>
-      <p>الرياضيات · الثالث المتوسط · 17/11/2026</p>
-      <p>المصدر: ورقة الامتحان الوزاري — وزارة التربية العراقية</p>
-      <a class="btn btn-teal" href="exam.html?id=math3-3rd-2026">ابدأ الاختبار</a>
-    </article>
-  </div>
-
-  <h2 class="section-title">الدروس الجديدة</h2>
-  <div class="grid" id="home-lessons"></div>
-  <div class="empty-state" id="home-lessons-empty">لا توجد دروس بعد — تضاف قريباً</div>
-
-  <h2 class="section-title">قسم المعلم الذكي</h2>
-  <div class="card">
-    <span class="badge">متاح الآن</span>
-    <h3>المعلم الذكي</h3>
-    <p>اسأل المعلم الذكي عن أي درس في المنهج العراقي — يشرح لك الدرس، يحل معك التمارين، ويراجع معك قبل الامتحان.</p>
-    <a class="btn btn-outline" href="teacher.html">ابدأ المحادثة</a>
-  </div>
+  <section id="continue-section" hidden>
+    <h2 class="section-title">أكمل من حيث توقفت</h2>
+    <div class="card" id="continue-card"></div>
+  </section>
 </main>
 
 <footer class="site-footer">
@@ -106,7 +76,7 @@
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
@@ -129,48 +99,26 @@
     wrap.appendChild(card);
   });
 
-  /* أحدث الكتب والمحاضرات من الكتالوج الموحد */
-  var content = window.SANAD_CONTENT || { books: [], malazim: [], lectures: [] };
-  var booksWrap = document.getElementById('home-books');
-  var booksEmpty = document.getElementById('home-books-empty');
-  var books = (content.books || []).slice(0, 3);
-  if (books.length) {
-    booksEmpty.style.display = 'none';
-    books.forEach(function (b) {
-      var card = document.createElement('article');
-      card.className = 'card';
-      card.innerHTML = '<span class="badge">محتوى رسمي</span><h3>' + b.title + '</h3>' +
-        '<p>' + b.subject + ' · ' + b.grade + '</p>' +
-        '<a class="btn btn-teal" href="' + b.url + '" target="_blank" rel="noopener">عرض الكتاب</a>';
-      booksWrap.appendChild(card);
-    });
-  } else {
-    booksWrap.style.display = 'none';
-  }
-  var lessonsWrap = document.getElementById('home-lessons');
-  var lessonsEmpty = document.getElementById('home-lessons-empty');
-  var lectures = (content.lectures || []).slice(0, 3);
-  if (lectures.length) {
-    lessonsEmpty.style.display = 'none';
-    lectures.forEach(function (l) {
-      var card = document.createElement('article');
-      card.className = 'card';
-      /* تشغيل المحاضرة داخل الموقع (نافذة منبثقة) — بلا تحويل إلى يوتيوب */
-      var src = (window.SANAD && window.SANAD.lectureEmbedSrc) ? window.SANAD.lectureEmbedSrc(l) : '';
-      card.innerHTML = '<span class="badge teal">محاضرة</span><h3>' + l.title + '</h3>' +
-        '<p>المدرس: ' + l.teacher + ' · ' + l.subject + ' · ' + l.grade + '</p>' +
-        (src ? '<button type="button" class="btn btn-teal" data-play-lecture>مشاهدة المحاضرة</button>' : '<a class="btn btn-teal" href="lessons.html">عرض الدروس</a>');
-      var playBtn = card.querySelector('[data-play-lecture]');
-      if (playBtn) {
-        playBtn.addEventListener('click', function () {
-          if (window.SANAD && window.SANAD.openLecturePlayer) window.SANAD.openLecturePlayer(l.title, src);
-        });
-      }
-      lessonsWrap.appendChild(card);
-    });
-  } else {
-    lessonsWrap.style.display = 'none';
-  }
+  /* «أكمل من حيث توقفت»: آخر محاضرة شُغّلت (يُحفظ من app.js عند التشغيل) */
+  (function () {
+    var last = null;
+    try { last = JSON.parse(window.localStorage.getItem('sanad_last_lesson') || 'null'); } catch (e) { last = null; }
+    if (!last || !last.title) return;
+    var sec = document.getElementById('continue-section');
+    var card = document.getElementById('continue-card');
+    if (!sec || !card) return;
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    var meta = [last.subject, last.grade].filter(function (x) { return x; }).join(' · ');
+    var href = last.href || 'lessons.html';
+    card.innerHTML = '<span class="badge teal">محاضرة</span><h3>' + esc(last.title) + '</h3>' +
+      (meta ? '<p>' + esc(meta) + '</p>' : '') +
+      '<a class="btn btn-teal" href="' + esc(href) + '">متابعة المشاهدة</a>';
+    sec.hidden = false;
+  })();
 })();
 </script>
 </body>

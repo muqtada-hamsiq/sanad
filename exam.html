@@ -5,26 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>الامتحان — سند SANAD</title>
 <meta name="description" content="أداء الامتحان الإلكتروني في منصة سند مع النتيجة والشرح.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
-<style>
-.option-btn{display:block;width:100%;text-align:right;margin:.5rem 0;padding:.8rem 1rem;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;font-size:1rem}
-.option-btn.selected{border-color:#0a7d7d;background:#e6f5f5;font-weight:bold}
-.option-btn.correct{border-color:#1a7a3a;background:#e6f7ea}
-.option-btn.wrong{border-color:#b3261e;background:#fdecea}
-.timer{font-weight:bold;font-size:1.1rem}
-.review-item{border-top:1px solid #ddd;padding:.8rem 0}
-</style>
 </head>
 <body>
 <header class="site-header">
-  <div class="container" style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap">
-    <a href="index.html" style="display:flex;align-items:center;gap:.6rem;text-decoration:none;color:inherit">
-      <img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44">
-      <span class="logo">سند <small>SANAD</small></span>
+  <div class="header-inner">
+        <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند SANAD" height="44">
+      <span class="logo-text"><span class="logo-name">سند</span><span class="logo-latin">SANAD</span></span>
     </a>
     <nav class="main-nav" aria-label="التنقل الرئيسي">
       <a class="nav-link" href="index.html">الرئيسية</a>
@@ -59,14 +54,15 @@
     <div class="card">
       <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:center">
         <span id="progress-text" aria-live="polite"></span>
-        <label><input type="checkbox" id="timer-toggle"> تشغيل المؤقت (60 دقيقة)</label>
-        <span id="timer-text" class="timer" style="display:none" aria-live="polite"></span>
+        <span id="timer-text" class="timer" aria-live="polite"></span>
       </div>
       <div class="progress-bar" style="height:8px;background:#e5e5e5;border-radius:4px;margin:.7rem 0">
         <div id="progress-fill" style="height:100%;background:#0a7d7d;border-radius:4px;width:0%"></div>
       </div>
+      <p id="exam-scoring-note" class="exam-meta"></p>
 
       <h2 id="q-text"></h2>
+      <p id="q-marks" class="exam-meta"></p>
       <div id="options" role="radiogroup" aria-label="خيارات الإجابة"></div>
 
       <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem">
@@ -81,6 +77,7 @@
     <h2 class="section-title">النتيجة</h2>
     <p id="score-text" style="font-size:1.3rem;font-weight:bold"></p>
     <p id="score-pct"></p>
+    <p id="score-note" class="exam-meta"></p>
     <div id="review"></div>
     <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem">
       <button id="btn-retake" class="btn btn-gold" type="button">إعادة الامتحان</button>
@@ -135,79 +132,144 @@
     return;
   }
 
-  var total = exam.questions.length;
+  /* ===== توحيد شكلَي الأسئلة =====
+     القديم: { q, options, answer: رقم الفهرس, explain }
+     الجديد (بنك الأسئلة): { q, options?, answer: حرف «أ/ب/ج/د» أو نص الإجابة, explanation, marks } */
+  var LETTERS_AR = ['أ', 'ب', 'ج', 'د'];
+  var LETTERS_EN = ['A', 'B', 'C', 'D'];
+  function normQuestion(q) {
+    var n = {
+      q: q.q || '',
+      explanation: q.explanation || q.explain || '',
+      marks: (typeof q.marks === 'number' && q.marks > 0) ? q.marks : 1
+    };
+    if (Array.isArray(q.options) && q.options.length) {
+      n.type = 'mcq';
+      n.options = q.options.slice();
+      var a = q.answer;
+      if (typeof a === 'number') {
+        n.answerIndex = a;
+      } else if (typeof a === 'string') {
+        var t = a.trim();
+        var li = LETTERS_AR.indexOf(t);
+        if (li === -1) li = LETTERS_EN.indexOf(t.toUpperCase());
+        if (li !== -1) {
+          n.answerIndex = li;
+        } else {
+          n.answerIndex = n.options.indexOf(t);
+        }
+      } else {
+        n.answerIndex = -1;
+      }
+      n.answerText = (n.answerIndex >= 0 && n.answerIndex < n.options.length) ? n.options[n.answerIndex] : '';
+    } else {
+      n.type = 'written';
+      n.answerIndex = -1;
+      n.answerText = String(q.answer == null ? '' : q.answer);
+    }
+    return n;
+  }
+
+  var qs = exam.questions.map(normQuestion);
+  var total = qs.length;
+  var totalMarks = qs.reduce(function (s, q) { return s + q.marks; }, 0);
+  var durationMinutes = (typeof exam.durationMinutes === 'number' && exam.durationMinutes > 0) ? exam.durationMinutes : 60;
+
   var idx = 0;
-  var answers = new Array(total).fill(null);
+  var answers = new Array(total).fill(null); /* اختيار: رقم الفهرس | كتابي: نص */
+  var selfMarked = new Array(total).fill(false); /* الكتابي فقط: قيّم الطالب إجابته صحيحة */
   var finished = false;
-  var timerOn = false;
-  var secondsLeft = 60 * 60;
+  var secondsLeft = durationMinutes * 60;
   var timerHandle = null;
+  var lastScore = 0;
 
   document.getElementById('runner').style.display = '';
   document.getElementById('exam-title').textContent = exam.title || 'امتحان';
   document.getElementById('exam-meta').textContent =
-    (exam.subject || '') + ' — ' + (exam.grade || '') + ' · ' + (exam.type || '') + ' · عدد الأسئلة: ' + total;
-  document.getElementById('exam-source').textContent = exam.source ? ('المصدر: ' + exam.source) : '';
+    (exam.subject || '') + ' — ' + (exam.grade || '') + ' · ' + (exam.type || '')
+    + (exam.round ? ' · ' + exam.round : '') + (exam.year ? ' · ' + exam.year : '')
+    + ' · عدد الأسئلة: ' + total + ' · مجموع الدرجات: ' + totalMarks + ' درجة';
+  document.getElementById('exam-source').textContent = exam.source ? ('المصدر: ' + exam.source.replace(/https?:\/\/\S+/, '').replace(/[—\-:،\s]+$/, '').trim()) : '';
+  document.getElementById('exam-scoring-note').textContent =
+    'تُحسب الدرجة من مجموع درجات كل الفروع المدرجة (' + totalMarks + ' درجة). في الورقة الوزارية الأصلية تُجيب عن 5 أسئلة من 6، أما هنا فكل الفروع مشمولة. للأسئلة الكتابية: قارن إجابتك بالحل النموذجي بعد التسليم وقيّم نفسك بنفسك.';
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
+  function pad2(n) { return (n < 10 ? '0' + n : '' + n); }
   function fmtTime(sec) {
-    var m = Math.floor(sec / 60);
+    var h = Math.floor(sec / 3600);
+    var m = Math.floor((sec % 3600) / 60);
     var s = sec % 60;
-    return (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
+    return h > 0 ? (h + ':' + pad2(m) + ':' + pad2(s)) : (pad2(m) + ':' + pad2(s));
   }
 
   function renderQuestion() {
-    var q = exam.questions[idx];
+    var q = qs[idx];
     document.getElementById('progress-text').textContent = 'سؤال ' + (idx + 1) + ' من ' + total;
     document.getElementById('progress-fill').style.width = Math.round(((idx + 1) / total) * 100) + '%';
-    document.getElementById('q-text').textContent = q.q || '';
+    document.getElementById('q-text').textContent = q.q;
+    document.getElementById('q-marks').textContent = 'الدرجة: ' + q.marks + (q.marks === 1 ? ' درجة' : ' درجات') + (q.type === 'written' ? ' — سؤال كتابي، اكتب إجابتك كاملة' : ' — اختر إجابة واحدة');
     var box = document.getElementById('options');
     box.innerHTML = '';
-    (q.options || []).forEach(function (opt, i) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'option-btn' + (answers[idx] === i ? ' selected' : '');
-      b.setAttribute('role', 'radio');
-      b.setAttribute('aria-checked', answers[idx] === i ? 'true' : 'false');
-      b.textContent = opt;
-      b.addEventListener('click', function () {
-        answers[idx] = i;
-        renderQuestion();
+    if (q.type === 'mcq') {
+      q.options.forEach(function (opt, i) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'option-btn' + (answers[idx] === i ? ' selected' : '');
+        b.setAttribute('role', 'radio');
+        b.setAttribute('aria-checked', answers[idx] === i ? 'true' : 'false');
+        b.textContent = opt;
+        b.addEventListener('click', function () {
+          answers[idx] = i;
+          renderQuestion();
+        });
+        box.appendChild(b);
       });
-      box.appendChild(b);
-    });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.id = 'written-answer';
+      ta.className = 'exam-answer-input';
+      ta.rows = 4;
+      ta.placeholder = 'اكتب إجابتك هنا…';
+      ta.setAttribute('aria-label', 'إجابتك الكتابية');
+      ta.value = (typeof answers[idx] === 'string') ? answers[idx] : '';
+      ta.addEventListener('input', function () { answers[idx] = ta.value; });
+      box.appendChild(ta);
+      var hint = document.createElement('p');
+      hint.className = 'exam-meta';
+      hint.textContent = 'بعد التسليم ستظهر الإجابة النموذجية والشرح، وتقيّم إجابتك بنفسك.';
+      box.appendChild(hint);
+    }
     document.getElementById('btn-prev').disabled = idx === 0;
     document.getElementById('btn-next').textContent = idx === total - 1 ? 'مراجعة الإجابات' : 'التالي';
   }
 
   function stopTimer() {
     if (timerHandle) { clearInterval(timerHandle); timerHandle = null; }
-    document.getElementById('timer-text').style.display = 'none';
+  }
+  function tickTimer() {
+    var t = document.getElementById('timer-text');
+    t.textContent = 'الوقت المتبقي: ' + fmtTime(secondsLeft);
+    if (secondsLeft <= 600) t.classList.add('low'); else t.classList.remove('low');
   }
   function startTimer() {
     stopTimer();
-    secondsLeft = 60 * 60;
-    var t = document.getElementById('timer-text');
-    t.style.display = '';
-    t.textContent = 'الوقت المتبقي: ' + fmtTime(secondsLeft);
+    secondsLeft = durationMinutes * 60;
+    tickTimer();
     timerHandle = setInterval(function () {
       secondsLeft -= 1;
       if (secondsLeft <= 0) {
-        t.textContent = 'انتهى الوقت';
+        secondsLeft = 0;
+        tickTimer();
         finish(true);
         return;
       }
-      t.textContent = 'الوقت المتبقي: ' + fmtTime(secondsLeft);
+      tickTimer();
     }, 1000);
   }
-  document.getElementById('timer-toggle').addEventListener('change', function (e) {
-    timerOn = e.target.checked;
-    if (timerOn && !finished) startTimer(); else stopTimer();
-  });
 
   document.getElementById('btn-prev').addEventListener('click', function () {
     if (idx > 0) { idx -= 1; renderQuestion(); }
@@ -224,85 +286,130 @@
     return [];
   }
 
+  function isAnswered(i) {
+    var a = answers[i];
+    if (qs[i].type === 'mcq') return a !== null && a !== undefined;
+    return typeof a === 'string' && a.trim() !== '';
+  }
+  function computeScore() {
+    var score = 0;
+    qs.forEach(function (q, i) {
+      if (q.type === 'mcq') {
+        if (answers[i] === q.answerIndex) score += q.marks;
+      } else if (selfMarked[i]) {
+        score += q.marks;
+      }
+    });
+    return score;
+  }
+  function updateScoreDisplay() {
+    lastScore = computeScore();
+    var pct = totalMarks ? Math.round((lastScore / totalMarks) * 100) : 0;
+    document.getElementById('score-text').textContent = 'نتيجتك: ' + lastScore + ' من ' + totalMarks + ' درجة';
+    document.getElementById('score-pct').textContent = 'النسبة: ' + pct + '٪';
+    qs.forEach(function (q, i) {
+      if (q.type !== 'written') return;
+      var st = document.getElementById('self-mark-status-' + i);
+      if (st) st.textContent = selfMarked[i] ? ('محتسبة: ' + q.marks + ' درجات') : 'غير محتسبة بعد — قيّم إجابتك أعلاه.';
+    });
+  }
+
   function finish(auto) {
     if (finished) return;
     var unanswered = 0;
-    answers.forEach(function (a) { if (a === null) unanswered += 1; });
+    for (var i = 0; i < total; i++) { if (!isAnswered(i)) unanswered += 1; }
     if (!auto && unanswered > 0) {
       if (!window.confirm('لديك ' + unanswered + ' سؤال بدون إجابة. هل تريد إنهاء الامتحان؟')) return;
     }
     finished = true;
     stopTimer();
-    var score = 0;
-    exam.questions.forEach(function (q, i) {
-      if (answers[i] === q.answer) score += 1;
-    });
-    var pct = Math.round((score / total) * 100);
 
     if (typeof window !== 'undefined' && window.SANAD) {
       if (typeof window.SANAD.recordExam === 'function') {
-        try { window.SANAD.recordExam(exam.id, score, total); } catch (e) {}
+        try { window.SANAD.recordExam(exam.id, computeScore(), totalMarks); } catch (e) {}
       }
       if (typeof window.SANAD.addPoints === 'function') {
         try { window.SANAD.addPoints(10, 'إنهاء اختبار'); } catch (e) {}
-      }
-      if (typeof window.SANAD.toast === 'function') {
-        window.SANAD.toast('أنهيت الامتحان — نتيجتك ' + score + ' من ' + total);
       }
     }
 
     document.getElementById('runner').style.display = 'none';
     var res = document.getElementById('results');
     res.style.display = '';
-    document.getElementById('score-text').textContent = 'نتيجتك: ' + score + ' من ' + total;
-    document.getElementById('score-pct').textContent = 'النسبة: ' + pct + '٪' + (auto ? ' — انتهى الوقت وتم تسليم الامتحان تلقائياً.' : '');
+    document.getElementById('score-note').textContent =
+      'الدرجة من مجموع درجات كل الفروع المدرجة (' + totalMarks + ' درجة). الأسئلة الكتابية تُحتسب فقط بعد أن تقيّم إجابتك بنفسك بمقارنتها مع الحل النموذجي.'
+      + (auto ? ' انتهى الوقت وتم تسليم الامتحان تلقائياً.' : '');
+    updateScoreDisplay();
+    if (typeof window !== 'undefined' && window.SANAD && typeof window.SANAD.toast === 'function') {
+      window.SANAD.toast('أنهيت الامتحان — نتيجتك ' + lastScore + ' من ' + totalMarks + ' درجة');
+    }
 
     var review = document.getElementById('review');
     review.innerHTML = '<h3>مراجعة الإجابات</h3>';
-    exam.questions.forEach(function (q, i) {
-      var mine = answers[i];
-      var ok = mine === q.answer;
+    qs.forEach(function (q, i) {
       var div = document.createElement('div');
       div.className = 'review-item';
-      var optsHtml = (q.options || []).map(function (opt, j) {
-        var cls = '';
-        if (j === q.answer) cls = 'correct';
-        else if (j === mine) cls = 'wrong';
-        var tag = j === q.answer ? ' (الإجابة الصحيحة)' : (j === mine ? ' (إجابتك)' : '');
-        return '<p class="option-btn ' + cls + '">' + esc(opt) + esc(tag) + '</p>';
-      }).join('');
-      div.innerHTML = '<p><strong>سؤال ' + (i + 1) + ': ' + esc(q.q || '') + '</strong></p>'
-        + optsHtml
-        + (mine === null ? '<p>لم تجب عن هذا السؤال.</p>' : '')
-        + '<p>' + (ok ? 'إجابة صحيحة.' : 'إجابة خاطئة.') + '</p>'
-        + (q.explain ? '<p>الشرح: ' + esc(q.explain) + '</p>' : '');
+      var html = '<p><strong>سؤال ' + (i + 1) + ': ' + esc(q.q) + '</strong></p>'
+        + '<p class="exam-meta">الدرجة: ' + q.marks + ' درجات</p>';
+      if (q.type === 'mcq') {
+        var mine = answers[i];
+        var ok = mine === q.answerIndex;
+        html += q.options.map(function (opt, j) {
+          var cls = '';
+          if (j === q.answerIndex) cls = 'correct';
+          else if (j === mine) cls = 'wrong';
+          var tag = j === q.answerIndex ? ' (الإجابة الصحيحة)' : (j === mine ? ' (إجابتك)' : '');
+          return '<p class="option-btn ' + cls + '">' + esc(opt) + esc(tag) + '</p>';
+        }).join('');
+        html += (mine === null || mine === undefined)
+          ? '<p>لم تجب عن هذا السؤال.</p>'
+          : '<p>' + (ok ? 'إجابة صحيحة. (+' + q.marks + ' درجات)' : 'إجابة خاطئة.') + '</p>';
+      } else {
+        var mineText = (typeof answers[i] === 'string' && answers[i].trim() !== '') ? answers[i] : null;
+        html += mineText === null
+          ? '<p>لم تجب عن هذا السؤال.</p>'
+          : '<p>إجابتك: ' + esc(mineText) + '</p>';
+        html += '<p><strong>الإجابة النموذجية:</strong> ' + esc(q.answerText) + '</p>';
+        html += '<label class="self-mark"><input type="checkbox" class="self-mark-checkbox" data-i="' + i + '"' + (selfMarked[i] ? ' checked' : '') + '> أجبتُ إجابة صحيحة — احتسب الدرجة (' + q.marks + ' درجات)</label>'
+          + '<p class="exam-meta" id="self-mark-status-' + i + '"></p>';
+      }
+      if (q.explanation) html += '<p>الشرح: ' + esc(q.explanation) + '</p>';
+      div.innerHTML = html;
       review.appendChild(div);
     });
+    review.querySelectorAll('.self-mark-checkbox').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        selfMarked[parseInt(cb.getAttribute('data-i'), 10)] = cb.checked;
+        updateScoreDisplay();
+      });
+    });
+    updateScoreDisplay();
 
     var hist = getHistory();
     var prevBox = document.getElementById('prev-list');
     if (hist.length) {
       prevBox.innerHTML = hist.map(function (h) {
-        var t = h.total || total;
+        var t = h.total || totalMarks;
         return '<p>محاولة بتاريخ ' + esc(h.date || h.at || '') + ' — النتيجة: ' + h.score + ' من ' + t + ' (' + Math.round((h.score / t) * 100) + '٪)</p>';
       }).join('');
     } else {
       prevBox.innerHTML = '<p>هذه محاولتك الأولى في هذا الامتحان.</p>';
     }
-    window.scrollTo(0, 0);
+    if (typeof window.scrollTo === 'function') { try { window.scrollTo(0, 0); } catch (e) {} }
   }
 
   document.getElementById('btn-retake').addEventListener('click', function () {
     idx = 0;
     answers = new Array(total).fill(null);
+    selfMarked = new Array(total).fill(false);
     finished = false;
-    secondsLeft = 60 * 60;
-    document.getElementById('timer-toggle').checked = false;
     document.getElementById('results').style.display = 'none';
     document.getElementById('runner').style.display = '';
+    startTimer();
     renderQuestion();
   });
 
+  startTimer();
   renderQuestion();
 })();
 </script>

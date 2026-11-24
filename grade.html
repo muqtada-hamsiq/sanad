@@ -7,15 +7,8 @@
 <meta name="description" content="الكتب الرسمية والملازم والمحاضرات لصف دراسي على منصة سند — كتب وزارة التربية العراقية وملازم المدرسين ومحاضرات فيديو.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<style>
-.video-wrap{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;background:#0B2A4A;margin-bottom:10px}
-.video-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
-.tab-panel{display:none}
-.tab-panel.active{display:block}
-.book-meta{color:#555;font-size:.9rem;margin:.3rem 0}
-</style>
 </head>
 <body>
 <header class="site-header">
@@ -54,7 +47,7 @@
   </div>
 
   <section id="panel-books" class="tab-panel active">
-    <div class="alert alert-info">كتب رسمية من وزارة التربية العراقية — ملفات PDF تفتح وتُنزّل مباشرة من الموقع.</div>
+    <div class="alert alert-info">كتب رسمية من وزارة التربية العراقية — تفتح داخل قارئ سند، ويمكن تنزيلها منه بصيغة PDF.</div>
     <div id="books-listing"></div>
     <div id="books-grid" class="grid"></div>
     <div id="books-empty" class="empty-state" style="display:none">
@@ -65,7 +58,7 @@
   </section>
 
   <section id="panel-malazim" class="tab-panel">
-    <div class="alert alert-info">ملازم المدرسين — الملفات المتوفرة بصيغة PDF تفتح مباشرة من الموقع، والباقي يُباع في المكتبات ولا توجد له نسخة PDF مجانية موثقة.</div>
+    <div class="alert alert-info">ملازم المدرسين — الملفات المتوفرة بصيغة PDF تفتح داخل قارئ سند، والباقي يُباع في المكتبات ولا توجد له نسخة PDF مجانية موثقة.</div>
     <div id="malazim-grid" class="grid"></div>
     <div id="malazim-empty" class="empty-state" style="display:none">
       <h2>لا توجد ملازم موثقة بعد لهذا الصف</h2>
@@ -113,7 +106,7 @@
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
@@ -224,13 +217,17 @@
     list.forEach(function (b) {
       var el = document.createElement('article');
       el.className = 'card';
+      var rightsText = b.rights || b.source || '';
+      var readerHref = (window.SANAD && window.SANAD.readerUrl)
+        ? window.SANAD.readerUrl(b.pdf || b.url, { title: b.title, source: b.source, rights: b.rights, year: b.year })
+        : 'reader.html?pdf=' + encodeURIComponent(b.pdf || b.url);
       el.innerHTML = '<span class="badge">محتوى رسمي</span>' +
         '<h3>' + esc(b.title || ('كتاب ' + (b.subject || ''))) + '</h3>' +
+        (rightsText ? '<p class="book-meta">الحقوق: ' + esc(rightsText) + '</p>' : '') +
         '<p class="book-meta">' + esc(b.subject || '') + ' — ' + esc(b.grade || grade.name) + '</p>' +
         '<p class="book-meta">' + esc(b.source || 'وزارة التربية العراقية') + (b.year ? ' · طبعة ' + esc(String(b.year)) : '') + '</p>' +
         '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' +
-        '<a class="btn btn-gold" href="' + esc(b.url) + '" target="_blank" rel="noopener">عرض الكتاب</a>' +
-        '<a class="btn btn-outline" href="' + esc(b.url) + '" download>تنزيل PDF</a></div>';
+        '<a class="btn btn-gold" href="' + esc(readerHref) + '">قراءة</a></div>';
       grid.appendChild(el);
     });
     empty.style.display = list.length ? 'none' : '';
@@ -249,8 +246,11 @@
          فقط توضيح صادق أن الملزمة تُباع في المكتبات ولا توجد نسخة PDF موثقة. */
       var actions = '';
       if (m.pdf) {
-        actions = '<a class="btn btn-gold" href="' + esc(m.pdf) + '" target="_blank" rel="noopener">عرض PDF</a>' +
-          '<a class="btn btn-outline" href="' + esc(m.pdf) + '" download>تحميل PDF</a>';
+        /* الملزمة تُقرأ داخل قارئ سند؛ التنزيل من داخل القارئ نفسه. */
+        var readerHref = (window.SANAD && window.SANAD.readerUrl)
+          ? window.SANAD.readerUrl(m.pdf, { title: m.title, source: m.source, rights: m.rights, year: m.year })
+          : 'reader.html?pdf=' + encodeURIComponent(m.pdf);
+        actions = '<a class="btn btn-gold" href="' + esc(readerHref) + '">قراءة</a>';
       } else {
         actions = '<p class="book-meta">لا توجد نسخة PDF مجانية موثقة — تُباع في المكتبات.</p>';
       }

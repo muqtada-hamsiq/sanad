@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>بحث — سند SANAD</title>
-<meta name="description" content="ابحث في منصة سند: اختبارات وزارية، جامعات، منح دراسية، مراحل ومواد دراسية.">
+<meta name="description" content="ابحث في منصة سند: كتب وملازم ودروس ومراجعات مركزة واختبارات وزارية ومدرسون وجامعات ومنح دراسية.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -36,10 +36,30 @@
 <main class="container">
   <h1 class="section-title">بحث في المنصة</h1>
 
-  <form class="search-box" action="search.html" method="get">
-    <input class="form-input" type="search" name="q" id="search-input" placeholder="ابحث عن مادة أو اختبار أو جامعة أو منحة..." aria-label="بحث">
+  <form class="search-box" id="search-form" action="search.html" method="get">
+    <input class="form-input" type="search" name="q" id="search-input" placeholder="ابحث عن كتاب أو ملزمة أو درس أو مراجعة أو اختبار أو مدرس أو جامعة أو منحة..." aria-label="بحث">
     <button class="btn btn-gold" type="submit">بحث</button>
   </form>
+
+  <div class="filter-bar" role="group" aria-label="فلاتر البحث">
+    <select class="form-input" id="filter-stage" aria-label="المرحلة">
+      <option value="">كل المراحل</option>
+    </select>
+    <select class="form-input" id="filter-subject" aria-label="المادة">
+      <option value="">كل المواد</option>
+    </select>
+    <select class="form-input" id="filter-type" aria-label="نوع المحتوى">
+      <option value="">كل الأنواع</option>
+      <option value="books">كتب</option>
+      <option value="malazim">ملازم</option>
+      <option value="lectures">دروس</option>
+      <option value="revisions">مراجعات</option>
+      <option value="exams">امتحانات</option>
+      <option value="teachers">مدرسون</option>
+      <option value="universities">جامعات</option>
+      <option value="scholarships">منح</option>
+    </select>
+  </div>
 
   <div id="search-results"></div>
 </main>
@@ -72,131 +92,431 @@
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
 <script>
+/* سند SANAD — بحث v2: بحث موحّد في كل المحتوى من data.js فقط.
+   تطبيع عربي (تشكيل/همزات/ة/ى)، كل كلمات البحث يجب أن تظهر في الحقول،
+   فلاتر مرحلة/مادة/نوع، بحث حي مع تأخير 300ms، والرابط متزامن مع الحالة.
+   كل التشغيل داخل الموقع عبر مشغّل سند المنبثق — بلا تحويل إلى يوتيوب. */
 (function () {
-  var params = new URLSearchParams(window.location.search);
-  var q = (params.get('q') || '').trim();
-  var input = document.getElementById('search-input');
-  var results = document.getElementById('search-results');
-  input.value = q;
+  'use strict';
 
-  if (!q) {
-    results.innerHTML = '<div class="alert alert-info">اكتب كلمة البحث أعلاه للبحث في الاختبارات والجامعات والمنح والمراحل والمواد الدراسية.</div>';
-    return;
-  }
+  var params = new URLSearchParams(window.location.search);
+  var input = document.getElementById('search-input');
+  var stageSel = document.getElementById('filter-stage');
+  var subjectSel = document.getElementById('filter-subject');
+  var typeSel = document.getElementById('filter-type');
+  var results = document.getElementById('search-results');
+  var GROUP_CAP = 12;
 
   var data = window.SANAD_DATA || {};
-  var content = window.SANAD_CONTENT || { books: [], malazim: [], lectures: [] };
-  var needle = q.toLowerCase();
-  function match(text) { return (text || '').toLowerCase().indexOf(needle) !== -1; }
+  var content = window.SANAD_CONTENT || { books: [], malazim: [], lectures: [], revisions: [] };
+  var stages = data.stages || [];
 
-  var bookHits = (content.books || []).filter(function (b) {
-    return match(b.title) || match(b.subject) || match(b.grade);
-  });
-  var lecHits = (content.lectures || []).filter(function (l) {
-    return match(l.title) || match(l.subject) || match(l.grade) || match(l.teacher);
-  });
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
 
-  var examHits = (data.exams || []).filter(function (e) {
-    return match(e.title) || match(e.subject) || match(e.grade) || match(e.type);
+  /* ===== التطبيع العربي: تشكيل + همزات + ة/ى + تطويل ===== */
+  function norm(s) {
+    return String(s == null ? '' : s)
+      .replace(/[\u064B-\u0652\u0670\u0640]/g, '')
+      .replace(/[أإآٱ]/g, 'ا')
+      .replace(/ة/g, 'ه')
+      .replace(/ى/g, 'ي')
+      .replace(/ؤ/g, 'و')
+      .replace(/ئ/g, 'ي')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  function queryWords(q) {
+    return norm(q).split(' ').filter(function (w) { return w.length > 0; });
+  }
+  /* كل كلمات البحث يجب أن تظهر في النص المجمّع للحقول */
+  function matchesAll(haystack, words) {
+    if (!words.length) return true;
+    var hay = norm(haystack);
+    for (var i = 0; i < words.length; i++) {
+      if (hay.indexOf(words[i]) === -1) return false;
+    }
+    return true;
+  }
+
+  /* ===== خرائط المراحل والصفوف من data.js ===== */
+  var stageById = {};
+  var stageNameById = {};
+  var gradeInfoByName = {}; /* اسم الصف ← {stageId, gradeId, stageName} */
+  stages.forEach(function (st) {
+    if (!st || !st.id) return;
+    stageById[st.id] = st;
+    stageNameById[st.id] = st.name || st.id;
+    (st.grades || []).forEach(function (g) {
+      if (g && g.name) gradeInfoByName[g.name] = { stageId: st.id, gradeId: g.id, stageName: st.name || '' };
+    });
   });
-  var uniHits = (data.universities || []).filter(function (u) {
-    return match(u.name) || match(u.city) || match(u.type);
+  /* مرحلة العنصر: من حقل stage مباشرة، أو من اسم صفه */
+  function itemStageId(it) {
+    if (it.stage && stageById[it.stage]) return it.stage;
+    if (it.grade && gradeInfoByName[it.grade]) return gradeInfoByName[it.grade].stageId;
+    return '';
+  }
+  function itemGradeId(it) {
+    if (it.gradeId) return it.gradeId;
+    if (it.grade && gradeInfoByName[it.grade]) return gradeInfoByName[it.grade].gradeId;
+    return '';
+  }
+  function itemStageName(it) {
+    var id = itemStageId(it);
+    return id ? (stageNameById[id] || '') : '';
+  }
+
+  /* ===== بناء الفلاتر ===== */
+  stages.forEach(function (st) {
+    if (!st || !st.id || st.id === 'uni') return;
+    if (!st.grades || !st.grades.length) return;
+    var opt = document.createElement('option');
+    opt.value = st.id;
+    opt.textContent = st.name || st.id;
+    stageSel.appendChild(opt);
   });
-  var schHits = (data.scholarships || []).filter(function (s) {
-    return match(s.name) || match(s.country) || match(s.level);
-  });
-  var stageHits = [];
-  (data.stages || []).forEach(function (stage) {
-    if (match(stage.name)) stageHits.push({ stage: stage.name, grade: '', subject: '' });
-    (stage.grades || []).forEach(function (grade) {
-      if (match(grade.name)) stageHits.push({ stage: stage.name, grade: grade.name, subject: '' });
-      (grade.subjects || []).forEach(function (subject) {
-        if (match(subject)) stageHits.push({ stage: stage.name, grade: grade.name, subject: subject });
+  function subjectsForStage(stageId) {
+    var set = {};
+    var list = [];
+    var pool = stageId ? [stageById[stageId]] : stages;
+    pool.forEach(function (st) {
+      if (!st || !st.grades) return;
+      st.grades.forEach(function (g) {
+        (g.subjects || []).forEach(function (s) {
+          if (s && !set[s]) { set[s] = true; list.push(s); }
+        });
       });
     });
+    return list.sort();
+  }
+  function renderSubjectOptions(keep) {
+    var prev = keep ? subjectSel.value : '';
+    var subjects = subjectsForStage(stageSel.value || '');
+    var html = '<option value="">كل المواد</option>';
+    subjects.forEach(function (s) {
+      html += '<option value="' + esc(s) + '">' + esc(s) + '</option>';
+    });
+    subjectSel.innerHTML = html;
+    if (prev && subjects.indexOf(prev) !== -1) subjectSel.value = prev;
+  }
+
+  /* ===== المدرسون: أسماء فريدة من المحاضرات + المراجعات ===== */
+  function buildTeachers() {
+    var map = {};
+    var order = [];
+    function add(name, it, isRevision) {
+      if (!name) return;
+      if (!map[name]) {
+        map[name] = { name: name, subjects: {}, grades: {}, stageIds: {}, lectures: 0, revisions: 0 };
+        order.push(name);
+      }
+      var t = map[name];
+      if (it.subject) t.subjects[it.subject] = true;
+      if (it.grade) t.grades[it.grade] = true;
+      var sid = itemStageId(it);
+      if (sid) t.stageIds[sid] = true;
+      if (isRevision) t.revisions++; else t.lectures++;
+    }
+    (content.lectures || []).forEach(function (l) { add(l.teacher, l, false); });
+    (content.revisions || []).forEach(function (r) { add(r.teacher, r, true); });
+    return order.map(function (n) { return map[n]; });
+  }
+  var teachers = buildTeachers();
+
+  /* ===== حالة البحث ===== */
+  function state() {
+    return {
+      q: input.value.trim(),
+      stage: stageSel.value || '',
+      subject: subjectSel.value || '',
+      type: typeSel.value || ''
+    };
+  }
+  function syncUrl(s) {
+    var p = new URLSearchParams();
+    if (s.q) p.set('q', s.q);
+    if (s.stage) p.set('stage', s.stage);
+    if (s.subject) p.set('subject', s.subject);
+    if (s.type) p.set('type', s.type);
+    var qs = p.toString();
+    try {
+      window.history.replaceState(null, '', qs ? ('search.html?' + qs) : 'search.html');
+    } catch (e) { /* تجاهل */ }
+  }
+  function stageSubjectOk(it, s) {
+    if (s.stage && itemStageId(it) !== s.stage) return false;
+    if (s.subject && (it.subject || '') !== s.subject) return false;
+    return true;
+  }
+  function hay(it, extra) {
+    return [it.title, it.subject, it.grade, it.teacher, itemStageName(it), it.chapter, extra || '']
+      .filter(function (x) { return x; }).join(' ');
+  }
+
+  function search(s) {
+    var words = queryWords(s.q);
+    var want = function (t) { return !s.type || s.type === t; };
+    var out = { books: [], malazim: [], lectures: [], revisions: [], exams: [], teachers: [], universities: [], scholarships: [] };
+    var noStageSubject = !s.stage && !s.subject;
+
+    if (want('books')) {
+      out.books = (content.books || []).filter(function (b) {
+        return stageSubjectOk(b, s) && matchesAll(hay(b), words);
+      });
+    }
+    if (want('malazim')) {
+      out.malazim = (content.malazim || []).filter(function (m) {
+        return stageSubjectOk(m, s) && matchesAll(hay(m, m.note), words);
+      });
+    }
+    if (want('lectures')) {
+      out.lectures = (content.lectures || []).filter(function (l) {
+        return stageSubjectOk(l, s) && matchesAll(hay(l), words);
+      });
+    }
+    if (want('revisions')) {
+      out.revisions = (content.revisions || []).filter(function (r) {
+        return stageSubjectOk(r, s) && matchesAll(hay(r, r.scope === 'book' ? 'كامل الكتاب' : ''), words);
+      });
+    }
+    if (want('exams')) {
+      out.exams = (data.exams || []).filter(function (e) {
+        return stageSubjectOk(e, s) && matchesAll(hay(e, (e.type || '') + ' ' + (e.round || '') + ' ' + (e.year || '')), words);
+      });
+    }
+    if (want('teachers')) {
+      out.teachers = teachers.filter(function (t) {
+        if (s.stage && !t.stageIds[s.stage]) return false;
+        if (s.subject && !t.subjects[s.subject]) return false;
+        return matchesAll(t.name, words);
+      });
+    }
+    /* الجامعات والمنح لا تنتمي لمرحلة أو مادة مدرسية: تُخفى عند ضبط أي فلتر منهما */
+    if (want('universities') && noStageSubject) {
+      out.universities = (data.universities || []).filter(function (u) {
+        return matchesAll([u.name, u.city, u.type].join(' '), words);
+      });
+    }
+    if (want('scholarships') && noStageSubject) {
+      out.scholarships = (data.scholarships || []).filter(function (sc) {
+        return matchesAll([sc.name, sc.country, sc.level].join(' '), words);
+      });
+    }
+    return out;
+  }
+
+  /* ===== العرض ===== */
+  function metaLine(parts) {
+    return parts.filter(function (x) { return x; }).map(esc).join(' · ');
+  }
+  function groupHead(title, total) {
+    var h = '<h2 class="section-title">' + esc(title) + ' (' + total + ')</h2>';
+    if (total > GROUP_CAP) {
+      h += '<p class="alert alert-info">يُعرض أول ' + GROUP_CAP + ' من ' + total + ' نتيجة — ضيّق البحث (كلمة أدق أو فلتر مرحلة/مادة) لعرض المزيد.</p>';
+    }
+    return h;
+  }
+  function gradeLink(it, tab) {
+    var sid = itemStageId(it);
+    var gid = itemGradeId(it);
+    if (!sid || !gid) return '';
+    return 'grade.html?stage=' + encodeURIComponent(sid) + '&grade=' + encodeURIComponent(gid) + '&tab=' + tab;
+  }
+  function pdfOf(it) {
+    if (it.pdf) return it.pdf;
+    if (it.url && /\.pdf(\?|#|$)/i.test(it.url)) return it.url;
+    return '';
+  }
+
+  function render() {
+    var s = state();
+    var hasQuery = !!s.q;
+    var hasFilter = !!(s.stage || s.subject || s.type);
+    if (!hasQuery && !hasFilter) {
+      results.innerHTML = '<div class="alert alert-info">اكتب كلمة البحث أعلاه للبحث في الكتب والملازم والدروس والمراجعات والاختبارات والمدرسين والجامعات والمنح، أو استخدم الفلاتر لتصفح المحتوى.</div>';
+      return;
+    }
+    var r = search(s);
+    var total = r.books.length + r.malazim.length + r.lectures.length + r.revisions.length +
+      r.exams.length + r.teachers.length + r.universities.length + r.scholarships.length;
+    if (total === 0) {
+      results.innerHTML = '<div class="empty-state">لا توجد نتائج مطابقة لـ «' + esc(s.q || 'الفلاتر المحددة') + '» — جرّب كلمة أخرى أو وسّع الفلاتر.</div>';
+      return;
+    }
+
+    var html = '<p>نتائج البحث' + (s.q ? ' عن «' + esc(s.q) + '»' : '') + ' — ' + total + ' نتيجة</p>';
+
+    if (r.books.length) {
+      html += groupHead('الكتب الرسمية', r.books.length) + '<div class="grid">';
+      r.books.slice(0, GROUP_CAP).forEach(function (b) {
+        var link = gradeLink(b, 'books');
+        html += '<article class="card"><span class="badge">كتاب رسمي</span><h3>' + esc(b.title) + '</h3>' +
+          '<p>' + metaLine([b.subject, b.grade, b.year ? ('سنة ' + b.year) : '']) + '</p>' +
+          (link ? '<a class="btn btn-teal" href="' + esc(link) + '">عرض الكتاب</a>' : '') + '</article>';
+      });
+      html += '</div>';
+    }
+
+    if (r.malazim.length) {
+      html += groupHead('الملازم', r.malazim.length) + '<div class="grid">';
+      r.malazim.slice(0, GROUP_CAP).forEach(function (m) {
+        var link = gradeLink(m, 'malazim');
+        var pdf = pdfOf(m);
+        /* ملف PDF يُفتح داخل قارئ سند؛ التنزيل من داخل القارئ نفسه. */
+        var readerHref = pdf ? ((window.SANAD && window.SANAD.readerUrl)
+          ? window.SANAD.readerUrl(pdf, { title: m.title, source: m.source, rights: m.rights, year: m.year })
+          : ('reader.html?pdf=' + encodeURIComponent(pdf))) : '';
+        html += '<article class="card"><span class="badge">ملزمة</span><h3>' + esc(m.title) + '</h3>' +
+          '<p>' + metaLine([m.teacher, m.subject, m.grade]) + '</p>' +
+          (link ? '<a class="btn btn-teal" href="' + esc(link) + '">عرض الملزمة</a>' : '') +
+          (readerHref ? ' <a class="btn btn-outline" href="' + esc(readerHref) + '">قراءة الملزمة</a>' : '') +
+          (m.note && !pdf ? '<p>' + esc(m.note) + '</p>' : '') + '</article>';
+      });
+      html += '</div>';
+    }
+
+    if (r.lectures.length) {
+      html += groupHead('المحاضرات', r.lectures.length) + '<div class="grid">';
+      r.lectures.slice(0, GROUP_CAP).forEach(function (l, i) {
+        html += '<article class="card"><span class="badge teal">محاضرة</span><h3>' + esc(l.title) + '</h3>' +
+          '<p>' + metaLine(['المدرس: ' + (l.teacher || ''), l.subject, l.grade]) + '</p>' +
+          '<button type="button" class="btn btn-teal" data-play-lecture="' + i + '">مشاهدة المحاضرة</button></article>';
+      });
+      html += '</div>';
+    }
+
+    if (r.revisions.length) {
+      html += groupHead('المراجعات المركزة', r.revisions.length) + '<div class="grid">';
+      r.revisions.slice(0, GROUP_CAP).forEach(function (rev, i) {
+        html += '<article class="card"><span class="badge navy">مراجعة مركزة</span><h3>' + esc(rev.title) + '</h3>' +
+          '<p>' + metaLine(['المدرس: ' + (rev.teacher || ''), rev.subject, rev.grade, rev.chapter || '']) + '</p>' +
+          '<a class="btn btn-outline" href="revisions.html?teacher=' + encodeURIComponent(rev.teacher || '') + '">مراجعات المدرس</a> ' +
+          '<button type="button" class="btn btn-teal" data-play-revision="' + i + '">تشغيل المراجعة</button></article>';
+      });
+      html += '</div>';
+    }
+
+    if (r.exams.length) {
+      html += groupHead('الامتحانات', r.exams.length) + '<div class="grid">';
+      r.exams.slice(0, GROUP_CAP).forEach(function (e) {
+        html += '<article class="card"><span class="badge">' + esc(e.type || 'امتحان') + '</span><h3>' + esc(e.title) + '</h3>' +
+          '<p>' + metaLine([e.subject, e.grade, e.round || '', e.year || '']) + '</p>' +
+          '<a class="btn btn-teal" href="exam.html?id=' + encodeURIComponent(e.id) + '">عرض الاختبار</a></article>';
+      });
+      html += '</div>';
+    }
+
+    if (r.teachers.length) {
+      html += groupHead('المدرسون', r.teachers.length) + '<div class="grid">';
+      r.teachers.slice(0, GROUP_CAP).forEach(function (t) {
+        var dest = t.revisions > 0
+          ? 'revisions.html?teacher=' + encodeURIComponent(t.name)
+          : 'lessons.html';
+        var subs = Object.keys(t.subjects).join('، ');
+        var grades = Object.keys(t.grades).join('، ');
+        html += '<article class="card"><span class="badge teal">مدرس</span><h3>' + esc(t.name) + '</h3>' +
+          '<p>' + metaLine([subs, grades]) + '</p>' +
+          '<p>' + t.lectures + ' محاضرة · ' + t.revisions + ' مراجعة مركزة</p>' +
+          '<a class="btn btn-teal" href="' + esc(dest) + '">عرض ' + (t.revisions > 0 ? 'مراجعاته' : 'دروسه') + '</a></article>';
+      });
+      html += '</div>';
+    }
+
+    if (r.universities.length) {
+      html += groupHead('الجامعات', r.universities.length) + '<div class="grid">';
+      r.universities.slice(0, GROUP_CAP).forEach(function (u) {
+        html += '<article class="card"><span class="badge navy">جامعة</span><h3>' + esc(u.name) + '</h3>' +
+          '<p>' + metaLine([u.type, u.city]) + '</p>' +
+          '<a class="btn btn-teal" href="universities.html">عرض الدليل</a>' +
+          (u.url ? ' <a class="btn btn-outline" href="' + esc(u.url) + '" target="_blank" rel="noopener">الموقع الرسمي</a>' : '') + '</article>';
+      });
+      html += '</div>';
+    }
+
+    if (r.scholarships.length) {
+      html += groupHead('المنح الدراسية', r.scholarships.length) + '<div class="grid">';
+      r.scholarships.slice(0, GROUP_CAP).forEach(function (sc) {
+        html += '<article class="card"><span class="badge">منحة</span><h3>' + esc(sc.name) + '</h3>' +
+          '<p>' + metaLine([sc.country, sc.level]) + '</p>' +
+          '<a class="btn btn-teal" href="scholarships.html">عرض المنح</a>' +
+          (sc.url ? ' <a class="btn btn-outline" href="' + esc(sc.url) + '" target="_blank" rel="noopener">الموقع الرسمي</a>' : '') + '</article>';
+      });
+      html += '</div>';
+    }
+
+    results.innerHTML = html;
+
+    /* تشغيل المحاضرات والمراجعات داخل الموقع (نافذة منبثقة) — بلا تحويل إلى يوتيوب */
+    var shownLectures = r.lectures.slice(0, GROUP_CAP);
+    results.querySelectorAll('[data-play-lecture]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var l = shownLectures[parseInt(btn.getAttribute('data-play-lecture'), 10)];
+        if (!l) return;
+        var src = (window.SANAD && window.SANAD.lectureEmbedSrc) ? window.SANAD.lectureEmbedSrc(l) : '';
+        if (src && window.SANAD.openLecturePlayer) {
+          window.SANAD.openLecturePlayer(l.title, src, { grade: l.grade, subject: l.subject, youtubeId: l.youtubeId, playlistId: l.playlistId });
+        }
+      });
+    });
+    var shownRevisions = r.revisions.slice(0, GROUP_CAP);
+    results.querySelectorAll('[data-play-revision]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var rev = shownRevisions[parseInt(btn.getAttribute('data-play-revision'), 10)];
+        if (!rev) return;
+        var src = (window.SANAD && window.SANAD.lectureEmbedSrc) ? window.SANAD.lectureEmbedSrc(rev) : '';
+        if (src && window.SANAD.openLecturePlayer) {
+          window.SANAD.openLecturePlayer(rev.title, src, { grade: rev.grade, subject: rev.subject, youtubeId: rev.youtubeId, playlistId: rev.playlistId });
+        }
+      });
+    });
+  }
+
+  /* ===== بحث حي مع تأخير 300ms + مزامنة الرابط ===== */
+  var debounceTimer = null;
+  function scheduleRender() {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function () {
+      syncUrl(state());
+      render();
+    }, 300);
+  }
+  input.addEventListener('input', scheduleRender);
+  stageSel.addEventListener('change', function () {
+    renderSubjectOptions(false);
+    syncUrl(state());
+    render();
+  });
+  subjectSel.addEventListener('change', function () { syncUrl(state()); render(); });
+  typeSel.addEventListener('change', function () { syncUrl(state()); render(); });
+  document.getElementById('search-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (debounceTimer) clearTimeout(debounceTimer);
+    syncUrl(state());
+    render();
   });
 
-  var total = examHits.length + uniHits.length + schHits.length + stageHits.length + bookHits.length + lecHits.length;
-  if (total === 0) {
-    results.innerHTML = '<div class="empty-state">لا توجد نتائج مطابقة لـ «' + q.replace(/</g, '&lt;') + '»</div>';
-    return;
-  }
-
-  var html = '<p>نتائج البحث عن «' + q.replace(/</g, '&lt;') + '» — ' + total + ' نتيجة</p>';
-
-  if (bookHits.length) {
-    html += '<h2 class="section-title">الكتب الرسمية</h2><div class="grid">';
-    bookHits.forEach(function (b) {
-      html += '<article class="card"><span class="badge">محتوى رسمي</span><h3>' + b.title + '</h3>' +
-        '<p>' + b.subject + ' · ' + b.grade + '</p>' +
-        '<a class="btn btn-teal" href="' + b.url + '" target="_blank" rel="noopener">عرض الكتاب</a></article>';
-    });
-    html += '</div>';
-  }
-
-  if (lecHits.length) {
-    html += '<h2 class="section-title">المحاضرات</h2><div class="grid">';
-    lecHits.forEach(function (l, i) {
-      html += '<article class="card"><span class="badge teal">محاضرة</span><h3>' + l.title + '</h3>' +
-        '<p>المدرس: ' + l.teacher + ' · ' + l.subject + ' · ' + l.grade + '</p>' +
-        '<button type="button" class="btn btn-teal" data-lec="' + i + '">مشاهدة المحاضرة</button></article>';
-    });
-    html += '</div>';
-  }
-
-  if (examHits.length) {
-    html += '<h2 class="section-title">الاختبارات</h2><div class="grid">';
-    examHits.forEach(function (e) {
-      html += '<article class="card"><span class="badge">' + e.type + '</span><h3>' + e.title + '</h3>' +
-        '<p>' + e.subject + ' · ' + e.grade + '</p>' +
-        '<a class="btn btn-teal" href="exam.html?id=' + e.id + '">عرض الاختبار</a></article>';
-    });
-    html += '</div>';
-  }
-
-  if (stageHits.length) {
-    html += '<h2 class="section-title">المراحل والمواد</h2><div class="card">';
-    stageHits.forEach(function (h) {
-      var label = h.stage + (h.grade ? ' ← ' + h.grade : '') + (h.subject ? ' ← ' + h.subject : '');
-      html += '<div class="lesson-row"><span class="lesson-title">' + label + '</span>' +
-        '<a class="btn btn-outline" href="stages.html">عرض المرحلة</a></div>';
-    });
-    html += '</div>';
-  }
-
-  if (uniHits.length) {
-    html += '<h2 class="section-title">الجامعات</h2><div class="grid">';
-    uniHits.forEach(function (u) {
-      html += '<article class="card"><h3>' + u.name + '</h3><p>' + u.type + ' · ' + u.city + '</p>' +
-        '<a class="btn btn-outline" href="universities.html">عرض الدليل</a></article>';
-    });
-    html += '</div>';
-  }
-
-  if (schHits.length) {
-    html += '<h2 class="section-title">المنح الدراسية</h2><div class="grid">';
-    schHits.forEach(function (s) {
-      html += '<article class="card"><h3>' + s.name + '</h3><p>' + s.country + ' · ' + s.level + '</p>' +
-        '<a class="btn btn-outline" href="scholarships.html">عرض المنح</a></article>';
-    });
-    html += '</div>';
-  }
-
-  results.innerHTML = html;
-  /* تشغيل المحاضرة داخل الموقع (نافذة منبثقة) — بلا تحويل إلى يوتيوب */
-  results.querySelectorAll('[data-lec]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var l = lecHits[parseInt(btn.getAttribute('data-lec'), 10)];
-      if (!l) return;
-      var src = (window.SANAD && window.SANAD.lectureEmbedSrc) ? window.SANAD.lectureEmbedSrc(l) : '';
-      if (src && window.SANAD.openLecturePlayer) window.SANAD.openLecturePlayer(l.title, src);
-    });
-  });
+  /* ===== القراءة من الرابط عند التحميل ===== */
+  renderSubjectOptions(false);
+  var initQ = params.get('q') || '';
+  var initStage = params.get('stage') || '';
+  var initSubject = params.get('subject') || '';
+  var initType = params.get('type') || '';
+  if (initStage && stageById[initStage]) stageSel.value = initStage;
+  renderSubjectOptions(false);
+  if (initSubject) subjectSel.value = initSubject;
+  if (initType) typeSel.value = initType;
+  input.value = initQ;
+  render();
 })();
 </script>
 </body>

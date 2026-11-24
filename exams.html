@@ -4,23 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>الامتحانات الإلكترونية — سند SANAD</title>
-<meta name="description" content="الامتحانات الإلكترونية في منصة سند — امتحانات وزارية وشهرية وتجريبية مجانية.">
+<meta name="description" content="الامتحانات الإلكترونية في منصة سند — بنك الأسئلة الوزارية: امتحانات وزارية حقيقية مع الحلول النموذجية.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
-<style>
-.chip[aria-pressed="true"]{outline:2px solid currentColor}
-.exam-meta{color:#555;font-size:.9rem;margin:.3rem 0}
-</style>
 </head>
 <body>
 <header class="site-header">
-  <div class="container" style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap">
-    <a href="index.html" style="display:flex;align-items:center;gap:.6rem;text-decoration:none;color:inherit">
-      <img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44">
-      <span class="logo">سند <small>SANAD</small></span>
+  <div class="header-inner">
+        <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند SANAD" height="44">
+      <span class="logo-text"><span class="logo-name">سند</span><span class="logo-latin">SANAD</span></span>
     </a>
     <nav class="main-nav" aria-label="التنقل الرئيسي">
       <a class="nav-link" href="index.html">الرئيسية</a>
@@ -40,8 +39,9 @@
 
 <main class="container">
   <section class="hero">
-    <h1>الامتحانات الإلكترونية</h1>
-    <p>اختبر نفسك بأسئلة حقيقية، واحصل على النتيجة والشرح فوراً — نتائجك محفوظة محلياً في جهازك لتقارن محاولاتك.</p>
+    <h1>بنك الأسئلة الوزارية</h1>
+    <p>اختبر نفسك بأسئلة وزارية حقيقية، واحصل على النتيجة والشرح فوراً — نتائجك محفوظة محلياً في جهازك لتقارن محاولاتك.</p>
+    <p class="exam-meta">ملاحظة: في الورقة الوزارية الأصلية تُجيب عن 5 أسئلة من 6 (20 درجة لكل سؤال)، أما في البنك فتُحسب الدرجة من مجموع درجات كل الفروع المدرجة في الامتحان.</p>
   </section>
 
   <div class="tabs filter-bar" role="tablist" aria-label="تصنيفات الامتحانات">
@@ -54,11 +54,17 @@
   </div>
 
   <div class="filter-bar">
-    <label class="form-label" for="f-subject">المادة</label>
-    <select id="f-subject" class="form-input"><option value="">كل المواد</option></select>
     <label class="form-label" for="f-grade">الصف</label>
     <select id="f-grade" class="form-input"><option value="">كل الصفوف</option></select>
+    <label class="form-label" for="f-subject">المادة</label>
+    <select id="f-subject" class="form-input"><option value="">كل المواد</option></select>
+    <label class="form-label" for="f-round">الدور</label>
+    <select id="f-round" class="form-input"><option value="">كل الأدوار</option></select>
+    <label class="form-label" for="f-year">السنة الدراسية</label>
+    <select id="f-year" class="form-input"><option value="">كل السنوات</option></select>
   </div>
+
+  <p id="exam-count" class="exam-meta" aria-live="polite"></p>
 
   <div id="exam-list" class="grid"></div>
 
@@ -118,30 +124,71 @@
     if (parts.length === 3) return parts[2] + '/' + parts[1] + '/' + parts[0];
     return String(d);
   }
+  function totalMarks(e) {
+    return (Array.isArray(e.questions) ? e.questions : []).reduce(function (s, q) {
+      return s + ((typeof q.marks === 'number' && q.marks > 0) ? q.marks : 1);
+    }, 0);
+  }
+  function durationText(e) {
+    var m = (typeof e.durationMinutes === 'number' && e.durationMinutes > 0) ? e.durationMinutes : 60;
+    if (m >= 60) {
+      var h = Math.floor(m / 60);
+      var r = m % 60;
+      var hText = h === 1 ? 'ساعة واحدة' : (h === 2 ? 'ساعتان' : h + ' ساعات');
+      return r ? (hText + ' و ' + r + ' دقيقة') : hText;
+    }
+    return m + ' دقيقة';
+  }
+  /* المصدر: نص + رابط داخل النص (إن وُجد) — نعرض الرابط موسوماً باسمه */
+  function sourceParts(e) {
+    var src = String(e.source || '');
+    var m = src.match(/https?:\/\/\S+/);
+    if (m) {
+      var url = m[0].replace(/[),.;]+$/, '');
+      var label = src.slice(0, m.index).replace(/[—\-:،\s]+$/, '').trim();
+      return { label: label || 'المصدر', url: url };
+    }
+    return { label: src, url: null };
+  }
+  function sourceHtml(e) {
+    var p = sourceParts(e);
+    if (!p.label) return '';
+    /* مصدر بصيغة PDF (ورقة الأسئلة الأصلية) يُفتح داخل قارئ سند أيضاً. */
+    var href = p.url;
+    if (p.url && /\.pdf(\?|#|$)/i.test(p.url) && window.SANAD && window.SANAD.readerUrl) {
+      href = window.SANAD.readerUrl(p.url, { title: e.title, source: p.label, year: e.year });
+    }
+    if (p.url) return '<p class="exam-meta">المصدر: <a href="' + esc(href) + '" target="_blank" rel="noopener">' + esc(p.label) + '</a></p>';
+    return '<p class="exam-meta">المصدر: ' + esc(p.label) + '</p>';
+  }
   function getHistory(id) {
     if (typeof window !== 'undefined' && window.SANAD && typeof window.SANAD.getExamHistory === 'function') {
-      try { return window.SANAD.getExamHistory(id) || []; } catch (e) { return []; }
+      try { return window.SANAD.getExamHistory(id) || []; } catch (err) { return []; }
     }
     return [];
   }
 
-  // Populate subject/grade selects from the real exams on file
-  var subs = [], grades = [];
-  exams.forEach(function (e) {
-    if (e.subject && subs.indexOf(e.subject) === -1) subs.push(e.subject);
-    if (e.grade && grades.indexOf(e.grade) === -1) grades.push(e.grade);
-  });
-  subs.forEach(function (n) {
-    var o = document.createElement('option'); o.value = n; o.textContent = n;
-    document.getElementById('f-subject').appendChild(o);
-  });
-  grades.forEach(function (n) {
-    var o = document.createElement('option'); o.value = n; o.textContent = n;
-    document.getElementById('f-grade').appendChild(o);
-  });
+  /* Populate grade/subject/round/year selects from the real exams on file */
+  function unique(vals) {
+    var out = [];
+    vals.forEach(function (v) { if (v && out.indexOf(v) === -1) out.push(v); });
+    return out;
+  }
+  function fillSelect(id, values) {
+    var sel = document.getElementById(id);
+    values.forEach(function (n) {
+      var o = document.createElement('option'); o.value = n; o.textContent = n;
+      sel.appendChild(o);
+    });
+  }
+  fillSelect('f-grade', unique(exams.map(function (e) { return e.grade; })));
+  fillSelect('f-subject', unique(exams.map(function (e) { return e.subject; })));
+  fillSelect('f-round', unique(exams.map(function (e) { return e.round; })));
+  fillSelect('f-year', unique(exams.map(function (e) { return e.year; })));
 
   var list = document.getElementById('exam-list');
   var empty = document.getElementById('exam-empty');
+  var countEl = document.getElementById('exam-count');
 
   function matchesFilter(e) {
     if (currentFilter === 'all') return true;
@@ -156,30 +203,38 @@
   function render() {
     var s = document.getElementById('f-subject').value;
     var g = document.getElementById('f-grade').value;
+    var r = document.getElementById('f-round').value;
+    var y = document.getElementById('f-year').value;
     var shown = exams.filter(function (e) {
       if (!matchesFilter(e)) return false;
       if (s && e.subject !== s) return false;
       if (g && e.grade !== g) return false;
+      if (r && e.round !== r) return false;
+      if (y && e.year !== y) return false;
       return true;
     });
     list.innerHTML = '';
     shown.forEach(function (e) {
       var n = Array.isArray(e.questions) ? e.questions.length : 0;
+      var marks = totalMarks(e);
       var hist = getHistory(e.id);
       var best = hist.length ? Math.max.apply(null, hist.map(function (h) { return h.score; })) : null;
       var el = document.createElement('article');
-      el.className = 'card';
+      el.className = 'card exam-card';
+      el.setAttribute('data-exam-id', e.id);
       el.innerHTML = '<span class="badge">' + esc(e.type || '') + '</span>'
         + '<h3>' + esc(e.title || '') + '</h3>'
         + '<p class="exam-meta">' + esc(e.subject || '') + ' — ' + esc(e.grade || '') + '</p>'
-        + '<p class="exam-meta">تاريخ الامتحان: ' + esc(fmtDate(e.date)) + '</p>'
-        + '<p class="exam-meta">عدد الأسئلة: ' + n + '</p>'
-        + (e.source ? '<p class="exam-meta">المصدر: ' + esc(e.source) + '</p>' : '')
-        + (best !== null ? '<p class="exam-meta">أفضل نتيجة سابقة لك: ' + best + ' من ' + n + '</p>' : '')
+        + '<p class="exam-meta">' + esc(e.round || '') + (e.round && e.year ? ' · ' : '') + esc(e.year || '') + '</p>'
+        + (e.date ? '<p class="exam-meta">تاريخ الامتحان: ' + esc(fmtDate(e.date)) + '</p>' : '')
+        + '<p class="exam-meta">عدد الأسئلة: ' + n + ' · مجموع الدرجات: ' + marks + ' درجة · المدة: ' + esc(durationText(e)) + '</p>'
+        + sourceHtml(e)
+        + (best !== null ? '<p class="exam-meta">أفضل نتيجة سابقة لك: ' + best + ' من ' + marks + ' درجة</p>' : '')
         + '<a class="btn btn-gold" href="exam.html?id=' + encodeURIComponent(e.id) + '">ابدأ الامتحان</a>';
       list.appendChild(el);
     });
     empty.style.display = shown.length ? 'none' : '';
+    countEl.textContent = shown.length ? ('عرض ' + shown.length + ' من ' + exams.length + ' امتحانات') : '';
   }
 
   document.querySelectorAll('[data-filter]').forEach(function (btn) {
@@ -191,11 +246,12 @@
       render();
     });
   });
-  document.getElementById('f-subject').addEventListener('change', render);
-  document.getElementById('f-grade').addEventListener('change', render);
+  ['f-subject', 'f-grade', 'f-round', 'f-year'].forEach(function (id) {
+    document.getElementById(id).addEventListener('change', render);
+  });
   render();
 
-  // Previous attempts for the real maths exam
+  /* Previous attempts for the real maths exam */
   var mathId = 'math3-3rd-2026';
   var hist = getHistory(mathId);
   if (hist.length) {
@@ -204,7 +260,7 @@
     sec.style.display = '';
     box.innerHTML = hist.map(function (h) {
       var total = h.total || 8;
-      var pct = Math.round((h.score / total) * 100);
+      var pct = total ? Math.round((h.score / total) * 100) : 0;
       return '<p>محاولة بتاريخ ' + esc(h.date || h.at || '') + ' — النتيجة: ' + h.score + ' من ' + total + ' (' + pct + '٪)</p>';
     }).join('');
   }

@@ -4,15 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>الإبلاغ عن محتوى | سند SANAD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="site-header">
-  <div class="container">
-    <a class="logo" href="index.html">
-      <img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44">
-      <span>سند</span>
-      <span>SANAD</span>
+  <div class="header-inner">
+        <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند SANAD" height="44">
+      <span class="logo-text"><span class="logo-name">سند</span><span class="logo-latin">SANAD</span></span>
     </a>
     <nav class="main-nav" aria-label="التنقل الرئيسي">
       <a class="nav-link" href="index.html">الرئيسية</a>
@@ -38,7 +40,8 @@
 
   <div class="card">
     <form id="reportForm" novalidate>
-      <div id="reportSuccess" class="alert alert-info" hidden>شكراً — حُفظ بلاغك وسيُراجع من الإدارة</div>
+      <div id="reportSuccess" class="alert alert-info" hidden>شكراً — وصل بلاغك إلى الإدارة وسيراجَع قريباً</div>
+      <div id="reportError" class="alert alert-warn" hidden></div>
       <label class="form-label" for="reportType">نوع البلاغ</label>
       <select class="form-input" id="reportType" required>
         <option value="محتوى خاطئ">محتوى خاطئ</option>
@@ -51,9 +54,8 @@
       <input class="form-input" type="text" id="reportRef" required placeholder="مثال: library.html — كتاب الرياضيات للثالث المتوسط">
       <label class="form-label" for="reportDetails">تفاصيل البلاغ</label>
       <textarea class="form-input" id="reportDetails" rows="5" required placeholder="اشرح المشكلة بالتفصيل..."></textarea>
-      <button class="btn btn-gold" type="submit">إرسال البلاغ</button>
+      <button class="btn btn-gold" id="reportSubmit" type="submit">إرسال البلاغ</button>
     </form>
-    <p class="alert alert-info">بلاغك يُحفظ محلياً على جهازك حالياً (في انتظار ربط الخدمة الخلفية)، وستتمكن الإدارة من مراجعته من لوحة الإدارة على هذا الجهاز.</p>
   </div>
 </main>
 
@@ -85,31 +87,102 @@
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
 <script>
 (function () {
-  function readReports() {
-    try { return JSON.parse(localStorage.getItem('sanad_reports') || '[]'); } catch (e) { return []; }
-  }
+  /* إرسال حقيقي إلى جدول contact_messages في Supabase (نفس جدول «تواصل معنا»)،
+     بموضوع يبدأ بـ «بلاغ عن محتوى: ». لا نجاح محلي — النجاح يعني وصول البلاغ فعلاً.
+     مهلة الإرسال: 60 ثانية بين بلاغ ناجح وآخر من المتصفح نفسه. */
+  var COOLDOWN_MS = 60 * 1000;
+  var LAST_SENT_KEY = 'sanad_report_last_sent';
+
   function toast(msg) {
     if (window.SANAD && typeof window.SANAD.toast === 'function') { window.SANAD.toast(msg); }
+  }
+  function lastSentAt() {
+    try {
+      var v = parseInt(window.localStorage.getItem(LAST_SENT_KEY) || '0', 10);
+      return isNaN(v) ? 0 : v;
+    } catch (e) { return 0; }
   }
   document.getElementById('reportForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var type = document.getElementById('reportType').value;
     var ref = document.getElementById('reportRef').value.trim();
     var details = document.getElementById('reportDetails').value.trim();
-    if (!ref || !details) { return; }
-    var reports = readReports();
-    reports.push({ type: type, ref: ref, details: details, date: new Date().toISOString(), read: false });
-    try { localStorage.setItem('sanad_reports', JSON.stringify(reports)); } catch (e2) {}
-    document.getElementById('reportSuccess').hidden = false;
-    toast('شكراً — حُفظ بلاغك وسيُراجع من الإدارة');
-    document.getElementById('reportForm').reset();
-    document.getElementById('reportSuccess').scrollIntoView();
+    var successBox = document.getElementById('reportSuccess');
+    var errorBox = document.getElementById('reportError');
+    var submitBtn = document.getElementById('reportSubmit');
+    function showError(msg) {
+      errorBox.textContent = msg;
+      errorBox.hidden = false;
+      successBox.hidden = true;
+      try { errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (err) {}
+    }
+    function showSuccess() {
+      errorBox.hidden = true;
+      successBox.hidden = false;
+      try { successBox.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (err) {}
+    }
+    if (!ref || !details) {
+      showError('اكتب الصفحة المُبلَّغ عنها وتفاصيل البلاغ قبل الإرسال.');
+      return;
+    }
+    if (ref.length > 300 || details.length > 2000) {
+      showError('بلاغك أطول من الحد المسموح (الصفحة 300 حرف، التفاصيل 2000 حرف).');
+      return;
+    }
+    var waitMs = COOLDOWN_MS - (Date.now() - lastSentAt());
+    if (waitMs > 0) {
+      showError('أرسلت بلاغاً قبل قليل — انتظر ' + Math.ceil(waitMs / 1000) + ' ثانية قبل إرسال بلاغ آخر.');
+      return;
+    }
+    var supa = (window.SANAD && window.SANAD.supabase) || null;
+    if (!supa) {
+      showError('تعذّر الاتصال بخدمة البلاغات — تحقق من اتصالك بالإنترنت وحاول مجدداً. بلاغك ما زال في النموذج.');
+      return;
+    }
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'جارٍ الإرسال…';
+    var userId = null;
+    var done = function () {
+      var payload = {
+        name: 'بلاغ عن محتوى',
+        email: '',
+        subject: 'بلاغ عن محتوى: ' + type,
+        message: 'العنصر: ' + ref + '\n\n' + details,
+        user_id: userId
+      };
+      supa.from('contact_messages').insert(payload).then(function (res) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'إرسال البلاغ';
+        if (res.error) {
+          try { console.error('report insert failed', res.error); } catch (err) {}
+          showError('تعذّر إرسال بلاغك — تحقق من اتصالك وحاول مجدداً. بلاغك ما زال في النموذج.');
+          return;
+        }
+        try { window.localStorage.setItem(LAST_SENT_KEY, String(Date.now())); } catch (err) {}
+        document.getElementById('reportForm').reset();
+        showSuccess();
+        toast('شكراً — وصل بلاغك إلى الإدارة');
+      }).catch(function (err) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'إرسال البلاغ';
+        try { console.error('report insert failed', err); } catch (e2) {}
+        showError('تعذّر إرسال بلاغك — تحقق من اتصالك وحاول مجدداً. بلاغك ما زال في النموذج.');
+      });
+    };
+    if (window.SANAD && typeof window.SANAD.getSessionUser === 'function') {
+      window.SANAD.getSessionUser().then(function (user) {
+        if (user && user.id) { userId = user.id; }
+        done();
+      }).catch(function () { done(); });
+    } else {
+      done();
+    }
   });
 })();
 </script>
