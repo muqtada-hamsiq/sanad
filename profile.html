@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ملفي الدراسي — سند SANAD</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+<div class="container">
+<a class="logo" href="index.html"><img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44"><span>سند</span> <span>SANAD</span></a>
+<nav class="main-nav">
+<a class="nav-link" href="index.html">الرئيسية</a>
+<a class="nav-link" href="stages.html">المراحل</a>
+<a class="nav-link" href="library.html">المكتبة</a>
+<a class="nav-link" href="exams.html">الامتحانات</a>
+<a class="nav-link" href="lessons.html">الدروس</a>
+<a class="nav-link" href="teacher.html">المعلم الذكي</a>
+<a class="nav-link" href="schedule.html">الجدول</a>
+<a class="nav-link" href="universities.html">الجامعات</a>
+<a class="nav-link" href="scholarships.html">المنح</a>
+<a class="nav-link active" href="profile.html">ملفي</a>
+<a class="nav-link" href="search.html">بحث</a>
+</nav>
+</div>
+</header>
+
+<main class="container">
+<section class="hero">
+<h1>ملفي الدراسي</h1>
+<p>كل معلوماتك الدراسية في مكان واحد.</p>
+</section>
+
+<div id="login-prompt" style="display:none">
+<section class="card">
+<h2 class="section-title">سجل الدخول لعرض ملفك الدراسي</h2>
+<p>ملفك الدراسي يظهر فقط بعد تسجيل الدخول.</p>
+<p>
+<a class="btn btn-gold" href="login.html">تسجيل الدخول</a>
+<a class="btn btn-outline" href="signup.html">إنشاء حساب</a>
+</p>
+</section>
+</div>
+
+<div id="profile-content" style="display:none">
+
+<section class="card">
+<h2 class="section-title">معلوماتي الدراسية</h2>
+<div id="study-info"></div>
+</section>
+
+<section class="card">
+<h2 class="section-title">المواد المفضلة</h2>
+<div id="fav-subjects"></div>
+</section>
+
+<section class="card">
+<h2 class="section-title">الكتب المحفوظة</h2>
+<div id="saved-books"></div>
+</section>
+
+<section class="card">
+<h2 class="section-title">نتائج الامتحانات</h2>
+<div id="exam-results"></div>
+</section>
+
+<section class="card">
+<h2 class="section-title">سجل الدروس</h2>
+<div id="lesson-log"></div>
+</section>
+
+<section class="card">
+<h2 class="section-title">جدولي الدراسي</h2>
+<div id="schedule-summary"></div>
+<p><a class="btn btn-outline" href="schedule.html">عرض الجدول الكامل وتعديله</a></p>
+</section>
+
+<section class="card">
+<h2 class="section-title">تقدمي</h2>
+<div id="student-progress"></div>
+<p><a class="btn btn-outline" href="achievements.html">عرض الإنجازات والشارات</a></p>
+<p><a class="btn btn-outline" href="level-report.html">عرض تقرير مستواي</a></p>
+</section>
+
+<section class="card">
+<button class="btn btn-outline" type="button" id="logout-btn">تسجيل الخروج</button>
+</section>
+
+</div>
+</main>
+
+<footer class="site-footer">
+<div class="container">
+<div class="footer-links">
+<a href="index.html">الرئيسية</a>
+<a href="stages.html">المراحل</a>
+<a href="library.html">المكتبة</a>
+<a href="exams.html">الامتحانات</a>
+<a href="lessons.html">الدروس</a>
+<a href="teacher.html">المعلم الذكي</a>
+<a href="schedule.html">الجدول</a>
+<a href="universities.html">الجامعات</a>
+<a href="scholarships.html">المنح</a>
+<a href="profile.html">ملفي</a>
+<a href="search.html">بحث</a>
+<a href="about.html">من نحن</a>
+<a href="contact.html">تواصل معنا</a>
+<a href="privacy.html">سياسة الخصوصية</a>
+<a href="terms.html">شروط الاستخدام</a>
+<a href="copyright.html">حقوق النشر</a>
+<a href="faq.html">الأسئلة الشائعة</a>
+<a href="report.html">الإبلاغ عن محتوى</a>
+<a href="sitemap.html">خريطة المنصة</a>
+</div>
+<p>سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</p>
+</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  function readJSON(key, fallback) {
+    try { var v = JSON.parse(localStorage.getItem(key) || 'null'); return v === null || v === undefined ? fallback : v; } catch (e) { return fallback; }
+  }
+  function emptyInto(el, text) {
+    el.innerHTML = '';
+    var p = document.createElement('p');
+    p.className = 'empty-state';
+    p.textContent = text;
+    el.appendChild(p);
+  }
+  function listInto(el, items, emptyText) {
+    el.innerHTML = '';
+    if (!items || !items.length) { emptyInto(el, emptyText); return; }
+    var ul = document.createElement('ul');
+    items.forEach(function (t) { var li = document.createElement('li'); li.textContent = t; ul.appendChild(li); });
+    el.appendChild(ul);
+  }
+  function getPoints() {
+    if (window.SANAD && typeof window.SANAD.getPoints === 'function') {
+      try { return window.SANAD.getPoints() || 0; } catch (e) { return 0; }
+    }
+    return readJSON('sanad_points', 0) || 0;
+  }
+  function getFavs() {
+    if (window.SANAD && typeof window.SANAD.getFavs === 'function') {
+      try { return window.SANAD.getFavs() || []; } catch (e) { return []; }
+    }
+    return readJSON('sanad_favs', []);
+  }
+  function getOffline() {
+    if (window.SANAD && typeof window.SANAD.getOffline === 'function') {
+      try { return window.SANAD.getOffline() || []; } catch (e) { return []; }
+    }
+    return readJSON('sanad_offline', []);
+  }
+  function examTitle(examId) {
+    try {
+      var data = window.SANAD_DATA;
+      if (data && Array.isArray(data.exams)) {
+        for (var i = 0; i < data.exams.length; i++) {
+          if (data.exams[i].id === examId) { return data.exams[i].title || data.exams[i].name || examId; }
+        }
+      }
+    } catch (e) {}
+    return examId;
+  }
+  async function init() {
+    var user = null;
+    try {
+      if (window.SANAD && typeof window.SANAD.getSessionUser === 'function') {
+        user = await window.SANAD.getSessionUser();
+      }
+    } catch (e) { user = null; }
+
+    var promptEl = document.getElementById('login-prompt');
+    var contentEl = document.getElementById('profile-content');
+    if (!user) {
+      promptEl.style.display = '';
+      contentEl.style.display = 'none';
+      return;
+    }
+    promptEl.style.display = 'none';
+    contentEl.style.display = '';
+
+    // Study info — from the Supabase session (email + user_metadata)
+    var meta = user.user_metadata || {};
+    var infoEl = document.getElementById('study-info');
+    var name = meta.name || user.email || 'طالب';
+    var stage = meta.stage || '';
+    var grade = meta.grade || '';
+    var email = user.email || '';
+    var info = document.createElement('p');
+    info.textContent = 'الاسم: ' + name +
+      (stage ? ' — المرحلة: ' + stage : '') +
+      (grade ? ' — الصف: ' + grade : '') +
+      (email ? ' — البريد: ' + email : '');
+    infoEl.appendChild(info);
+    var note = document.createElement('p');
+    note.className = 'alert alert-info';
+    note.textContent = 'بيانات حسابك محفوظة في خدمة سند الآمنة، وبياناتك الدراسية (المفضلة والنتائج والجدول) محفوظة على جهازك.';
+    infoEl.appendChild(note);
+
+  // Favorite subjects — favs are stored as {type, id} references; resolve the
+  // subject from the shared data where possible.
+  var favs = getFavs();
+  function resolveFav(f) {
+    if (typeof f === 'string') { return f; }
+    if (!f) { return ''; }
+    try {
+      var d = window.SANAD_DATA;
+      if (d) {
+        var list = f.type === 'exam' ? d.exams : (f.type === 'book' ? d.books : (f.type === 'lesson' ? d.lessons : null));
+        if (Array.isArray(list)) {
+          for (var i = 0; i < list.length; i++) {
+            if (list[i].id === f.id) { return list[i].subject || list[i].subjectName || list[i].title || list[i].name || ''; }
+          }
+        }
+      }
+    } catch (e) {}
+    return (f && (f.subject || f.title || f.name)) || '';
+  }
+  var favNames = favs.map(resolveFav).filter(Boolean);
+  var userFavSubjects = Array.isArray(user.favSubjects) ? user.favSubjects : [];
+  var allFavs = userFavSubjects.concat(favNames.filter(function (n) { return userFavSubjects.indexOf(n) === -1; }));
+  listInto(document.getElementById('fav-subjects'), allFavs, 'لم تضف مواد مفضلة بعد.');
+
+  // Saved books — offline items carry their title; favs are {type, id}
+  // references, resolved against the shared book data.
+  var offline = getOffline();
+  var savedNames = offline.map(function (b) {
+    if (typeof b === 'string') { return b; }
+    return (b && (b.title || b.name)) || '';
+  }).filter(Boolean);
+  var favBookNames = favs.map(function (f) {
+    if (f && typeof f === 'object' && f.type === 'book') {
+      try {
+        var d = window.SANAD_DATA;
+        if (d && Array.isArray(d.books)) {
+          for (var i = 0; i < d.books.length; i++) {
+            if (d.books[i].id === f.id) { return d.books[i].title || d.books[i].name || ''; }
+          }
+        }
+      } catch (e) {}
+      return f.title || f.name || '';
+    }
+    return '';
+  }).filter(Boolean);
+  var allSaved = savedNames.concat(favBookNames.filter(function (n) { return savedNames.indexOf(n) === -1; }));
+  listInto(document.getElementById('saved-books'), allSaved, 'لم تحفظ أي كتاب بعد — يمكنك حفظ الكتب من المكتبة للقراءة لاحقاً دون إنترنت.');
+
+  // Exam results — sanad_exam_history is a flat array of attempts:
+  // [{examId, score, total, at}] (see app.js recordExam). Also tolerate
+  // an object keyed by examId, in case the shape ever changes.
+  var resultsEl = document.getElementById('exam-results');
+  var historyRaw = readJSON('sanad_exam_history', []);
+  var attemptsList = [];
+  if (Array.isArray(historyRaw)) {
+    attemptsList = historyRaw;
+  } else if (historyRaw && typeof historyRaw === 'object') {
+    Object.keys(historyRaw).forEach(function (examId) {
+      var a = historyRaw[examId];
+      if (Array.isArray(a)) { a.forEach(function (x) { attemptsList.push(x); }); }
+      else if (a) { attemptsList.push(a); }
+    });
+  }
+  var rows = attemptsList.map(function (a) {
+    var examId = (a && a.examId) || '';
+    var score = (a && a.score !== undefined) ? a.score : (a && a.correct !== undefined ? a.correct : null);
+    var total = (a && (a.total !== undefined ? a.total : a.totalQuestions)) || null;
+    var date = (a && (a.at || a.date || a.finishedAt)) || '';
+    return examTitle(examId) + ': ' +
+      (score !== null ? score : '—') +
+      (total !== null ? ' من ' + total : '') +
+      (date ? ' — ' + String(date).slice(0, 10) : '');
+  });
+  listInto(resultsEl, rows, 'لم تكمل أي امتحان بعد — جرّب الامتحانات من صفحة الامتحانات.');
+
+  // Lesson log
+  var lessonLog = readJSON('sanad_lesson_log', []);
+  var lessonNames = lessonLog.map(function (l) {
+    if (typeof l === 'string') { return l; }
+    var t = (l && (l.title || l.lessonTitle || l.name)) || '';
+    var s = (l && (l.subject || l.subjectName)) || '';
+    var d = (l && (l.date || l.completedAt)) || '';
+    return t + (s ? ' — ' + s : '') + (d ? ' — ' + d : '');
+  }).filter(Boolean);
+  listInto(document.getElementById('lesson-log'), lessonNames, 'لم تكمل أي درس بعد — سجل دروسك يظهر هنا.');
+
+  // Schedule summary
+  var schedEl = document.getElementById('schedule-summary');
+  var sched = readJSON('sanad_schedule', null);
+  if (!sched || !sched.subjects || !sched.subjects.length) {
+    emptyInto(schedEl, 'لم تنشئ جدولك الدراسي بعد.');
+  } else {
+    var s = document.createElement('p');
+    s.textContent = 'موادك: ' + sched.subjects.join('، ') +
+      (sched.goalHours ? ' — هدفك اليومي: ' + sched.goalHours + ' ساعة' : '') +
+      (sched.goalLessons ? ' — ' + sched.goalLessons + ' دروس' : '');
+    schedEl.appendChild(s);
+    var done = readJSON('sanad_schedule_done', {});
+    var days = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+    var planned = 0, doneCount = 0;
+    days.forEach(function (d, i) {
+      if (sched.times && sched.times[i]) { planned++; if (done[i]) { doneCount++; } }
+    });
+    if (planned) {
+      var p2 = document.createElement('p');
+      p2.textContent = 'إنجاز هذا الأسبوع: ' + doneCount + ' من ' + planned + ' جلسات (' + Math.round((doneCount / planned) * 100) + '%)';
+      schedEl.appendChild(p2);
+    }
+  }
+
+  // Progress
+  var progEl = document.getElementById('student-progress');
+  var points = getPoints();
+  var p = document.createElement('p');
+  p.textContent = 'نقاطك: ' + points + ' نقطة';
+  progEl.appendChild(p);
+  var badges = [];
+  if (lessonLog.length) { badges.push('أول درس'); }
+  if (rows.length) { badges.push('أول اختبار'); }
+  if (points >= 100) { badges.push('100 نقطة'); }
+  var totalAttempts = rows.length;
+  if (totalAttempts >= 5) { badges.push('5 اختبارات'); }
+  if (sched && sched.subjects && sched.subjects.length) { badges.push('أسبوع منظم'); }
+  if (badges.length) {
+    var b = document.createElement('p');
+    badges.forEach(function (name) {
+      var chip = document.createElement('span');
+      chip.className = 'badge';
+      chip.textContent = name;
+      b.appendChild(chip);
+      b.appendChild(document.createTextNode(' '));
+    });
+    progEl.appendChild(b);
+  } else {
+    var pe = document.createElement('p');
+    pe.className = 'empty-state';
+    pe.textContent = 'لم تحصل على أي شارة بعد — أكمل درساً أو اختباراً لتبدأ.';
+    progEl.appendChild(pe);
+  }
+
+  document.getElementById('logout-btn').addEventListener('click', async function () {
+    try {
+      if (window.SANAD && typeof window.SANAD.signOut === 'function') {
+        await window.SANAD.signOut();
+      }
+    } catch (e) {}
+    location.reload();
+  });
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

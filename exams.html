@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الامتحانات الإلكترونية — سند SANAD</title>
+<meta name="description" content="الامتحانات الإلكترونية في منصة سند — امتحانات وزارية وشهرية وتجريبية مجانية.">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<style>
+.chip[aria-pressed="true"]{outline:2px solid currentColor}
+.exam-meta{color:#555;font-size:.9rem;margin:.3rem 0}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="container" style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap">
+    <a href="index.html" style="display:flex;align-items:center;gap:.6rem;text-decoration:none;color:inherit">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44">
+      <span class="logo">سند <small>SANAD</small></span>
+    </a>
+    <nav class="main-nav" aria-label="التنقل الرئيسي">
+      <a class="nav-link" href="index.html">الرئيسية</a>
+      <a class="nav-link" href="stages.html">المراحل</a>
+      <a class="nav-link" href="library.html">المكتبة</a>
+      <a class="nav-link active" href="exams.html">الامتحانات</a>
+      <a class="nav-link" href="lessons.html">الدروس</a>
+      <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="schedule.html">الجدول</a>
+      <a class="nav-link" href="universities.html">الجامعات</a>
+      <a class="nav-link" href="scholarships.html">المنح</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
+      <a class="nav-link" href="search.html">بحث</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <h1>الامتحانات الإلكترونية</h1>
+    <p>اختبر نفسك بأسئلة حقيقية، واحصل على النتيجة والشرح فوراً — نتائجك محفوظة محلياً في جهازك لتقارن محاولاتك.</p>
+  </section>
+
+  <div class="tabs filter-bar" role="tablist" aria-label="تصنيفات الامتحانات">
+    <button class="chip" type="button" role="tab" aria-pressed="true" data-filter="all">الكل</button>
+    <button class="chip" type="button" role="tab" aria-pressed="false" data-filter="وزاري">وزارية</button>
+    <button class="chip" type="button" role="tab" aria-pressed="false" data-filter="شهري">شهرية</button>
+    <button class="chip" type="button" role="tab" aria-pressed="false" data-filter="تجريبي">تجريبية</button>
+    <button class="chip" type="button" role="tab" aria-pressed="false" data-filter="فصل">حسب الفصل</button>
+    <button class="chip" type="button" role="tab" aria-pressed="false" data-filter="مادة">حسب المادة</button>
+  </div>
+
+  <div class="filter-bar">
+    <label class="form-label" for="f-subject">المادة</label>
+    <select id="f-subject" class="form-input"><option value="">كل المواد</option></select>
+    <label class="form-label" for="f-grade">الصف</label>
+    <select id="f-grade" class="form-input"><option value="">كل الصفوف</option></select>
+  </div>
+
+  <div id="exam-list" class="grid"></div>
+
+  <div id="exam-empty" class="empty-state" style="display:none">
+    <h2>لا توجد امتحانات في هذا التصنيف بعد — تضاف قريباً</h2>
+    <p>نضيف الامتحانات فقط عندما تكون أسئلتها حقيقية ومُراجعة. تابع هذه الصفحة.</p>
+  </div>
+
+  <section id="history-section" class="card" style="display:none">
+    <h2 class="section-title">محاولاتك السابقة</h2>
+    <div id="history-list"></div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <nav class="footer-links" aria-label="روابط المنصة">
+      <a href="index.html">الرئيسية</a>
+      <a href="stages.html">المراحل</a>
+      <a href="library.html">المكتبة</a>
+      <a href="exams.html">الامتحانات</a>
+      <a href="lessons.html">الدروس</a>
+      <a href="teacher.html">المعلم الذكي</a>
+      <a href="schedule.html">الجدول</a>
+      <a href="universities.html">الجامعات</a>
+      <a href="scholarships.html">المنح</a>
+      <a href="profile.html">ملفي</a>
+      <a href="search.html">بحث</a>
+      <a href="about.html">من نحن</a>
+      <a href="contact.html">تواصل معنا</a>
+      <a href="privacy.html">سياسة الخصوصية</a>
+      <a href="terms.html">شروط الاستخدام</a>
+      <a href="copyright.html">حقوق النشر</a>
+      <a href="faq.html">الأسئلة الشائعة</a>
+      <a href="report.html">الإبلاغ عن محتوى</a>
+      <a href="sitemap.html">خريطة المنصة</a>
+    </nav>
+    <p>سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var data = (typeof window !== 'undefined' && window.SANAD_DATA) ? window.SANAD_DATA : {};
+  var exams = Array.isArray(data.exams) ? data.exams : [];
+  var currentFilter = 'all';
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmtDate(d) {
+    if (!d) return '';
+    var parts = String(d).split('-');
+    if (parts.length === 3) return parts[2] + '/' + parts[1] + '/' + parts[0];
+    return String(d);
+  }
+  function getHistory(id) {
+    if (typeof window !== 'undefined' && window.SANAD && typeof window.SANAD.getExamHistory === 'function') {
+      try { return window.SANAD.getExamHistory(id) || []; } catch (e) { return []; }
+    }
+    return [];
+  }
+
+  // Populate subject/grade selects from the real exams on file
+  var subs = [], grades = [];
+  exams.forEach(function (e) {
+    if (e.subject && subs.indexOf(e.subject) === -1) subs.push(e.subject);
+    if (e.grade && grades.indexOf(e.grade) === -1) grades.push(e.grade);
+  });
+  subs.forEach(function (n) {
+    var o = document.createElement('option'); o.value = n; o.textContent = n;
+    document.getElementById('f-subject').appendChild(o);
+  });
+  grades.forEach(function (n) {
+    var o = document.createElement('option'); o.value = n; o.textContent = n;
+    document.getElementById('f-grade').appendChild(o);
+  });
+
+  var list = document.getElementById('exam-list');
+  var empty = document.getElementById('exam-empty');
+
+  function matchesFilter(e) {
+    if (currentFilter === 'all') return true;
+    if (currentFilter === 'وزاري') return e.type === 'وزاري';
+    if (currentFilter === 'شهري') return e.type === 'شهري';
+    if (currentFilter === 'تجريبي') return e.type === 'تجريبي';
+    if (currentFilter === 'فصل') return !!(e.chapter || e.type === 'فصل');
+    if (currentFilter === 'مادة') return !!(e.subject || e.type === 'مادة');
+    return true;
+  }
+
+  function render() {
+    var s = document.getElementById('f-subject').value;
+    var g = document.getElementById('f-grade').value;
+    var shown = exams.filter(function (e) {
+      if (!matchesFilter(e)) return false;
+      if (s && e.subject !== s) return false;
+      if (g && e.grade !== g) return false;
+      return true;
+    });
+    list.innerHTML = '';
+    shown.forEach(function (e) {
+      var n = Array.isArray(e.questions) ? e.questions.length : 0;
+      var hist = getHistory(e.id);
+      var best = hist.length ? Math.max.apply(null, hist.map(function (h) { return h.score; })) : null;
+      var el = document.createElement('article');
+      el.className = 'card';
+      el.innerHTML = '<span class="badge">' + esc(e.type || '') + '</span>'
+        + '<h3>' + esc(e.title || '') + '</h3>'
+        + '<p class="exam-meta">' + esc(e.subject || '') + ' — ' + esc(e.grade || '') + '</p>'
+        + '<p class="exam-meta">تاريخ الامتحان: ' + esc(fmtDate(e.date)) + '</p>'
+        + '<p class="exam-meta">عدد الأسئلة: ' + n + '</p>'
+        + (e.source ? '<p class="exam-meta">المصدر: ' + esc(e.source) + '</p>' : '')
+        + (best !== null ? '<p class="exam-meta">أفضل نتيجة سابقة لك: ' + best + ' من ' + n + '</p>' : '')
+        + '<a class="btn btn-gold" href="exam.html?id=' + encodeURIComponent(e.id) + '">ابدأ الامتحان</a>';
+      list.appendChild(el);
+    });
+    empty.style.display = shown.length ? 'none' : '';
+  }
+
+  document.querySelectorAll('[data-filter]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      currentFilter = btn.getAttribute('data-filter');
+      document.querySelectorAll('[data-filter]').forEach(function (b) {
+        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+      });
+      render();
+    });
+  });
+  document.getElementById('f-subject').addEventListener('change', render);
+  document.getElementById('f-grade').addEventListener('change', render);
+  render();
+
+  // Previous attempts for the real maths exam
+  var mathId = 'math3-3rd-2026';
+  var hist = getHistory(mathId);
+  if (hist.length) {
+    var sec = document.getElementById('history-section');
+    var box = document.getElementById('history-list');
+    sec.style.display = '';
+    box.innerHTML = hist.map(function (h) {
+      var total = h.total || 8;
+      var pct = Math.round((h.score / total) * 100);
+      return '<p>محاولة بتاريخ ' + esc(h.date || h.at || '') + ' — النتيجة: ' + h.score + ' من ' + total + ' (' + pct + '٪)</p>';
+    }).join('');
+  }
+})();
+</script>
+</body>
+</html>

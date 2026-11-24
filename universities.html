@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>دليل الجامعات | سند SANAD</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.chip.active{font-weight:700;outline:2px solid currentColor}
+.logo-img{width:44px;height:44px}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44">
+      <span>سند</span>
+      <span>SANAD</span>
+    </a>
+    <nav class="main-nav">
+      <a class="nav-link" href="index.html">الرئيسية</a>
+      <a class="nav-link" href="stages.html">المراحل</a>
+      <a class="nav-link" href="library.html">المكتبة</a>
+      <a class="nav-link" href="exams.html">الامتحانات</a>
+      <a class="nav-link" href="lessons.html">الدروس</a>
+      <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="schedule.html">الجدول</a>
+      <a class="nav-link active" href="universities.html">الجامعات</a>
+      <a class="nav-link" href="scholarships.html">المنح</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
+      <a class="nav-link" href="search.html">بحث</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <h1>دليل الجامعات</h1>
+    <p>دليل الجامعات العراقية الحكومية والأهلية — روابط رسمية فقط، ومعلومات القبول بمصدرها الرسمي.</p>
+  </section>
+
+  <div class="alert alert-info">
+    <strong>معلومات القبول:</strong>
+    الحدود الدنيا للعام الدراسي 2025/2026 تُعلنها وزارة التعليم العالي والبحث العلمي — راجع دليل الطالب على الموقع الرسمي للوزارة:
+    <a href="https://mohesr.gov.iq" target="_blank" rel="noopener">mohesr.gov.iq</a>
+  </div>
+
+  <div class="filter-bar">
+    <div class="tabs" id="type-chips">
+      <button type="button" class="chip active" data-type="الكل">الكل</button>
+      <button type="button" class="chip" data-type="حكومية">حكومية</button>
+      <button type="button" class="chip" data-type="أهلية">أهلية</button>
+    </div>
+    <label class="form-label" for="city-filter">المحافظة / المدينة</label>
+    <select class="form-input" id="city-filter">
+      <option value="الكل">كل المدن</option>
+    </select>
+    <input class="search-box" type="search" id="uni-search" placeholder="ابحث عن جامعة…" aria-label="ابحث عن جامعة">
+  </div>
+
+  <p id="uni-count"></p>
+  <div class="grid" id="uni-list"></div>
+  <div class="empty-state" id="uni-empty" hidden>
+    لا توجد جامعات مطابقة لبحثك — جرّب تغيير الفلاتر أو كلمة البحث.
+  </div>
+  <div class="empty-state" id="uni-no-data" hidden>
+    بيانات الجامعات غير متوفرة بعد — نضيفها تدريجياً من المصادر الرسمية.
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <nav class="footer-links">
+      <a href="index.html">الرئيسية</a>
+      <a href="stages.html">المراحل</a>
+      <a href="library.html">المكتبة</a>
+      <a href="exams.html">الامتحانات</a>
+      <a href="lessons.html">الدروس</a>
+      <a href="teacher.html">المعلم الذكي</a>
+      <a href="schedule.html">الجدول</a>
+      <a href="universities.html">الجامعات</a>
+      <a href="scholarships.html">المنح</a>
+      <a href="profile.html">ملفي</a>
+      <a href="search.html">بحث</a>
+      <a href="about.html">من نحن</a>
+      <a href="contact.html">تواصل معنا</a>
+      <a href="privacy.html">سياسة الخصوصية</a>
+      <a href="terms.html">شروط الاستخدام</a>
+      <a href="copyright.html">حقوق النشر</a>
+      <a href="faq.html">الأسئلة الشائعة</a>
+      <a href="report.html">الإبلاغ عن محتوى</a>
+      <a href="sitemap.html">خريطة المنصة</a>
+    </nav>
+    <p>سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  var typeFilter = 'الكل';
+  var cityFilter = 'الكل';
+  var query = '';
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function getData() {
+    return (window.SANAD_DATA && window.SANAD_DATA.universities) || [];
+  }
+
+  function render() {
+    var list = document.getElementById('uni-list');
+    var empty = document.getElementById('uni-empty');
+    var noData = document.getElementById('uni-no-data');
+    var count = document.getElementById('uni-count');
+    var data = getData();
+
+    if (!data.length) {
+      list.innerHTML = '';
+      count.textContent = '';
+      empty.hidden = true;
+      noData.hidden = false;
+      return;
+    }
+    noData.hidden = true;
+
+    var q = query.trim();
+    var filtered = data.filter(function (u) {
+      if (typeFilter !== 'الكل' && u.type !== typeFilter) return false;
+      if (cityFilter !== 'الكل' && u.city !== cityFilter) return false;
+      if (q && (u.name + ' ' + u.city).indexOf(q) === -1) return false;
+      return true;
+    });
+
+    count.textContent = 'عدد الجامعات المعروضة: ' + filtered.length + ' من ' + data.length;
+    empty.hidden = filtered.length !== 0;
+
+    list.innerHTML = filtered.map(function (u) {
+      return '<article class="card">'
+        + '<h2>' + esc(u.name) + '</h2>'
+        + '<p><span class="badge">' + esc(u.type) + '</span> <span>' + esc(u.city) + '</span></p>'
+        + '<p>الكليات والأقسام والتخصصات: راجع الموقع الرسمي للجامعة</p>'
+        + '<p><a class="btn btn-outline" href="' + esc(u.url) + '" target="_blank" rel="noopener">الموقع الرسمي للجامعة</a></p>'
+        + '</article>';
+    }).join('');
+  }
+
+  function fillCities() {
+    var select = document.getElementById('city-filter');
+    var cities = [];
+    getData().forEach(function (u) {
+      if (u.city && cities.indexOf(u.city) === -1) cities.push(u.city);
+    });
+    cities.sort();
+    cities.forEach(function (c) {
+      var opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      select.appendChild(opt);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    fillCities();
+    render();
+    document.getElementById('type-chips').addEventListener('click', function (e) {
+      var btn = e.target.closest('.chip');
+      if (!btn) return;
+      typeFilter = btn.getAttribute('data-type');
+      document.querySelectorAll('#type-chips .chip').forEach(function (c) {
+        c.classList.toggle('active', c === btn);
+      });
+      render();
+    });
+    document.getElementById('city-filter').addEventListener('change', function (e) {
+      cityFilter = e.target.value;
+      render();
+    });
+    document.getElementById('uni-search').addEventListener('input', function (e) {
+      query = e.target.value;
+      render();
+    });
+  });
+})();
+</script>
+</body>
+</html>

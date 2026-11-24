@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بحث — سند SANAD</title>
+<meta name="description" content="ابحث في منصة سند: اختبارات وزارية، جامعات، منح دراسية، مراحل ومواد دراسية.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند SANAD" height="44">
+      <span class="logo-text"><span class="logo-name">سند</span><span class="logo-latin">SANAD</span></span>
+    </a>
+    <nav class="main-nav">
+      <a class="nav-link" href="index.html">الرئيسية</a>
+      <a class="nav-link" href="stages.html">المراحل</a>
+      <a class="nav-link" href="library.html">المكتبة</a>
+      <a class="nav-link" href="exams.html">الامتحانات</a>
+      <a class="nav-link" href="lessons.html">الدروس</a>
+      <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="schedule.html">الجدول</a>
+      <a class="nav-link" href="universities.html">الجامعات</a>
+      <a class="nav-link" href="scholarships.html">المنح</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
+      <a class="nav-link" href="search.html">بحث</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <h1 class="section-title">بحث في المنصة</h1>
+
+  <form class="search-box" action="search.html" method="get">
+    <input class="form-input" type="search" name="q" id="search-input" placeholder="ابحث عن مادة أو اختبار أو جامعة أو منحة..." aria-label="بحث">
+    <button class="btn btn-gold" type="submit">بحث</button>
+  </form>
+
+  <div id="search-results"></div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <nav class="footer-links">
+      <a href="index.html">الرئيسية</a>
+      <a href="stages.html">المراحل</a>
+      <a href="library.html">المكتبة</a>
+      <a href="exams.html">الامتحانات</a>
+      <a href="lessons.html">الدروس</a>
+      <a href="teacher.html">المعلم الذكي</a>
+      <a href="schedule.html">الجدول</a>
+      <a href="universities.html">الجامعات</a>
+      <a href="scholarships.html">المنح</a>
+      <a href="profile.html">ملفي</a>
+      <a href="search.html">بحث</a>
+      <a href="about.html">من نحن</a>
+      <a href="contact.html">تواصل معنا</a>
+      <a href="privacy.html">سياسة الخصوصية</a>
+      <a href="terms.html">شروط الاستخدام</a>
+      <a href="copyright.html">حقوق النشر</a>
+      <a href="faq.html">الأسئلة الشائعة</a>
+      <a href="report.html">الإبلاغ عن محتوى</a>
+      <a href="sitemap.html">خريطة المنصة</a>
+    </nav>
+    <p class="footer-note"><span class="footer-tagline">سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</span> · جميع الحقوق محفوظة © <span data-year>2026</span></p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var q = (params.get('q') || '').trim();
+  var input = document.getElementById('search-input');
+  var results = document.getElementById('search-results');
+  input.value = q;
+
+  if (!q) {
+    results.innerHTML = '<div class="alert alert-info">اكتب كلمة البحث أعلاه للبحث في الاختبارات والجامعات والمنح والمراحل والمواد الدراسية.</div>';
+    return;
+  }
+
+  var data = window.SANAD_DATA || {};
+  var content = window.SANAD_CONTENT || { books: [], malazim: [], lectures: [] };
+  var needle = q.toLowerCase();
+  function match(text) { return (text || '').toLowerCase().indexOf(needle) !== -1; }
+
+  var bookHits = (content.books || []).filter(function (b) {
+    return match(b.title) || match(b.subject) || match(b.grade);
+  });
+  var lecHits = (content.lectures || []).filter(function (l) {
+    return match(l.title) || match(l.subject) || match(l.grade) || match(l.teacher);
+  });
+
+  var examHits = (data.exams || []).filter(function (e) {
+    return match(e.title) || match(e.subject) || match(e.grade) || match(e.type);
+  });
+  var uniHits = (data.universities || []).filter(function (u) {
+    return match(u.name) || match(u.city) || match(u.type);
+  });
+  var schHits = (data.scholarships || []).filter(function (s) {
+    return match(s.name) || match(s.country) || match(s.level);
+  });
+  var stageHits = [];
+  (data.stages || []).forEach(function (stage) {
+    if (match(stage.name)) stageHits.push({ stage: stage.name, grade: '', subject: '' });
+    (stage.grades || []).forEach(function (grade) {
+      if (match(grade.name)) stageHits.push({ stage: stage.name, grade: grade.name, subject: '' });
+      (grade.subjects || []).forEach(function (subject) {
+        if (match(subject)) stageHits.push({ stage: stage.name, grade: grade.name, subject: subject });
+      });
+    });
+  });
+
+  var total = examHits.length + uniHits.length + schHits.length + stageHits.length + bookHits.length + lecHits.length;
+  if (total === 0) {
+    results.innerHTML = '<div class="empty-state">لا توجد نتائج مطابقة لـ «' + q.replace(/</g, '&lt;') + '»</div>';
+    return;
+  }
+
+  var html = '<p>نتائج البحث عن «' + q.replace(/</g, '&lt;') + '» — ' + total + ' نتيجة</p>';
+
+  if (bookHits.length) {
+    html += '<h2 class="section-title">الكتب الرسمية</h2><div class="grid">';
+    bookHits.forEach(function (b) {
+      html += '<article class="card"><span class="badge">محتوى رسمي</span><h3>' + b.title + '</h3>' +
+        '<p>' + b.subject + ' · ' + b.grade + '</p>' +
+        '<a class="btn btn-teal" href="' + b.url + '" target="_blank" rel="noopener">عرض الكتاب</a></article>';
+    });
+    html += '</div>';
+  }
+
+  if (lecHits.length) {
+    html += '<h2 class="section-title">المحاضرات</h2><div class="grid">';
+    lecHits.forEach(function (l) {
+      var link = l.youtubeId ? 'https://www.youtube.com/watch?v=' + l.youtubeId : (l.playlistId ? 'https://www.youtube.com/playlist?list=' + l.playlistId : 'lessons.html');
+      html += '<article class="card"><span class="badge teal">محاضرة</span><h3>' + l.title + '</h3>' +
+        '<p>المدرس: ' + l.teacher + ' · ' + l.subject + ' · ' + l.grade + '</p>' +
+        '<a class="btn btn-teal" href="' + link + '" target="_blank" rel="noopener">مشاهدة المحاضرة</a></article>';
+    });
+    html += '</div>';
+  }
+
+  if (examHits.length) {
+    html += '<h2 class="section-title">الاختبارات</h2><div class="grid">';
+    examHits.forEach(function (e) {
+      html += '<article class="card"><span class="badge">' + e.type + '</span><h3>' + e.title + '</h3>' +
+        '<p>' + e.subject + ' · ' + e.grade + '</p>' +
+        '<a class="btn btn-teal" href="exam.html?id=' + e.id + '">عرض الاختبار</a></article>';
+    });
+    html += '</div>';
+  }
+
+  if (stageHits.length) {
+    html += '<h2 class="section-title">المراحل والمواد</h2><div class="card">';
+    stageHits.forEach(function (h) {
+      var label = h.stage + (h.grade ? ' ← ' + h.grade : '') + (h.subject ? ' ← ' + h.subject : '');
+      html += '<div class="lesson-row"><span class="lesson-title">' + label + '</span>' +
+        '<a class="btn btn-outline" href="stages.html">عرض المرحلة</a></div>';
+    });
+    html += '</div>';
+  }
+
+  if (uniHits.length) {
+    html += '<h2 class="section-title">الجامعات</h2><div class="grid">';
+    uniHits.forEach(function (u) {
+      html += '<article class="card"><h3>' + u.name + '</h3><p>' + u.type + ' · ' + u.city + '</p>' +
+        '<a class="btn btn-outline" href="universities.html">عرض الدليل</a></article>';
+    });
+    html += '</div>';
+  }
+
+  if (schHits.length) {
+    html += '<h2 class="section-title">المنح الدراسية</h2><div class="grid">';
+    schHits.forEach(function (s) {
+      html += '<article class="card"><h3>' + s.name + '</h3><p>' + s.country + ' · ' + s.level + '</p>' +
+        '<a class="btn btn-outline" href="scholarships.html">عرض المنح</a></article>';
+    });
+    html += '</div>';
+  }
+
+  results.innerHTML = html;
+})();
+</script>
+</body>
+</html>

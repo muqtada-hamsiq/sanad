@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الدروس والشروحات — سند SANAD</title>
+<meta name="description" content="الدروس والشروحات في منصة سند — شروحات مدرسين عراقيين مجانية.">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<style>
+.lesson-meta{color:#555;font-size:.9rem;margin:.3rem 0}
+.video-wrap{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;background:#0B2A4A;margin-bottom:10px}
+.video-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="container" style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap">
+    <a href="index.html" style="display:flex;align-items:center;gap:.6rem;text-decoration:none;color:inherit">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44">
+      <span class="logo">سند <small>SANAD</small></span>
+    </a>
+    <nav class="main-nav" aria-label="التنقل الرئيسي">
+      <a class="nav-link" href="index.html">الرئيسية</a>
+      <a class="nav-link" href="stages.html">المراحل</a>
+      <a class="nav-link" href="library.html">المكتبة</a>
+      <a class="nav-link" href="exams.html">الامتحانات</a>
+      <a class="nav-link active" href="lessons.html">الدروس</a>
+      <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="schedule.html">الجدول</a>
+      <a class="nav-link" href="universities.html">الجامعات</a>
+      <a class="nav-link" href="scholarships.html">المنح</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
+      <a class="nav-link" href="search.html">بحث</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <h1>الدروس والشروحات</h1>
+    <p>شروحات فيديو ومكتوبة من مدرسين عراقيين — ننشر فقط الدروس المُراجعة، ونحذف الروابط التي لا تعمل بعد الإبلاغ عنها.</p>
+    <p>أو تصفح المحاضرات حسب الصف من <a href="stages.html">صفحة المراحل الدراسية</a> — كل صف يعرض كتبه وملازمه ومحاضراته.</p>
+  </section>
+
+  <div class="filter-bar" role="search" aria-label="فلاتر الدروس">
+    <label class="form-label" for="f-subject">المادة</label>
+    <select id="f-subject" class="form-input"><option value="">كل المواد</option></select>
+    <label class="form-label" for="f-grade">الصف</label>
+    <select id="f-grade" class="form-input"><option value="">كل الصفوف</option></select>
+    <input id="f-q" class="search-box form-input" type="search" placeholder="ابحث عن درس…" aria-label="بحث في الدروس">
+  </div>
+
+  <div id="lesson-grid" class="grid"></div>
+
+  <div id="lesson-empty" class="empty-state">
+    <h2>لا توجد دروس بعد — تضاف قريباً</h2>
+    <p>نعمل على إضافة شروحات مُراجعة لكل مادة وصف. تابع هذه الصفحة — ستظهر الدروس هنا فور توفرها.</p>
+    <a class="btn btn-outline" href="contact.html">اقتراح درس أو شرح</a>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <nav class="footer-links" aria-label="روابط المنصة">
+      <a href="index.html">الرئيسية</a>
+      <a href="stages.html">المراحل</a>
+      <a href="library.html">المكتبة</a>
+      <a href="exams.html">الامتحانات</a>
+      <a href="lessons.html">الدروس</a>
+      <a href="teacher.html">المعلم الذكي</a>
+      <a href="schedule.html">الجدول</a>
+      <a href="universities.html">الجامعات</a>
+      <a href="scholarships.html">المنح</a>
+      <a href="profile.html">ملفي</a>
+      <a href="search.html">بحث</a>
+      <a href="about.html">من نحن</a>
+      <a href="contact.html">تواصل معنا</a>
+      <a href="privacy.html">سياسة الخصوصية</a>
+      <a href="terms.html">شروط الاستخدام</a>
+      <a href="copyright.html">حقوق النشر</a>
+      <a href="faq.html">الأسئلة الشائعة</a>
+      <a href="report.html">الإبلاغ عن محتوى</a>
+      <a href="sitemap.html">خريطة المنصة</a>
+    </nav>
+    <p>سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var data = (typeof window !== 'undefined' && window.SANAD_DATA) ? window.SANAD_DATA : {};
+  var lessons = Array.isArray(data.lessons) ? data.lessons : [];
+  var stages = Array.isArray(data.stages) ? data.stages : [];
+
+  function collect(key) {
+    var out = [];
+    stages.forEach(function (st) {
+      var grades = st.grades || st.rows || st.classes || [];
+      grades.forEach(function (g) {
+        if (key === 'grade') {
+          var gn = typeof g === 'string' ? g : (g.name || g.title || '');
+          if (gn && out.indexOf(gn) === -1) out.push(gn);
+        } else {
+          var subs = (g && g.subjects) || (g && g.materials) || [];
+          subs.forEach(function (s) {
+            var name = typeof s === 'string' ? s : (s.name || s.title || '');
+            if (name && out.indexOf(name) === -1) out.push(name);
+          });
+        }
+      });
+      if (key === 'subject') {
+        (st.subjects || []).forEach(function (s) {
+          var name = typeof s === 'string' ? s : (s.name || '');
+          if (name && out.indexOf(name) === -1) out.push(name);
+        });
+      }
+    });
+    lessons.forEach(function (l) {
+      var v = key === 'grade' ? l.grade : l.subject;
+      if (v && out.indexOf(v) === -1) out.push(v);
+    });
+    return out;
+  }
+  function fillSelect(id, items) {
+    var sel = document.getElementById(id);
+    items.forEach(function (n) {
+      var o = document.createElement('option');
+      o.value = n; o.textContent = n; sel.appendChild(o);
+    });
+  }
+  fillSelect('f-subject', collect('subject'));
+  fillSelect('f-grade', collect('grade'));
+
+  var grid = document.getElementById('lesson-grid');
+  var empty = document.getElementById('lesson-empty');
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function saveLesson(id, title) {
+    if (typeof window !== 'undefined' && window.SANAD) {
+      if (typeof window.SANAD.saveFav === 'function') window.SANAD.saveFav('lesson', id);
+      if (typeof window.SANAD.toast === 'function') window.SANAD.toast('حُفظ الدرس «' + title + '»');
+    }
+  }
+  window.SANAD_LESSONS = { saveLesson: saveLesson };
+
+  function card(l) {
+    var el = document.createElement('article');
+    el.className = 'card';
+    var media = '';
+    if (l.youtubeId) {
+      media = '<div class="video-wrap"><iframe src="https://www.youtube-nocookie.com/embed/' + esc(l.youtubeId) + '" title="' + esc(l.title || 'درس') + '" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>' +
+        '<a class="btn btn-outline" href="https://www.youtube.com/watch?v=' + esc(l.youtubeId) + '" target="_blank" rel="noopener">فتح في يوتيوب</a>';
+    } else if (l.playlistId) {
+      media = '<div class="video-wrap"><iframe src="https://www.youtube-nocookie.com/embed/videoseries?list=' + esc(l.playlistId) + '" title="' + esc(l.title || 'درس') + '" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>' +
+        '<a class="btn btn-outline" href="https://www.youtube.com/playlist?list=' + esc(l.playlistId) + '" target="_blank" rel="noopener">عرض قائمة التشغيل</a>';
+    } else if (l.videoUrl) {
+      media = '<a class="btn btn-gold" href="' + esc(l.videoUrl) + '" target="_blank" rel="noopener">مشاهدة الفيديو</a>';
+    } else if (l.textUrl) {
+      media = '<a class="btn btn-gold" href="' + esc(l.textUrl) + '">قراءة الشرح المكتوب</a>';
+    }
+    var qs = '';
+    if (Array.isArray(l.questions) && l.questions.length) {
+      qs = '<h4>أسئلة بعد الدرس</h4><ol>' + l.questions.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ol>';
+    }
+    el.innerHTML = '<h3>' + esc(l.title || 'درس') + '</h3>'
+      + '<p class="lesson-meta">المدرس: ' + esc(l.teacher || '') + '</p>'
+      + '<p class="lesson-meta">' + esc(l.subject || '') + ' — ' + esc(l.grade || '') + '</p>'
+      + (l.duration ? '<p class="lesson-meta">مدة الدرس: ' + esc(l.duration) + '</p>' : '')
+      + (l.summary ? '<p>' + esc(l.summary) + '</p>' : '')
+      + qs
+      + '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' + media
+      + '<button class="btn btn-outline" type="button" data-save="' + esc(l.id || '') + '">حفظ الدرس</button>'
+      + '<a class="btn btn-outline" href="report.html">الإبلاغ عن رابط لا يعمل</a></div>';
+    var sb = el.querySelector('[data-save]');
+    if (sb) sb.addEventListener('click', function () { saveLesson(l.id, l.title || 'الدرس'); });
+    return el;
+  }
+
+  function render() {
+    var s = document.getElementById('f-subject').value;
+    var g = document.getElementById('f-grade').value;
+    var q = document.getElementById('f-q').value.trim();
+    var list = lessons.filter(function (l) {
+      if (s && l.subject !== s) return false;
+      if (g && l.grade !== g) return false;
+      if (q && ((l.title || '') + ' ' + (l.subject || '') + ' ' + (l.teacher || '') + ' ' + (l.summary || '')).indexOf(q) === -1) return false;
+      return true;
+    });
+    grid.innerHTML = '';
+    list.forEach(function (l) { grid.appendChild(card(l)); });
+    empty.style.display = list.length ? 'none' : '';
+    if (!list.length && lessons.length) {
+      empty.querySelector('h2').textContent = 'لا توجد دروس مطابقة للفلاتر';
+    } else if (!lessons.length) {
+      empty.querySelector('h2').textContent = 'لا توجد دروس بعد — تضاف قريباً';
+    }
+  }
+  document.getElementById('f-subject').addEventListener('change', render);
+  document.getElementById('f-grade').addEventListener('change', render);
+  document.getElementById('f-q').addEventListener('input', render);
+  render();
+})();
+</script>
+</body>
+</html>

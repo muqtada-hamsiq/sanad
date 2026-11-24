@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مجتمع الطلاب — سند SANAD</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+<div class="container">
+<a class="logo" href="index.html"><img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44"><span>سند</span> <span>SANAD</span></a>
+<nav class="main-nav">
+<a class="nav-link" href="index.html">الرئيسية</a>
+<a class="nav-link" href="stages.html">المراحل</a>
+<a class="nav-link" href="library.html">المكتبة</a>
+<a class="nav-link" href="exams.html">الامتحانات</a>
+<a class="nav-link" href="lessons.html">الدروس</a>
+<a class="nav-link" href="teacher.html">المعلم الذكي</a>
+<a class="nav-link" href="schedule.html">الجدول</a>
+<a class="nav-link" href="universities.html">الجامعات</a>
+<a class="nav-link" href="scholarships.html">المنح</a>
+<a class="nav-link" href="profile.html">ملفي</a>
+<a class="nav-link" href="search.html">بحث</a>
+</nav>
+</div>
+</header>
+
+<main class="container">
+<section class="hero">
+<h1>مجتمع الطلاب</h1>
+<p>اسأل سؤالاً تعليمياً، وساعد زملاءك بإجابة — كل المنشورات تُراجع قبل النشر.</p>
+</section>
+
+<section class="card">
+<h2 class="section-title">قواعد المجتمع</h2>
+<p class="alert alert-warn">أسئلة ومناقشات تعليمية فقط — يُراجع المحتوى قبل النشر، ويُمنع التنمر والروابط الضارة</p>
+<p>هذه لوحة أسئلة وأجوبة تعليمية مُراجَعة فقط — ليست دردشة عامة مفتوحة. كل سؤال وإجابة يظهران بعد المراجعة، ويُحذف أي محتوى مسيء أو أي رابط ضار. إن رأيت محتوى مخالفاً، أبلغ عنه من صفحة <a href="report.html">الإبلاغ عن محتوى</a>.</p>
+</section>
+
+<section class="card">
+<h2 class="section-title">اطرح سؤالاً</h2>
+<div id="ask-login-prompt" style="display:none">
+<p>يجب تسجيل الدخول أولاً لطرح سؤال.</p>
+<p><a class="btn btn-gold" href="login.html">تسجيل الدخول</a> <a class="btn btn-outline" href="signup.html">إنشاء حساب</a></p>
+</div>
+<form id="ask-form" style="display:none">
+<label class="form-label" for="q-title">عنوان السؤال</label>
+<input class="form-input" type="text" id="q-title" placeholder="مثال: كيف أبسّط الجذر التربيعي؟" required>
+<label class="form-label" for="q-subject">المادة</label>
+<input class="form-input" type="text" id="q-subject" placeholder="مثال: الرياضيات" required>
+<label class="form-label" for="q-details">تفاصيل السؤال</label>
+<textarea class="form-input" id="q-details" rows="4" placeholder="اشرح سؤالك هنا..." required></textarea>
+<p><button class="btn btn-gold" type="submit">انشر سؤالك للمراجعة</button></p>
+<p class="alert alert-info">سؤالك يُرسل للمراجعة قبل النشر، ويُحفظ على جهازك في هذه المرحلة.</p>
+</form>
+</section>
+
+<section class="card">
+<h2 class="section-title">الأسئلة</h2>
+<div class="filter-bar">
+<label class="form-label" for="subject-filter">تصفية حسب المادة</label>
+<input class="form-input search-box" type="text" id="subject-filter" placeholder="اكتب اسم المادة للتصفية...">
+</div>
+<div id="questions-list"></div>
+</section>
+</main>
+
+<footer class="site-footer">
+<div class="container">
+<div class="footer-links">
+<a href="index.html">الرئيسية</a>
+<a href="stages.html">المراحل</a>
+<a href="library.html">المكتبة</a>
+<a href="exams.html">الامتحانات</a>
+<a href="lessons.html">الدروس</a>
+<a href="teacher.html">المعلم الذكي</a>
+<a href="schedule.html">الجدول</a>
+<a href="universities.html">الجامعات</a>
+<a href="scholarships.html">المنح</a>
+<a href="profile.html">ملفي</a>
+<a href="search.html">بحث</a>
+<a href="about.html">من نحن</a>
+<a href="contact.html">تواصل معنا</a>
+<a href="privacy.html">سياسة الخصوصية</a>
+<a href="terms.html">شروط الاستخدام</a>
+<a href="copyright.html">حقوق النشر</a>
+<a href="faq.html">الأسئلة الشائعة</a>
+<a href="report.html">الإبلاغ عن محتوى</a>
+<a href="sitemap.html">خريطة المنصة</a>
+</div>
+<p>سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</p>
+</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  function readJSON(key, fallback) {
+    try { var v = JSON.parse(localStorage.getItem(key) || 'null'); return v === null || v === undefined ? fallback : v; } catch (e) { return fallback; }
+  }
+  function saveJSON(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (e) { return false; }
+  }
+  function toast(msg) {
+    if (window.SANAD && typeof window.SANAD.toast === 'function') { window.SANAD.toast(msg); }
+    else { alert(msg); }
+  }
+  var user = null;
+  function authorName() {
+    if (!user) { return 'طالب'; }
+    var meta = user.user_metadata || {};
+    if (meta.name) { return meta.name; }
+    var email = user.email || '';
+    return email ? email.split('@')[0] : 'طالب';
+  }
+  async function init() {
+    try {
+      if (window.SANAD && typeof window.SANAD.getSessionUser === 'function') {
+        user = await window.SANAD.getSessionUser();
+      }
+    } catch (e) { user = null; }
+    var askForm = document.getElementById('ask-form');
+    var askPrompt = document.getElementById('ask-login-prompt');
+    if (user) { askForm.style.display = ''; askPrompt.style.display = 'none'; }
+    else { askForm.style.display = 'none'; askPrompt.style.display = ''; }
+    renderQuestions();
+  }
+  function escapeHTML(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function getQuestions() { return readJSON('sanad_community', []); }
+
+  function renderQuestions() {
+    var list = document.getElementById('questions-list');
+    var filter = (document.getElementById('subject-filter').value || '').trim();
+    var questions = getQuestions();
+    list.innerHTML = '';
+    if (!questions.length) {
+      var p = document.createElement('p');
+      p.className = 'empty-state';
+      p.textContent = 'لا توجد أسئلة بعد — كن أول من يسأل';
+      list.appendChild(p);
+      return;
+    }
+    var shown = 0;
+    questions.forEach(function (q) {
+      if (filter && (q.subject || '').indexOf(filter) === -1) { return; }
+      shown++;
+      var card = document.createElement('div');
+      card.className = 'card';
+      var title = document.createElement('h3');
+      title.textContent = q.title;
+      var meta = document.createElement('p');
+      var chip = document.createElement('span');
+      chip.className = 'chip';
+      chip.textContent = q.subject || '';
+      meta.appendChild(chip);
+      meta.appendChild(document.createTextNode(' ' + (q.date || '') + ' — ' + (q.author || 'طالب')));
+      var status = document.createElement('span');
+      status.className = 'badge';
+      status.textContent = q.status || 'قيد المراجعة';
+      meta.appendChild(document.createTextNode(' '));
+      meta.appendChild(status);
+      var details = document.createElement('p');
+      details.textContent = q.details || '';
+      card.appendChild(title); card.appendChild(meta); card.appendChild(details);
+
+      var answers = Array.isArray(q.answers) ? q.answers : [];
+      var ansTitle = document.createElement('h4');
+      ansTitle.textContent = 'الإجابات (' + answers.length + ')';
+      card.appendChild(ansTitle);
+      if (!answers.length) {
+        var noAns = document.createElement('p');
+        noAns.className = 'empty-state';
+        noAns.textContent = 'لا توجد إجابات بعد.';
+        card.appendChild(noAns);
+      } else {
+        answers.forEach(function (a) {
+          var ap = document.createElement('p');
+          ap.textContent = (a.text || '') + ' — ' + (a.author || 'طالب') + ' (' + (a.date || '') + ')';
+          card.appendChild(ap);
+        });
+      }
+
+      if (user) {
+        var form = document.createElement('form');
+        var label = document.createElement('label');
+        label.className = 'form-label';
+        label.textContent = 'أضف إجابة';
+        var input = document.createElement('textarea');
+        input.className = 'form-input';
+        input.rows = 2;
+        input.required = true;
+        input.placeholder = 'اكتب إجابتك هنا...';
+        var btn = document.createElement('button');
+        btn.className = 'btn btn-teal';
+        btn.type = 'submit';
+        btn.textContent = 'انشر إجابتك للمراجعة';
+        form.appendChild(label); form.appendChild(input); form.appendChild(btn);
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var text = input.value.trim();
+          if (!text) { toast('اكتب إجابتك أولاً.'); return; }
+          var all = getQuestions();
+          for (var i = 0; i < all.length; i++) {
+            if (all[i].id === q.id) {
+              if (!Array.isArray(all[i].answers)) { all[i].answers = []; }
+              all[i].answers.push({ text: text, author: authorName(), date: new Date().toISOString().slice(0, 10), status: 'قيد المراجعة' });
+              break;
+            }
+          }
+          if (saveJSON('sanad_community', all)) { toast('أُرسلت إجابتك للمراجعة.'); renderQuestions(); }
+          else { toast('تعذر حفظ الإجابة على هذا الجهاز.'); }
+        });
+        card.appendChild(form);
+      } else {
+        var loginNote = document.createElement('p');
+        loginNote.innerHTML = '';
+        var link = document.createElement('a');
+        link.href = 'login.html';
+        link.textContent = 'سجل الدخول لإضافة إجابة';
+        loginNote.appendChild(link);
+        card.appendChild(loginNote);
+      }
+      list.appendChild(card);
+    });
+    if (!shown) {
+      var pf = document.createElement('p');
+      pf.className = 'empty-state';
+      pf.textContent = 'لا توجد أسئلة في هذه المادة بعد.';
+      list.appendChild(pf);
+    }
+  }
+
+  document.getElementById('subject-filter').addEventListener('input', renderQuestions);
+
+  document.getElementById('ask-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!user) { toast('سجل الدخول أولاً لطرح سؤال.'); return; }
+    var title = document.getElementById('q-title').value.trim();
+    var subject = document.getElementById('q-subject').value.trim();
+    var details = document.getElementById('q-details').value.trim();
+    if (!title || !subject || !details) { toast('املأ عنوان السؤال والمادة والتفاصيل.'); return; }
+    var questions = getQuestions();
+    questions.unshift({
+      id: 'q' + Date.now(),
+      title: title,
+      subject: subject,
+      details: details,
+      author: authorName(),
+      date: new Date().toISOString().slice(0, 10),
+      status: 'قيد المراجعة',
+      answers: []
+    });
+    if (saveJSON('sanad_community', questions)) {
+      toast('أُرسل سؤالك للمراجعة قبل النشر.');
+      document.getElementById('q-title').value = '';
+      document.getElementById('q-subject').value = '';
+      document.getElementById('q-details').value = '';
+      renderQuestions();
+    } else {
+      toast('تعذر حفظ السؤال على هذا الجهاز.');
+    }
+  });
+
+  init();
+})();
+</script>
+</body>
+</html>

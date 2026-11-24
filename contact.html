@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تواصل معنا | سند SANAD</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.logo-img{width:44px;height:44px}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44">
+      <span>سند</span>
+      <span>SANAD</span>
+    </a>
+    <nav class="main-nav">
+      <a class="nav-link" href="index.html">الرئيسية</a>
+      <a class="nav-link" href="stages.html">المراحل</a>
+      <a class="nav-link" href="library.html">المكتبة</a>
+      <a class="nav-link" href="exams.html">الامتحانات</a>
+      <a class="nav-link" href="lessons.html">الدروس</a>
+      <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="schedule.html">الجدول</a>
+      <a class="nav-link" href="universities.html">الجامعات</a>
+      <a class="nav-link" href="scholarships.html">المنح</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
+      <a class="nav-link" href="search.html">بحث</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <h1>تواصل معنا</h1>
+    <p>رأيك يهمّنا — أرسل رسالتك، أو بلّغ عن خطأ، أو اقترح مادة أو درساً، أو اطلب إضافة كتاب.</p>
+  </section>
+
+  <div class="alert alert-warn">
+    خدمة إرسال الرسائل إلى الإدارة لم تُفعَّل بعد. رسالتك تُحفظ على جهازك فقط في الوقت الحالي، وستُرسل إلى الإدارة عند تفعيل خدمة الرسائل.
+  </div>
+
+  <div class="alert alert-info" id="contact-success" hidden>
+    شكراً — حُفظت رسالتك على جهازك وستُرسل إلى الإدارة عند تفعيل خدمة الرسائل.
+  </div>
+
+  <form id="contact-form" class="card">
+    <p>
+      <label class="form-label" for="contact-subject">الموضوع</label>
+      <select class="form-input" id="contact-subject" name="subject" required>
+        <option value="إرسال رسالة">إرسال رسالة</option>
+        <option value="الإبلاغ عن خطأ">الإبلاغ عن خطأ</option>
+        <option value="اقتراح مادة أو درس">اقتراح مادة أو درس</option>
+        <option value="طلب إضافة كتاب">طلب إضافة كتاب</option>
+        <option value="التواصل مع الإدارة">التواصل مع الإدارة</option>
+      </select>
+    </p>
+    <p>
+      <label class="form-label" for="contact-name">الاسم</label>
+      <input class="form-input" type="text" id="contact-name" name="name" required autocomplete="name">
+    </p>
+    <p>
+      <label class="form-label" for="contact-email">البريد الإلكتروني</label>
+      <input class="form-input" type="email" id="contact-email" name="email" required autocomplete="email" dir="ltr">
+    </p>
+    <p>
+      <label class="form-label" for="contact-message">رسالتك</label>
+      <textarea class="form-input" id="contact-message" name="message" rows="6" required></textarea>
+    </p>
+    <p>
+      <button class="btn btn-gold" type="submit">حفظ الرسالة</button>
+    </p>
+  </form>
+
+  <section>
+    <h2 class="section-title">روابط سريعة</h2>
+    <div class="grid">
+      <article class="card">
+        <h2>الإبلاغ عن خطأ</h2>
+        <p>وجدت خطأ في درس أو سؤال أو معلومة؟ بلّغ عنه من صفحة الإبلاغ عن محتوى.</p>
+        <p><a class="btn btn-outline" href="report.html">الإبلاغ عن محتوى</a></p>
+      </article>
+      <article class="card">
+        <h2>اقتراح مادة أو درس</h2>
+        <p>اختر «اقتراح مادة أو درس» من قائمة الموضوع أعلاه واكتب اقتراحك.</p>
+        <p><a class="btn btn-outline" href="report.html">الإبلاغ عن محتوى</a></p>
+      </article>
+      <article class="card">
+        <h2>التواصل مع الإدارة</h2>
+        <p>اختر «التواصل مع الإدارة» من قائمة الموضوع أعلاه، وستُحفظ رسالتك على جهازك حتى تفعيل خدمة الرسائل.</p>
+        <p><a class="btn btn-outline" href="about.html">من نحن</a></p>
+      </article>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <nav class="footer-links">
+      <a href="index.html">الرئيسية</a>
+      <a href="stages.html">المراحل</a>
+      <a href="library.html">المكتبة</a>
+      <a href="exams.html">الامتحانات</a>
+      <a href="lessons.html">الدروس</a>
+      <a href="teacher.html">المعلم الذكي</a>
+      <a href="schedule.html">الجدول</a>
+      <a href="universities.html">الجامعات</a>
+      <a href="scholarships.html">المنح</a>
+      <a href="profile.html">ملفي</a>
+      <a href="search.html">بحث</a>
+      <a href="about.html">من نحن</a>
+      <a href="contact.html">تواصل معنا</a>
+      <a href="privacy.html">سياسة الخصوصية</a>
+      <a href="terms.html">شروط الاستخدام</a>
+      <a href="copyright.html">حقوق النشر</a>
+      <a href="faq.html">الأسئلة الشائعة</a>
+      <a href="report.html">الإبلاغ عن محتوى</a>
+      <a href="sitemap.html">خريطة المنصة</a>
+    </nav>
+    <p>سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  document.addEventListener('DOMContentLoaded', function () {
+    var form = document.getElementById('contact-form');
+    var success = document.getElementById('contact-success');
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var message = {
+        subject: document.getElementById('contact-subject').value,
+        name: document.getElementById('contact-name').value.trim(),
+        email: document.getElementById('contact-email').value.trim(),
+        message: document.getElementById('contact-message').value.trim(),
+        date: new Date().toISOString()
+      };
+      if (!message.name || !message.email || !message.message) return;
+      var stored = [];
+      try {
+        stored = JSON.parse(localStorage.getItem('sanad_contact_messages') || '[]');
+        if (!Array.isArray(stored)) stored = [];
+      } catch (err) {
+        stored = [];
+      }
+      stored.push(message);
+      try {
+        localStorage.setItem('sanad_contact_messages', JSON.stringify(stored));
+      } catch (err) {
+        return;
+      }
+      form.reset();
+      success.hidden = false;
+      try {
+        if (typeof success.scrollIntoView === 'function') {
+          success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } catch (err) {}
+    });
+  });
+})();
+</script>
+</body>
+</html>

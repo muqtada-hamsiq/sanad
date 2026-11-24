@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام الإنجازات — سند SANAD</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.badge-card.locked{opacity:.55}
+.badge-state{font-weight:bold}
+</style>
+</head>
+<body>
+<header class="site-header">
+<div class="container">
+<a class="logo" href="index.html"><img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44"><span>سند</span> <span>SANAD</span></a>
+<nav class="main-nav">
+<a class="nav-link" href="index.html">الرئيسية</a>
+<a class="nav-link" href="stages.html">المراحل</a>
+<a class="nav-link" href="library.html">المكتبة</a>
+<a class="nav-link" href="exams.html">الامتحانات</a>
+<a class="nav-link" href="lessons.html">الدروس</a>
+<a class="nav-link" href="teacher.html">المعلم الذكي</a>
+<a class="nav-link" href="schedule.html">الجدول</a>
+<a class="nav-link" href="universities.html">الجامعات</a>
+<a class="nav-link" href="scholarships.html">المنح</a>
+<a class="nav-link" href="profile.html">ملفي</a>
+<a class="nav-link" href="search.html">بحث</a>
+</nav>
+</div>
+</header>
+
+<main class="container">
+<section class="hero">
+<h1>نظام الإنجازات</h1>
+<p>نقاطك وشاراتك — للتشجيع فقط، وليست منافسة مع أحد.</p>
+<p class="alert alert-info">النقاط والشارات للتشجيع فقط — التعلم أولاً، وليست منافسة. لا توجد قوائم متصدرين ولا مقارنة مع طلاب آخرين.</p>
+</section>
+
+<section class="card">
+<h2 class="section-title">نقاطك الحالية</h2>
+<div class="grid" id="points-view"></div>
+<p>نقاطك وشاراتك محفوظة على جهازك.</p>
+</section>
+
+<section class="card">
+<h2 class="section-title">الشارات</h2>
+<div class="grid" id="badges-view"></div>
+</section>
+</main>
+
+<footer class="site-footer">
+<div class="container">
+<div class="footer-links">
+<a href="index.html">الرئيسية</a>
+<a href="stages.html">المراحل</a>
+<a href="library.html">المكتبة</a>
+<a href="exams.html">الامتحانات</a>
+<a href="lessons.html">الدروس</a>
+<a href="teacher.html">المعلم الذكي</a>
+<a href="schedule.html">الجدول</a>
+<a href="universities.html">الجامعات</a>
+<a href="scholarships.html">المنح</a>
+<a href="profile.html">ملفي</a>
+<a href="search.html">بحث</a>
+<a href="about.html">من نحن</a>
+<a href="contact.html">تواصل معنا</a>
+<a href="privacy.html">سياسة الخصوصية</a>
+<a href="terms.html">شروط الاستخدام</a>
+<a href="copyright.html">حقوق النشر</a>
+<a href="faq.html">الأسئلة الشائعة</a>
+<a href="report.html">الإبلاغ عن محتوى</a>
+<a href="sitemap.html">خريطة المنصة</a>
+</div>
+<p>سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</p>
+</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  function readJSON(key, fallback) {
+    try { var v = JSON.parse(localStorage.getItem(key) || 'null'); return v === null || v === undefined ? fallback : v; } catch (e) { return fallback; }
+  }
+  function getPoints() {
+    if (window.SANAD && typeof window.SANAD.getPoints === 'function') {
+      try { return window.SANAD.getPoints() || 0; } catch (e) { return 0; }
+    }
+    return readJSON('sanad_points', 0) || 0;
+  }
+  function totalExamAttempts() {
+    // sanad_exam_history is a flat array of attempts (see app.js recordExam).
+    var history = readJSON('sanad_exam_history', []);
+    if (Array.isArray(history)) { return history.length; }
+    if (history && typeof history === 'object') {
+      var count = 0;
+      Object.keys(history).forEach(function (k) {
+        var a = history[k];
+        if (Array.isArray(a)) { count += a.length; } else if (a) { count += 1; }
+      });
+      return count;
+    }
+    return 0;
+  }
+
+  var points = getPoints();
+  var lessonLog = readJSON('sanad_lesson_log', []);
+  var attempts = totalExamAttempts();
+  var hasSchedule = !!(readJSON('sanad_schedule', null) && readJSON('sanad_schedule', null).subjects && readJSON('sanad_schedule', null).subjects.length);
+
+  var pointsView = document.getElementById('points-view');
+  var stat = document.createElement('div');
+  stat.className = 'stat-card';
+  stat.textContent = 'نقاطك: ' + points + ' نقطة';
+  pointsView.appendChild(stat);
+  var stat2 = document.createElement('div');
+  stat2.className = 'stat-card';
+  stat2.textContent = 'دروس مكتملة: ' + lessonLog.length;
+  pointsView.appendChild(stat2);
+  var stat3 = document.createElement('div');
+  stat3.className = 'stat-card';
+  stat3.textContent = 'اختبارات مكتملة: ' + attempts;
+  pointsView.appendChild(stat3);
+
+  var badges = [
+    { name: 'أول درس', condition: 'أكمل درساً واحداً.', unlocked: lessonLog.length > 0, progress: 'الدروس المكتملة: ' + lessonLog.length },
+    { name: 'أول اختبار', condition: 'أنهِ أي اختبار.', unlocked: attempts > 0, progress: 'الاختبارات المكتملة: ' + attempts },
+    { name: '100 نقطة', condition: 'اجمع 100 نقطة.', unlocked: points >= 100, progress: 'نقاطك الحالية: ' + points },
+    { name: '5 اختبارات', condition: 'أنهِ 5 اختبارات.', unlocked: attempts >= 5, progress: 'الاختبارات المكتملة: ' + attempts + ' من 5' },
+    { name: 'أسبوع منظم', condition: 'أنشئ جدولاً دراسياً.', unlocked: hasSchedule, progress: hasSchedule ? 'أنشأت جدولك الدراسي.' : 'لم تنشئ جدولك بعد.' }
+  ];
+
+  var view = document.getElementById('badges-view');
+  badges.forEach(function (b) {
+    var card = document.createElement('div');
+    card.className = 'card badge-card' + (b.unlocked ? '' : ' locked');
+    var title = document.createElement('h3');
+    title.textContent = b.name;
+    var state = document.createElement('p');
+    state.className = 'badge-state';
+    var chip = document.createElement('span');
+    chip.className = 'badge';
+    chip.textContent = b.unlocked ? 'مكتسبة' : 'مقفلة';
+    state.appendChild(chip);
+    var cond = document.createElement('p');
+    cond.textContent = 'الشرط: ' + b.condition;
+    var prog = document.createElement('p');
+    prog.textContent = b.progress;
+    card.appendChild(title); card.appendChild(state); card.appendChild(cond); card.appendChild(prog);
+    view.appendChild(card);
+  });
+})();
+</script>
+</body>
+</html>

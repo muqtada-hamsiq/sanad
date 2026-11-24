@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة الإدارة | سند SANAD</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.admin-section { margin-bottom: 16px; }
+.admin-section[hidden] { display: none; }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44">
+      <span>سند</span>
+      <span>SANAD</span>
+    </a>
+    <nav class="main-nav" aria-label="التنقل الرئيسي">
+      <a class="nav-link" href="index.html">الرئيسية</a>
+      <a class="nav-link" href="stages.html">المراحل</a>
+      <a class="nav-link" href="library.html">المكتبة</a>
+      <a class="nav-link" href="exams.html">الامتحانات</a>
+      <a class="nav-link" href="lessons.html">الدروس</a>
+      <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="schedule.html">الجدول</a>
+      <a class="nav-link" href="universities.html">الجامعات</a>
+      <a class="nav-link" href="scholarships.html">المنح</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
+      <a class="nav-link" href="search.html">بحث</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <div class="alert alert-warn"><strong>لوحة الإدارة — منفصلة عن واجهة الطلاب.</strong> هذه الصفحة مخصصة لإدارة منصة سند فقط، ولا تظهر للطلاب في واجهتهم.</div>
+
+  <!-- بوابة الدخول: تتطلب حساب سند مسجلاً — الدور يُقرأ من جدول الصلاحيات -->
+  <section class="card" id="adminGate">
+    <h1 class="section-title">لوحة الإدارة — تسجيل الدخول مطلوب</h1>
+    <p>هذه الصفحة مخصصة لإدارة منصة سند فقط، وتتطلب تسجيل الدخول بحساب سند.</p>
+    <p><a class="btn btn-gold" href="login.html">تسجيل الدخول</a></p>
+  </section>
+
+  <div id="adminDashboard" hidden>
+    <section class="hero">
+      <h1>لوحة الإدارة</h1>
+      <p id="sessionInfo"></p>
+    </section>
+
+    <div class="card">
+      <p id="sessionInfo"></p>
+      <p id="roleNote" class="alert alert-warn" hidden>الصلاحيات تُقرأ من جدول الصلاحيات عند إنشائه — الدور المعروض حالياً مؤقت في الواجهة فقط وليس إثبات صلاحية</p>
+      <button class="btn btn-outline" id="exitAdmin" type="button">تسجيل الخروج من لوحة الإدارة</button>
+    </div>
+
+    <div class="tabs" id="adminTabs"></div>
+
+    <!-- إحصائيات -->
+    <section class="card admin-section" data-roles="admin content" data-title="إحصائيات">
+      <h2 class="section-title">إحصائيات</h2>
+      <p class="alert alert-info">تُحسب من البيانات المحلية حالياً — لا توجد أرقام زوار مختلقة.</p>
+      <div class="grid" id="statsGrid"></div>
+    </section>
+
+    <!-- إدارة الحسابات -->
+    <section class="card admin-section" data-roles="admin" data-title="إدارة الحسابات">
+      <h2 class="section-title">إدارة الحسابات</h2>
+      <p class="alert alert-info">تُدار حسابات الطلاب من لوحة تحكم Supabase</p>
+    </section>
+
+    <!-- إدارة الأدوار -->
+    <section class="card admin-section" data-roles="admin" data-title="إدارة الأدوار">
+      <h2 class="section-title">إدارة الأدوار</h2>
+      <p>الأدوار المتاحة في سند:</p>
+      <p><span class="badge">مدير عام</span> — يرى كل الأقسام ويدير الحسابات والأدوار والإعلانات وسجل النشاط.</p>
+      <p><span class="badge">مشرف محتوى</span> — يدير الكتب والدروس والأسئلة والامتحانات والجامعات والمنح والبلاغات، دون الحسابات والأدوار والإعلانات والسجل.</p>
+      <p><span class="badge">مدرس</span> — يضيف الدروس والأسئلة والامتحانات فقط.</p>
+      <p><span class="badge">مراجع</span> — يراجع البلاغات والمحتوى فقط.</p>
+      <p>الدور الحالي يُقرأ من جدول الصلاحيات في خدمة سند.</p>
+    </section>
+
+    <!-- إدارة الصفوف والمواد -->
+    <section class="card admin-section" data-roles="admin content" data-title="الصفوف والمواد">
+      <h2 class="section-title">إدارة الصفوف والمواد</h2>
+      <div id="stagesList"></div>
+      <form id="stageAddForm" novalidate>
+        <label class="form-label" for="stageAddStage">المرحلة</label>
+        <select class="form-input" id="stageAddStage"></select>
+        <label class="form-label" for="stageAddKind">النوع</label>
+        <select class="form-input" id="stageAddKind">
+          <option value="صف">صف دراسي</option>
+          <option value="مادة">مادة دراسية</option>
+        </select>
+        <label class="form-label" for="stageAddName">الاسم</label>
+        <input class="form-input" type="text" id="stageAddName" required placeholder="مثال: الثالث المتوسط أو الرياضيات">
+        <button class="btn btn-teal" type="submit">إضافة</button>
+      </form>
+      <div id="localStagesList"></div>
+    </section>
+
+    <!-- رفع الكتب -->
+    <section class="card admin-section" data-roles="admin content reviewer" data-title="رفع الكتب">
+      <h2 class="section-title">رفع الكتب</h2>
+      <p>الكتب المضافة هنا تُحفظ محلياً وتظهر في المكتبة مع كتب المنصة. لا ترفع كتباً محمية بحقوق النشر دون إذن.</p>
+      <form id="bookForm" novalidate>
+        <label class="form-label" for="bookTitle">عنوان الكتاب</label>
+        <input class="form-input" type="text" id="bookTitle" required>
+        <label class="form-label" for="bookSubject">المادة</label>
+        <input class="form-input" type="text" id="bookSubject" required>
+        <label class="form-label" for="bookGrade">الصف الدراسي</label>
+        <input class="form-input" type="text" id="bookGrade" required>
+        <label class="form-label" for="bookAuthor">المؤلف أو الجهة الناشرة</label>
+        <input class="form-input" type="text" id="bookAuthor">
+        <label class="form-label" for="bookYear">سنة الطبعة</label>
+        <input class="form-input" type="text" id="bookYear" inputmode="numeric">
+        <label class="form-label" for="bookUrl">رابط الكتاب (اختياري)</label>
+        <input class="form-input" type="url" id="bookUrl" dir="ltr" placeholder="https://...">
+        <button class="btn btn-teal" type="submit">إضافة الكتاب</button>
+      </form>
+      <div id="booksList"></div>
+    </section>
+
+    <!-- إضافة الدروس -->
+    <section class="card admin-section" data-roles="admin content teacher reviewer" data-title="إضافة الدروس">
+      <h2 class="section-title">إضافة الدروس</h2>
+      <form id="lessonForm" novalidate>
+        <label class="form-label" for="lessonTitle">عنوان الدرس</label>
+        <input class="form-input" type="text" id="lessonTitle" required>
+        <label class="form-label" for="lessonTeacher">اسم المدرس</label>
+        <input class="form-input" type="text" id="lessonTeacher" required>
+        <label class="form-label" for="lessonSubject">المادة</label>
+        <input class="form-input" type="text" id="lessonSubject" required>
+        <label class="form-label" for="lessonGrade">الصف الدراسي</label>
+        <input class="form-input" type="text" id="lessonGrade" required>
+        <label class="form-label" for="lessonDuration">مدة الدرس (بالدقائق)</label>
+        <input class="form-input" type="text" id="lessonDuration" inputmode="numeric">
+        <label class="form-label" for="lessonUrl">رابط الفيديو أو الشرح (اختياري)</label>
+        <input class="form-input" type="url" id="lessonUrl" dir="ltr" placeholder="https://...">
+        <button class="btn btn-teal" type="submit">إضافة الدرس</button>
+      </form>
+      <div id="lessonsList"></div>
+    </section>
+
+    <!-- إنشاء الأسئلة -->
+    <section class="card admin-section" data-roles="admin content teacher" data-title="إنشاء الأسئلة">
+      <h2 class="section-title">إنشاء الأسئلة</h2>
+      <form id="questionForm" novalidate>
+        <label class="form-label" for="qText">نص السؤال</label>
+        <textarea class="form-input" id="qText" rows="3" required></textarea>
+        <label class="form-label" for="qOpt1">الاختيار الأول</label>
+        <input class="form-input" type="text" id="qOpt1" required>
+        <label class="form-label" for="qOpt2">الاختيار الثاني</label>
+        <input class="form-input" type="text" id="qOpt2" required>
+        <label class="form-label" for="qOpt3">الاختيار الثالث</label>
+        <input class="form-input" type="text" id="qOpt3" required>
+        <label class="form-label" for="qOpt4">الاختيار الرابع</label>
+        <input class="form-input" type="text" id="qOpt4" required>
+        <label class="form-label" for="qCorrect">الإجابة الصحيحة</label>
+        <select class="form-input" id="qCorrect">
+          <option value="0">الاختيار الأول</option>
+          <option value="1">الاختيار الثاني</option>
+          <option value="2">الاختيار الثالث</option>
+          <option value="3">الاختيار الرابع</option>
+        </select>
+        <label class="form-label" for="qExplain">شرح الإجابة (اختياري)</label>
+        <textarea class="form-input" id="qExplain" rows="2"></textarea>
+        <button class="btn btn-teal" type="submit">حفظ السؤال</button>
+      </form>
+      <div id="questionsList"></div>
+    </section>
+
+    <!-- إدارة الامتحانات -->
+    <section class="card admin-section" data-roles="admin content teacher" data-title="إدارة الامتحانات">
+      <h2 class="section-title">إدارة الامتحانات</h2>
+      <div id="examsList"></div>
+      <form id="examForm" novalidate>
+        <label class="form-label" for="examTitle">عنوان الامتحان</label>
+        <input class="form-input" type="text" id="examTitle" required placeholder="مثال: امتحان تجريبي — رياضيات الثالث المتوسط">
+        <label class="form-label" for="examSubject">المادة</label>
+        <input class="form-input" type="text" id="examSubject" required>
+        <label class="form-label" for="examGrade">الصف الدراسي</label>
+        <input class="form-input" type="text" id="examGrade" required>
+        <button class="btn btn-teal" type="submit">إضافة امتحان</button>
+      </form>
+    </section>
+
+    <!-- تحديث معلومات الجامعات -->
+    <section class="card admin-section" data-roles="admin content" data-title="معلومات الجامعات">
+      <h2 class="section-title">تحديث معلومات الجامعات</h2>
+      <p>أضف ملاحظة أو رابطاً رسمياً لجامعة. كل معلومة قبول يجب أن تحمل سنة مرجعية ومصدراً رسمياً.</p>
+      <form id="uniForm" novalidate>
+        <label class="form-label" for="uniName">اسم الجامعة</label>
+        <input class="form-input" type="text" id="uniName" required>
+        <label class="form-label" for="uniNote">ملاحظة أو معلومة (مع السنة المرجعية والمصدر)</label>
+        <textarea class="form-input" id="uniNote" rows="3" required placeholder="مثال: الحدود الدنيا لكلية الطب 2025 — المصدر: وزارة التعليم العالي"></textarea>
+        <label class="form-label" for="uniUrl">رابط الموقع الرسمي</label>
+        <input class="form-input" type="url" id="uniUrl" dir="ltr" placeholder="https://...">
+        <button class="btn btn-teal" type="submit">حفظ معلومات الجامعة</button>
+      </form>
+      <div id="unisList"></div>
+    </section>
+
+    <!-- إدارة المنح -->
+    <section class="card admin-section" data-roles="admin content" data-title="إدارة المنح">
+      <h2 class="section-title">إدارة المنح</h2>
+      <form id="scholarForm" novalidate>
+        <label class="form-label" for="schName">اسم المنحة</label>
+        <input class="form-input" type="text" id="schName" required>
+        <label class="form-label" for="schCountry">الدولة</label>
+        <input class="form-input" type="text" id="schCountry" required>
+        <label class="form-label" for="schDeadline">آخر موعد للتقديم</label>
+        <input class="form-input" type="date" id="schDeadline">
+        <label class="form-label" for="schUrl">رابط الجهة الرسمية</label>
+        <input class="form-input" type="url" id="schUrl" dir="ltr" placeholder="https://...">
+        <button class="btn btn-teal" type="submit">إضافة المنحة</button>
+      </form>
+      <div id="scholarsList"></div>
+    </section>
+
+    <!-- استقبال البلاغات -->
+    <section class="card admin-section" data-roles="admin content reviewer" data-title="استقبال البلاغات">
+      <h2 class="section-title">استقبال البلاغات</h2>
+      <div id="reportsList"></div>
+    </section>
+
+    <!-- إدارة الإعلانات والرعايات -->
+    <section class="card admin-section" data-roles="admin" data-title="الإعلانات والرعايات">
+      <h2 class="section-title">إدارة الإعلانات والرعايات</h2>
+      <p class="alert alert-info">لا توجد إعلانات كبيرة على المنصة — تُدار الرعايات هنا فقط.</p>
+      <form id="adForm" novalidate>
+        <label class="form-label" for="adName">اسم الراعي</label>
+        <input class="form-input" type="text" id="adName" required>
+        <label class="form-label" for="adNote">ملاحظة عن الرعاية</label>
+        <input class="form-input" type="text" id="adNote">
+        <button class="btn btn-teal" type="submit">إضافة رعاية</button>
+      </form>
+      <div id="adsList"></div>
+    </section>
+
+    <!-- إدارة المدرسين -->
+    <section class="card admin-section" data-roles="admin" data-title="إدارة المدرسين">
+      <h2 class="section-title">إدارة المدرسين</h2>
+      <form id="teacherForm" novalidate>
+        <label class="form-label" for="teacherName">اسم المدرس</label>
+        <input class="form-input" type="text" id="teacherName" required>
+        <label class="form-label" for="teacherSubject">المادة</label>
+        <input class="form-input" type="text" id="teacherSubject">
+        <button class="btn btn-teal" type="submit">إضافة مدرس</button>
+      </form>
+      <div id="teachersList"></div>
+    </section>
+
+    <!-- سجل نشاط المشرفين -->
+    <section class="card admin-section" data-roles="admin" data-title="سجل نشاط المشرفين">
+      <h2 class="section-title">سجل نشاط المشرفين</h2>
+      <div id="logList"></div>
+    </section>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <nav class="footer-links" aria-label="روابط المنصة">
+      <a href="index.html">الرئيسية</a>
+      <a href="stages.html">المراحل</a>
+      <a href="library.html">المكتبة</a>
+      <a href="exams.html">الامتحانات</a>
+      <a href="lessons.html">الدروس</a>
+      <a href="teacher.html">المعلم الذكي</a>
+      <a href="schedule.html">الجدول</a>
+      <a href="universities.html">الجامعات</a>
+      <a href="scholarships.html">المنح</a>
+      <a href="profile.html">ملفي</a>
+      <a href="search.html">بحث</a>
+      <a href="about.html">من نحن</a>
+      <a href="contact.html">تواصل معنا</a>
+      <a href="privacy.html">سياسة الخصوصية</a>
+      <a href="terms.html">شروط الاستخدام</a>
+      <a href="copyright.html">حقوق النشر</a>
+      <a href="faq.html">الأسئلة الشائعة</a>
+      <a href="report.html">الإبلاغ عن محتوى</a>
+      <a href="sitemap.html">خريطة المنصة</a>
+    </nav>
+    <p>سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  var ROLE_LABELS = { admin: 'مدير عام', content: 'مشرف محتوى', teacher: 'مدرس', reviewer: 'مراجع' };
+  var FALLBACK_STAGES = [
+    { name: 'الابتدائية', grades: ['الأول الابتدائي', 'الثاني الابتدائي', 'الثالث الابتدائي', 'الرابع الابتدائي', 'الخامس الابتدائي', 'السادس الابتدائي'] },
+    { name: 'المتوسطة', grades: ['الأول المتوسط', 'الثاني المتوسط', 'الثالث المتوسط'] },
+    { name: 'الإعدادية', grades: ['الرابع الإعدادي', 'الخامس الإعدادي', 'السادس الإعدادي'] },
+    { name: 'الجامعات', grades: ['المرحلة الأولى', 'المرحلة الثانية', 'المرحلة الثالثة', 'المرحلة الرابعة'] }
+  ];
+
+  function read(key, fallback) {
+    try { var v = JSON.parse(localStorage.getItem(key) || 'null'); return (v === null || v === undefined) ? fallback : v; } catch (e) { return fallback; }
+  }
+  function write(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} }
+  function esc(s) {
+    return String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function toast(msg) { if (window.SANAD && typeof window.SANAD.toast === 'function') { window.SANAD.toast(msg); } }
+  function getStages() {
+    var raw = (window.SANAD_DATA && window.SANAD_DATA.stages) || null;
+    if (Array.isArray(raw) && raw.length) {
+      return raw.map(function (s) {
+        if (typeof s === 'string') { return { name: s, grades: [] }; }
+        return { name: s.name || s.title || s.id || '', grades: s.grades || s.classes || s.years || [] };
+      });
+    }
+    return FALLBACK_STAGES;
+  }
+  /* ---------- الجلسة والدور (Supabase) ---------- */
+  var currentUser = null;
+  var currentRoleValue = 'admin';
+  var roleFromTable = false;
+  function getSupa() {
+    return (window.SANAD && window.SANAD.supabase) || null;
+  }
+  function currentRole() {
+    return currentRoleValue;
+  }
+  function currentName() {
+    if (!currentUser) { return ''; }
+    var meta = currentUser.user_metadata || {};
+    return meta.name || currentUser.email || '';
+  }
+  async function fetchRole(user) {
+    var supa = getSupa();
+    if (!supa) { return { role: 'admin', fromTable: false }; }
+    try {
+      var res = await supa.from('profiles').select('role').eq('id', user.id).single();
+      if (res.error || !res.data || !res.data.role) { return { role: 'admin', fromTable: false }; }
+      var raw = String(res.data.role);
+      var map = { 'مدير عام': 'admin', 'مشرف محتوى': 'content', 'مدرس': 'teacher', 'مراجع': 'reviewer' };
+      if (map[raw]) { return { role: map[raw], fromTable: true }; }
+      if (ROLE_LABELS[raw]) { return { role: raw, fromTable: true }; }
+      return { role: 'admin', fromTable: false };
+    } catch (e) { return { role: 'admin', fromTable: false }; }
+  }
+  function logAction(action) {
+    var log = read('sanad_admin_log', []);
+    log.push({ date: new Date().toISOString(), role: currentRoleValue, name: currentName(), action: action });
+    write('sanad_admin_log', log);
+  }
+
+  /* ---------- العرض حسب الدور ---------- */
+  function applyRole() {
+    var role = currentRole();
+    document.getElementById('sessionInfo').textContent =
+      'مرحباً ' + currentName() + ' — دورك الحالي: ' + (ROLE_LABELS[role] || role);
+    document.getElementById('roleNote').hidden = roleFromTable;
+    var tabs = document.getElementById('adminTabs');
+    tabs.innerHTML = '';
+    document.querySelectorAll('.admin-section').forEach(function (sec) {
+      var roles = (sec.getAttribute('data-roles') || '').split(' ');
+      var visible = roles.indexOf(role) !== -1;
+      sec.hidden = !visible;
+      if (visible) {
+        var chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.textContent = sec.getAttribute('data-title') || '';
+        tabs.appendChild(chip);
+      }
+    });
+  }
+
+  /* ---------- إحصائيات ---------- */
+  function renderStats() {
+    var counts = [
+      ['البلاغات المستلمة', read('sanad_reports', []).length],
+      ['الأسئلة المنشأة', read('sanad_questions', []).length],
+      ['الكتب المضافة محلياً', read('sanad_books', []).length],
+      ['الدروس المضافة', read('sanad_lessons', []).length],
+      ['المدرسون المسجلون', read('sanad_teachers', []).length]
+    ];
+    document.getElementById('statsGrid').innerHTML = counts.map(function (c) {
+      return '<div class="stat-card"><strong>' + c[1] + '</strong><p>' + esc(c[0]) + '</p></div>';
+    }).join('');
+  }
+
+  /* ---------- الصفوف والمواد ---------- */
+  function renderStages() {
+    var stages = getStages();
+    var sel = document.getElementById('stageAddStage');
+    sel.innerHTML = '';
+    stages.forEach(function (s) {
+      var o = document.createElement('option');
+      o.value = s.name; o.textContent = s.name;
+      sel.appendChild(o);
+    });
+    document.getElementById('stagesList').innerHTML = stages.map(function (s) {
+      var grades = (s.grades || []).map(function (g) { return esc(typeof g === 'string' ? g : (g.name || '')); }).join('، ');
+      return '<p><strong>' + esc(s.name) + '</strong>: ' + (grades || '—') + '</p>';
+    }).join('');
+    var local = read('sanad_admin_stages', []);
+    document.getElementById('localStagesList').innerHTML = local.length
+      ? '<h3>إضافات محلية</h3>' + local.map(function (it, i) {
+          return '<p><span class="chip">' + esc(it.kind) + '</span> ' + esc(it.stage) + ' — ' + esc(it.name) +
+            ' <button class="btn btn-outline" type="button" data-del-stage="' + i + '">حذف</button></p>';
+        }).join('')
+      : '<p class="empty-state">لا توجد إضافات محلية للصفوف والمواد بعد.</p>';
+    document.querySelectorAll('[data-del-stage]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var items = read('sanad_admin_stages', []);
+        items.splice(parseInt(btn.getAttribute('data-del-stage'), 10), 1);
+        write('sanad_admin_stages', items);
+        logAction('حذف صف/مادة محلية');
+        renderStages();
+      });
+    });
+  }
+
+  /* ---------- قوائم عامة مع حذف ---------- */
+  function renderSimpleList(elId, key, format, emptyText, logLabel) {
+    var items = read(key, []);
+    var el = document.getElementById(elId);
+    if (!items.length) { el.innerHTML = '<p class="empty-state">' + esc(emptyText) + '</p>'; return; }
+    el.innerHTML = items.map(function (it, i) {
+      return '<div class="card"><p>' + format(it) + '</p>' +
+        '<button class="btn btn-outline" type="button" data-del="' + i + '" data-key="' + key + '">حذف</button></div>';
+    }).join('');
+    el.querySelectorAll('[data-del]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var k = btn.getAttribute('data-key');
+        var arr = read(k, []);
+        arr.splice(parseInt(btn.getAttribute('data-del'), 10), 1);
+        write(k, arr);
+        logAction('حذف عنصر من ' + logLabel);
+        renderAll();
+      });
+    });
+  }
+
+  function renderBooks() {
+    renderSimpleList('booksList', 'sanad_books', function (b) {
+      return '<strong>' + esc(b.title) + '</strong> — ' + esc(b.subject) + ' / ' + esc(b.grade) +
+        (b.author ? ' — ' + esc(b.author) : '') + (b.year ? ' (' + esc(b.year) + ')' : '') +
+        (b.url ? ' — <a href="' + esc(b.url) + '" target="_blank" rel="noopener">رابط الكتاب</a>' : '');
+    }, 'لا توجد كتب مضافة محلياً بعد.', 'الكتب');
+  }
+  function renderLessons() {
+    renderSimpleList('lessonsList', 'sanad_lessons', function (l) {
+      return '<strong>' + esc(l.title) + '</strong> — ' + esc(l.teacher) + ' — ' + esc(l.subject) + ' / ' + esc(l.grade) +
+        (l.duration ? ' — ' + esc(l.duration) + ' دقيقة' : '') +
+        (l.url ? ' — <a href="' + esc(l.url) + '" target="_blank" rel="noopener">رابط الدرس</a>' : '');
+    }, 'لا توجد دروس مضافة بعد.', 'الدروس');
+  }
+  function renderQuestions() {
+    renderSimpleList('questionsList', 'sanad_questions', function (q) {
+      return '<strong>' + esc(q.question) + '</strong><br>' +
+        (q.options || []).map(function (o, i) {
+          return (i === q.correct ? '<span class="badge">صحيح</span> ' : '') + esc(o);
+        }).join(' | ') + (q.explanation ? '<br>الشرح: ' + esc(q.explanation) : '');
+    }, 'لا توجد أسئلة منشأة بعد.', 'الأسئلة');
+  }
+  function renderExams() {
+    var base = (window.SANAD_DATA && Array.isArray(window.SANAD_DATA.exams)) ? window.SANAD_DATA.exams : [];
+    var local = read('sanad_exams', []);
+    var el = document.getElementById('examsList');
+    var html = '';
+    if (base.length) {
+      html += '<h3>امتحانات المنصة</h3>' + base.map(function (x) {
+        return '<p>' + esc(typeof x === 'string' ? x : (x.title || x.name || '')) + '</p>';
+      }).join('');
+    }
+    if (local.length) {
+      html += '<h3>امتحانات مضافة محلياً</h3>' + local.map(function (x, i) {
+        return '<p><strong>' + esc(x.title) + '</strong> — ' + esc(x.subject) + ' / ' + esc(x.grade) +
+          ' <button class="btn btn-outline" type="button" data-del-exam="' + i + '">حذف</button></p>';
+      }).join('');
+    }
+    if (!html) { html = '<p class="empty-state">لا توجد امتحانات بعد.</p>'; }
+    el.innerHTML = html;
+    el.querySelectorAll('[data-del-exam]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var arr = read('sanad_exams', []);
+        arr.splice(parseInt(btn.getAttribute('data-del-exam'), 10), 1);
+        write('sanad_exams', arr);
+        logAction('حذف امتحان محلي');
+        renderExams(); renderStats();
+      });
+    });
+  }
+  function renderUnis() {
+    renderSimpleList('unisList', 'sanad_university_edits', function (u) {
+      return '<strong>' + esc(u.name) + '</strong><br>' + esc(u.note) +
+        (u.url ? '<br><a href="' + esc(u.url) + '" target="_blank" rel="noopener">الموقع الرسمي</a>' : '');
+    }, 'لا توجد معلومات جامعات محدّثة محلياً بعد.', 'معلومات الجامعات');
+  }
+  function renderScholars() {
+    renderSimpleList('scholarsList', 'sanad_scholarships', function (s) {
+      return '<strong>' + esc(s.name) + '</strong> — ' + esc(s.country) +
+        (s.deadline ? ' — آخر موعد: ' + esc(s.deadline) : '') +
+        (s.url ? ' — <a href="' + esc(s.url) + '" target="_blank" rel="noopener">رابط الجهة الرسمية</a>' : '');
+    }, 'لا توجد منح مضافة محلياً بعد.', 'المنح');
+  }
+  function renderAds() {
+    renderSimpleList('adsList', 'sanad_ads', function (a) {
+      return '<strong>' + esc(a.name) + '</strong>' + (a.note ? ' — ' + esc(a.note) : '');
+    }, 'لا توجد رعايات مسجلة بعد.', 'الرعايات');
+  }
+  function renderTeachers() {
+    renderSimpleList('teachersList', 'sanad_teachers', function (t) {
+      return '<strong>' + esc(t.name) + '</strong>' + (t.subject ? ' — ' + esc(t.subject) : '');
+    }, 'لا يوجد مدرسون مسجلون بعد — القائمة تبدأ فارغة.', 'المدرسين');
+  }
+
+  /* ---------- البلاغات ---------- */
+  function renderReports() {
+    var reports = read('sanad_reports', []);
+    var messages = read('sanad_contact_messages', []);
+    var el = document.getElementById('reportsList');
+    var html = '';
+    if (reports.length) {
+      html += '<h3>بلاغات المحتوى</h3>' + reports.map(function (r, i) {
+        return '<div class="card"><p><span class="chip">' + esc(r.type) + '</span> ' + (r.read ? '<span class="badge">مقروء</span>' : '<span class="badge">جديد</span>') + '</p>' +
+          '<p><strong>' + esc(r.ref) + '</strong></p><p>' + esc(r.details) + '</p>' +
+          '<p>' + esc(r.date || '') + '</p>' +
+          (r.read ? '' : '<button class="btn btn-outline" type="button" data-read-report="' + i + '">تعليم كمقروء</button>') + '</div>';
+      }).join('');
+    }
+    if (messages.length) {
+      html += '<h3>رسائل تواصل معنا</h3>' + messages.map(function (m, i) {
+        var text = (typeof m === 'string') ? m : (m.message || m.details || JSON.stringify(m));
+        var title = (typeof m === 'object' && m !== null) ? (m.name || m.email || m.subject || '') : '';
+        return '<div class="card"><p><strong>' + esc(title) + '</strong> ' + (m.read ? '<span class="badge">مقروء</span>' : '<span class="badge">جديد</span>') + '</p>' +
+          '<p>' + esc(text) + '</p>' +
+          (m.read ? '' : '<button class="btn btn-outline" type="button" data-read-msg="' + i + '">تعليم كمقروء</button>') + '</div>';
+      }).join('');
+    }
+    if (!html) { html = '<p class="empty-state">لا توجد بلاغات أو رسائل بعد.</p>'; }
+    el.innerHTML = html;
+    el.querySelectorAll('[data-read-report]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var arr = read('sanad_reports', []);
+        arr[parseInt(btn.getAttribute('data-read-report'), 10)].read = true;
+        write('sanad_reports', arr);
+        logAction('تعليم بلاغ كمقروء');
+        renderReports();
+      });
+    });
+    el.querySelectorAll('[data-read-msg]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var arr = read('sanad_contact_messages', []);
+        if (typeof arr[parseInt(btn.getAttribute('data-read-msg'), 10)] === 'object') {
+          arr[parseInt(btn.getAttribute('data-read-msg'), 10)].read = true;
+          write('sanad_contact_messages', arr);
+        }
+        logAction('تعليم رسالة تواصل كمقروءة');
+        renderReports();
+      });
+    });
+  }
+
+  /* ---------- السجل ---------- */
+  function renderLog() {
+    var log = read('sanad_admin_log', []).slice().reverse();
+    var el = document.getElementById('logList');
+    if (!log.length) { el.innerHTML = '<p class="empty-state">لا توجد أنشطة مسجلة بعد.</p>'; return; }
+    el.innerHTML = '<table class="table"><thead><tr><th>التاريخ</th><th>الاسم</th><th>الدور</th><th>الإجراء</th></tr></thead><tbody>' +
+      log.map(function (e) {
+        return '<tr><td dir="ltr">' + esc(e.date) + '</td><td>' + esc(e.name) + '</td><td>' + esc(ROLE_LABELS[e.role] || e.role) + '</td><td>' + esc(e.action) + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  function renderAll() {
+    renderStats(); renderStages(); renderBooks(); renderLessons();
+    renderQuestions(); renderExams(); renderUnis(); renderScholars(); renderReports();
+    renderAds(); renderTeachers(); renderLog();
+  }
+
+  /* ---------- النماذج ---------- */
+  function bindForm(id, handler) {
+    var f = document.getElementById(id);
+    if (f) { f.addEventListener('submit', function (e) { e.preventDefault(); handler(f); }); }
+  }
+  bindForm('stageAddForm', function () {
+    var stage = document.getElementById('stageAddStage').value;
+    var kind = document.getElementById('stageAddKind').value;
+    var name = document.getElementById('stageAddName').value.trim();
+    if (!name) { return; }
+    var items = read('sanad_admin_stages', []);
+    items.push({ stage: stage, kind: kind, name: name });
+    write('sanad_admin_stages', items);
+    logAction('إضافة ' + kind + ': ' + name + ' (' + stage + ')');
+    document.getElementById('stageAddForm').reset();
+    renderStages(); toast('تمت الإضافة');
+  });
+  bindForm('bookForm', function (f) {
+    var items = read('sanad_books', []);
+    items.push({
+      title: document.getElementById('bookTitle').value.trim(),
+      subject: document.getElementById('bookSubject').value.trim(),
+      grade: document.getElementById('bookGrade').value.trim(),
+      author: document.getElementById('bookAuthor').value.trim(),
+      year: document.getElementById('bookYear').value.trim(),
+      url: document.getElementById('bookUrl').value.trim()
+    });
+    write('sanad_books', items);
+    logAction('رفع كتاب: ' + items[items.length - 1].title);
+    f.reset(); renderBooks(); renderStats(); toast('تمت إضافة الكتاب');
+  });
+  bindForm('lessonForm', function (f) {
+    var items = read('sanad_lessons', []);
+    items.push({
+      title: document.getElementById('lessonTitle').value.trim(),
+      teacher: document.getElementById('lessonTeacher').value.trim(),
+      subject: document.getElementById('lessonSubject').value.trim(),
+      grade: document.getElementById('lessonGrade').value.trim(),
+      duration: document.getElementById('lessonDuration').value.trim(),
+      url: document.getElementById('lessonUrl').value.trim()
+    });
+    write('sanad_lessons', items);
+    logAction('إضافة درس: ' + items[items.length - 1].title);
+    f.reset(); renderLessons(); renderStats(); toast('تمت إضافة الدرس');
+  });
+  bindForm('questionForm', function (f) {
+    var items = read('sanad_questions', []);
+    items.push({
+      question: document.getElementById('qText').value.trim(),
+      options: [
+        document.getElementById('qOpt1').value.trim(),
+        document.getElementById('qOpt2').value.trim(),
+        document.getElementById('qOpt3').value.trim(),
+        document.getElementById('qOpt4').value.trim()
+      ],
+      correct: parseInt(document.getElementById('qCorrect').value, 10),
+      explanation: document.getElementById('qExplain').value.trim()
+    });
+    write('sanad_questions', items);
+    logAction('إنشاء سؤال جديد');
+    f.reset(); renderQuestions(); renderStats(); toast('تم حفظ السؤال');
+  });
+  bindForm('examForm', function (f) {
+    var items = read('sanad_exams', []);
+    items.push({
+      title: document.getElementById('examTitle').value.trim(),
+      subject: document.getElementById('examSubject').value.trim(),
+      grade: document.getElementById('examGrade').value.trim()
+    });
+    write('sanad_exams', items);
+    logAction('إضافة امتحان: ' + items[items.length - 1].title);
+    f.reset(); renderExams(); toast('تمت إضافة الامتحان');
+  });
+  bindForm('uniForm', function (f) {
+    var items = read('sanad_university_edits', []);
+    items.push({
+      name: document.getElementById('uniName').value.trim(),
+      note: document.getElementById('uniNote').value.trim(),
+      url: document.getElementById('uniUrl').value.trim()
+    });
+    write('sanad_university_edits', items);
+    logAction('تحديث معلومات جامعة: ' + items[items.length - 1].name);
+    f.reset(); renderUnis(); toast('تم حفظ معلومات الجامعة');
+  });
+  bindForm('scholarForm', function (f) {
+    var items = read('sanad_scholarships', []);
+    items.push({
+      name: document.getElementById('schName').value.trim(),
+      country: document.getElementById('schCountry').value.trim(),
+      deadline: document.getElementById('schDeadline').value,
+      url: document.getElementById('schUrl').value.trim()
+    });
+    write('sanad_scholarships', items);
+    logAction('إضافة منحة: ' + items[items.length - 1].name);
+    f.reset(); renderScholars(); toast('تمت إضافة المنحة');
+  });
+  bindForm('adForm', function (f) {
+    var items = read('sanad_ads', []);
+    items.push({
+      name: document.getElementById('adName').value.trim(),
+      note: document.getElementById('adNote').value.trim()
+    });
+    write('sanad_ads', items);
+    logAction('إضافة رعاية: ' + items[items.length - 1].name);
+    f.reset(); renderAds(); toast('تمت إضافة الرعاية');
+  });
+  bindForm('teacherForm', function (f) {
+    var items = read('sanad_teachers', []);
+    items.push({
+      name: document.getElementById('teacherName').value.trim(),
+      subject: document.getElementById('teacherSubject').value.trim()
+    });
+    write('sanad_teachers', items);
+    logAction('إضافة مدرس: ' + items[items.length - 1].name);
+    f.reset(); renderTeachers(); renderStats(); toast('تمت إضافة المدرس');
+  });
+
+  /* ---------- البوابة والجلسة ---------- */
+  document.getElementById('exitAdmin').addEventListener('click', async function () {
+    logAction('تسجيل الخروج من لوحة الإدارة');
+    try {
+      if (window.SANAD && typeof window.SANAD.signOut === 'function') {
+        await window.SANAD.signOut();
+      }
+    } catch (e) {}
+    location.reload();
+  });
+
+  function openDashboard() {
+    document.getElementById('adminGate').hidden = true;
+    document.getElementById('adminDashboard').hidden = false;
+    applyRole();
+    renderAll();
+  }
+
+  /* الدخول إلى اللوحة يتطلب جلسة سند مسجلة */
+  (async function () {
+    var user = null;
+    try {
+      if (window.SANAD && typeof window.SANAD.getSessionUser === 'function') {
+        user = await window.SANAD.getSessionUser();
+      }
+    } catch (e) { user = null; }
+    if (!user) {
+      document.getElementById('adminGate').hidden = false;
+      document.getElementById('adminDashboard').hidden = true;
+      return;
+    }
+    currentUser = user;
+    var r = await fetchRole(user);
+    currentRoleValue = r.role;
+    roleFromTable = r.fromTable;
+    logAction('دخول لوحة الإدارة بدور ' + (ROLE_LABELS[currentRoleValue] || currentRoleValue));
+    openDashboard();
+  })();
+})();
+</script>
+</body>
+</html>

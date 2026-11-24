@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>المنح والفرص الدراسية | سند SANAD</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.logo-img{width:44px;height:44px}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44">
+      <span>سند</span>
+      <span>SANAD</span>
+    </a>
+    <nav class="main-nav">
+      <a class="nav-link" href="index.html">الرئيسية</a>
+      <a class="nav-link" href="stages.html">المراحل</a>
+      <a class="nav-link" href="library.html">المكتبة</a>
+      <a class="nav-link" href="exams.html">الامتحانات</a>
+      <a class="nav-link" href="lessons.html">الدروس</a>
+      <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="schedule.html">الجدول</a>
+      <a class="nav-link" href="universities.html">الجامعات</a>
+      <a class="nav-link active" href="scholarships.html">المنح</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
+      <a class="nav-link" href="search.html">بحث</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <h1>المنح والفرص الدراسية</h1>
+    <p>منح وفرص دراسية داخل العراق وخارجه — الشروط والمواعيد الدقيقة على الموقع الرسمي للجهة المانحة.</p>
+  </section>
+
+  <div class="alert alert-info">
+    آخر موعد وشروط التقديم الدقيقة تُعلن على الموقع الرسمي للجهة المانحة — تحقق منها قبل التقديم.
+  </div>
+
+  <div class="filter-bar">
+    <label class="form-label" for="country-filter">الدولة</label>
+    <select class="form-input" id="country-filter">
+      <option value="الكل">كل الدول</option>
+    </select>
+    <label class="form-label" for="level-filter">المرحلة الدراسية</label>
+    <select class="form-input" id="level-filter">
+      <option value="الكل">كل المراحل</option>
+    </select>
+    <label class="form-label" for="deadline-filter">آخر موعد</label>
+    <select class="form-input" id="deadline-filter">
+      <option value="الكل">الكل</option>
+      <option value="يُعلن على الموقع الرسمي">يُعلن على الموقع الرسمي</option>
+    </select>
+  </div>
+
+  <p id="sch-count"></p>
+  <div class="grid" id="sch-list"></div>
+  <div class="empty-state" id="sch-empty" hidden>
+    لا توجد منح مطابقة للفلاتر المختارة — جرّب تغيير الفلاتر.
+  </div>
+  <div class="empty-state" id="sch-no-data" hidden>
+    بيانات المنح غير متوفرة بعد — نضيفها تدريجياً من المصادر الرسمية.
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <nav class="footer-links">
+      <a href="index.html">الرئيسية</a>
+      <a href="stages.html">المراحل</a>
+      <a href="library.html">المكتبة</a>
+      <a href="exams.html">الامتحانات</a>
+      <a href="lessons.html">الدروس</a>
+      <a href="teacher.html">المعلم الذكي</a>
+      <a href="schedule.html">الجدول</a>
+      <a href="universities.html">الجامعات</a>
+      <a href="scholarships.html">المنح</a>
+      <a href="profile.html">ملفي</a>
+      <a href="search.html">بحث</a>
+      <a href="about.html">من نحن</a>
+      <a href="contact.html">تواصل معنا</a>
+      <a href="privacy.html">سياسة الخصوصية</a>
+      <a href="terms.html">شروط الاستخدام</a>
+      <a href="copyright.html">حقوق النشر</a>
+      <a href="faq.html">الأسئلة الشائعة</a>
+      <a href="report.html">الإبلاغ عن محتوى</a>
+      <a href="sitemap.html">خريطة المنصة</a>
+    </nav>
+    <p>سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  var countryFilter = 'الكل';
+  var levelFilter = 'الكل';
+  var deadlineFilter = 'الكل';
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function getData() {
+    return (window.SANAD_DATA && window.SANAD_DATA.scholarships) || [];
+  }
+
+  function render() {
+    var list = document.getElementById('sch-list');
+    var empty = document.getElementById('sch-empty');
+    var noData = document.getElementById('sch-no-data');
+    var count = document.getElementById('sch-count');
+    var data = getData();
+
+    if (!data.length) {
+      list.innerHTML = '';
+      count.textContent = '';
+      empty.hidden = true;
+      noData.hidden = false;
+      return;
+    }
+    noData.hidden = true;
+
+    var filtered = data.filter(function (s) {
+      if (countryFilter !== 'الكل' && s.country !== countryFilter) return false;
+      if (levelFilter !== 'الكل' && s.level !== levelFilter) return false;
+      if (deadlineFilter !== 'الكل' && s.deadline !== deadlineFilter) return false;
+      return true;
+    });
+
+    count.textContent = 'عدد المنح المعروضة: ' + filtered.length + ' من ' + data.length;
+    empty.hidden = filtered.length !== 0;
+
+    list.innerHTML = filtered.map(function (s) {
+      return '<article class="card">'
+        + '<h2>' + esc(s.name) + '</h2>'
+        + '<p><span class="badge">' + esc(s.country) + '</span> <span class="badge">' + esc(s.level) + '</span></p>'
+        + '<p>الشروط: ' + esc(s.conditions) + '</p>'
+        + '<p>آخر موعد: ' + esc(s.deadline) + '</p>'
+        + '<p><a class="btn btn-outline" href="' + esc(s.url) + '" target="_blank" rel="noopener">الموقع الرسمي للجهة المانحة</a></p>'
+        + '</article>';
+    }).join('');
+  }
+
+  function fillSelect(id, field) {
+    var select = document.getElementById(id);
+    var values = [];
+    getData().forEach(function (s) {
+      if (s[field] && values.indexOf(s[field]) === -1) values.push(s[field]);
+    });
+    values.sort();
+    values.forEach(function (v) {
+      var opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      select.appendChild(opt);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    fillSelect('country-filter', 'country');
+    fillSelect('level-filter', 'level');
+    render();
+    document.getElementById('country-filter').addEventListener('change', function (e) {
+      countryFilter = e.target.value;
+      render();
+    });
+    document.getElementById('level-filter').addEventListener('change', function (e) {
+      levelFilter = e.target.value;
+      render();
+    });
+    document.getElementById('deadline-filter').addEventListener('change', function (e) {
+      deadlineFilter = e.target.value;
+      render();
+    });
+  });
+})();
+</script>
+</body>
+</html>

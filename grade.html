@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>صف دراسي — سند SANAD</title>
+<meta name="description" content="الكتب الرسمية والملازم والمحاضرات لصف دراسي على منصة سند — كتب وزارة التربية العراقية وملازم المدرسين ومحاضرات فيديو.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.video-wrap{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;background:#0B2A4A;margin-bottom:10px}
+.video-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.book-meta{color:#555;font-size:.9rem;margin:.3rem 0}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند SANAD" height="44">
+      <span class="logo-text"><span class="logo-name">سند</span><span class="logo-latin">SANAD</span></span>
+    </a>
+    <nav class="main-nav">
+      <a class="nav-link" href="index.html">الرئيسية</a>
+      <a class="nav-link" href="stages.html">المراحل</a>
+      <a class="nav-link" href="library.html">المكتبة</a>
+      <a class="nav-link" href="exams.html">الامتحانات</a>
+      <a class="nav-link" href="lessons.html">الدروس</a>
+      <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="schedule.html">الجدول</a>
+      <a class="nav-link" href="universities.html">الجامعات</a>
+      <a class="nav-link" href="scholarships.html">المنح</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
+      <a class="nav-link" href="search.html">بحث</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <p><a href="stages.html">← العودة إلى المراحل الدراسية</a></p>
+  <h1 class="section-title" id="grade-title">صف دراسي</h1>
+  <p id="grade-sub"></p>
+
+  <div id="subject-chips" style="margin:12px 0;"></div>
+
+  <div class="tabs" role="tablist" aria-label="أقسام الصف">
+    <button type="button" role="tab" data-tab="books" class="active">الكتب الرسمية <span id="count-books"></span></button>
+    <button type="button" role="tab" data-tab="malazim">الملازم <span id="count-malazim"></span></button>
+    <button type="button" role="tab" data-tab="lectures">المحاضرات <span id="count-lectures"></span></button>
+  </div>
+
+  <section id="panel-books" class="tab-panel active">
+    <div class="alert alert-info">كتب رسمية من وزارة التربية العراقية — ملفات PDF أصلية من الموقع الرسمي للوزارة.</div>
+    <div id="books-listing"></div>
+    <div id="books-grid" class="grid"></div>
+    <div id="books-empty" class="empty-state" style="display:none">
+      <h2>لا توجد كتب رسمية موثقة بعد لهذا الصف</h2>
+      <p>نضيف الكتب الرسمية فور توفر روابطها من الموقع الرسمي لوزارة التربية — لا نرفع نسخاً غير رسمية.</p>
+      <a class="btn btn-outline" href="contact.html">طلب إضافة كتاب</a>
+    </div>
+  </section>
+
+  <section id="panel-malazim" class="tab-panel">
+    <div class="alert alert-info">ملازم من إعداد المدرسين أنفسهم — الروابط تفتح منشور المدرس الرسمي حيث نشر ملزمته.</div>
+    <div id="malazim-grid" class="grid"></div>
+    <div id="malazim-empty" class="empty-state" style="display:none">
+      <h2>لا توجد ملازم موثقة بعد لهذا الصف</h2>
+      <p>نضيف ملازم المدرسين المعروفين فور توثيق مصدرها الرسمي.</p>
+      <a class="btn btn-outline" href="contact.html">اقتراح ملزمة</a>
+    </div>
+  </section>
+
+  <section id="panel-lectures" class="tab-panel">
+    <div class="alert alert-info">محاضرات فيديو من قنوات المدرسين الرسمية على يوتيوب — تشاهدها داخل الموقع مباشرة.</div>
+    <div id="lectures-grid" class="grid"></div>
+    <div id="lectures-empty" class="empty-state" style="display:none">
+      <h2>لا توجد محاضرات موثقة بعد لهذا الصف</h2>
+      <p>نضيف محاضرات المدرسين المعروفين فور توثيق قنواتهم الرسمية.</p>
+      <a class="btn btn-outline" href="contact.html">اقتراح محاضرة</a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <nav class="footer-links">
+      <a href="index.html">الرئيسية</a>
+      <a href="stages.html">المراحل</a>
+      <a href="library.html">المكتبة</a>
+      <a href="exams.html">الامتحانات</a>
+      <a href="lessons.html">الدروس</a>
+      <a href="teacher.html">المعلم الذكي</a>
+      <a href="schedule.html">الجدول</a>
+      <a href="universities.html">الجامعات</a>
+      <a href="scholarships.html">المنح</a>
+      <a href="profile.html">ملفي</a>
+      <a href="search.html">بحث</a>
+      <a href="about.html">من نحن</a>
+      <a href="contact.html">تواصل معنا</a>
+      <a href="privacy.html">سياسة الخصوصية</a>
+      <a href="terms.html">شروط الاستخدام</a>
+      <a href="copyright.html">حقوق النشر</a>
+      <a href="faq.html">الأسئلة الشائعة</a>
+      <a href="report.html">الإبلاغ عن محتوى</a>
+      <a href="sitemap.html">خريطة المنصة</a>
+    </nav>
+    <p class="footer-note"><span class="footer-tagline">سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</span> · جميع الحقوق محفوظة © <span data-year>2026</span></p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var stageId = params.get('stage') || '';
+  var gradeId = params.get('grade') || '';
+  var data = window.SANAD_DATA || { stages: [] };
+  var content = window.SANAD_CONTENT || { books: [], malazim: [], lectures: [] };
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  var stage = (data.stages || []).find(function (s) { return s.id === stageId; }) || null;
+  var grade = stage ? ((stage.grades || []).find(function (g) { return g.id === gradeId; }) || null) : null;
+
+  var titleEl = document.getElementById('grade-title');
+  var subEl = document.getElementById('grade-sub');
+  if (!stage || !grade) {
+    titleEl.textContent = 'صف غير موجود';
+    subEl.innerHTML = 'تأكد من الرابط أو اختر صفاً من <a href="stages.html">صفحة المراحل الدراسية</a>.';
+    document.querySelectorAll('.tabs button').forEach(function (b) { b.disabled = true; });
+    return;
+  }
+  document.title = grade.name + ' — ' + stage.name + ' — سند SANAD';
+  titleEl.textContent = grade.name + ' — ' + stage.name;
+  subEl.textContent = 'الكتب الرسمية والملازم والمحاضرات لهذا الصف.';
+
+  var activeSubject = '';
+  var activeTab = 'books';
+
+  var chipsWrap = document.getElementById('subject-chips');
+  function renderChips() {
+    var html = '<button type="button" class="chip' + (activeSubject === '' ? ' active' : '') + '" data-subject="">كل المواد</button>';
+    (grade.subjects || []).forEach(function (subject) {
+      html += '<button type="button" class="chip" data-subject="' + esc(subject) + '">' + esc(subject) + '</button>';
+    });
+    chipsWrap.innerHTML = html;
+    chipsWrap.querySelectorAll('[data-subject]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        activeSubject = btn.getAttribute('data-subject') || '';
+        renderChips();
+        renderAll();
+      });
+      if (btn.getAttribute('data-subject') === activeSubject) btn.classList.add('active');
+    });
+  }
+
+  function byGrade(list) {
+    return (list || []).filter(function (item) {
+      if (item.stage && item.stage !== stageId) return false;
+      if (item.gradeId && item.gradeId !== gradeId) return false;
+      if (item.grade && item.grade !== grade.name) return false;
+      if (activeSubject && item.subject !== activeSubject) return false;
+      return true;
+    });
+  }
+
+  function ytEmbedSrc(l) {
+    if (l.youtubeId) return 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(l.youtubeId);
+    if (l.playlistId) return 'https://www.youtube-nocookie.com/embed/videoseries?list=' + encodeURIComponent(l.playlistId);
+    return '';
+  }
+
+  function renderBooks() {
+    var list = byGrade(content.books);
+    var grid = document.getElementById('books-grid');
+    var empty = document.getElementById('books-empty');
+    document.getElementById('count-books').textContent = list.length ? '(' + list.length + ')' : '';
+    /* بطاقة صفحة الكتب الرسمية على موقع الوزارة (مديرية المناهج) */
+    var listingWrap = document.getElementById('books-listing');
+    var listing = ((content.bookListings || []).find(function (x) { return x.stage === stageId; }) || null);
+    if (listing) {
+      listingWrap.innerHTML = '<article class="card" style="margin-bottom:16px"><span class="badge">المصدر الرسمي</span>' +
+        '<h3>' + esc(listing.label) + '</h3>' +
+        '<p>الكتب الرسمية كاملة بصيغة PDF على موقع وزارة التربية العراقية — مديرية المناهج. موقع الوزارة يحجب أحياناً الطلبات الآلية، فإذا لم يفتح الرابط مباشرة جرّبه من متصفح هاتفك.</p>' +
+        '<a class="btn btn-teal" href="' + esc(listing.url) + '" target="_blank" rel="noopener">فتح صفحة الكتب الرسمية</a></article>';
+    } else {
+      listingWrap.innerHTML = '';
+    }
+    grid.innerHTML = '';
+    list.forEach(function (b) {
+      var el = document.createElement('article');
+      el.className = 'card';
+      el.innerHTML = '<span class="badge">محتوى رسمي</span>' +
+        '<h3>' + esc(b.title || ('كتاب ' + (b.subject || ''))) + '</h3>' +
+        '<p class="book-meta">' + esc(b.subject || '') + ' — ' + esc(b.grade || grade.name) + '</p>' +
+        '<p class="book-meta">' + esc(b.source || 'وزارة التربية العراقية') + (b.year ? ' · طبعة ' + esc(String(b.year)) : '') + '</p>' +
+        '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' +
+        '<a class="btn btn-gold" href="' + esc(b.url) + '" target="_blank" rel="noopener">عرض الكتاب</a>' +
+        '<a class="btn btn-outline" href="' + esc(b.url) + '" download>تنزيل PDF</a></div>';
+      grid.appendChild(el);
+    });
+    empty.style.display = list.length ? 'none' : '';
+  }
+
+  function renderMalazim() {
+    var list = byGrade(content.malazim);
+    var grid = document.getElementById('malazim-grid');
+    var empty = document.getElementById('malazim-empty');
+    document.getElementById('count-malazim').textContent = list.length ? '(' + list.length + ')' : '';
+    grid.innerHTML = '';
+    list.forEach(function (m) {
+      var el = document.createElement('article');
+      el.className = 'card';
+      el.innerHTML = '<span class="badge teal">من إعداد مدرس</span>' +
+        '<h3>' + esc(m.title || ('ملزمة ' + (m.subject || ''))) + '</h3>' +
+        '<p class="book-meta">المدرس: ' + esc(m.teacher || '') + '</p>' +
+        '<p class="book-meta">' + esc(m.subject || '') + ' — ' + esc(m.grade || grade.name) + '</p>' +
+        (m.note ? '<p>' + esc(m.note) + '</p>' : '') +
+        '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' +
+        '<a class="btn btn-gold" href="' + esc(m.url) + '" target="_blank" rel="noopener">عرض الملزمة</a></div>';
+      grid.appendChild(el);
+    });
+    empty.style.display = list.length ? 'none' : '';
+  }
+
+  function renderLectures() {
+    var list = byGrade(content.lectures);
+    var grid = document.getElementById('lectures-grid');
+    var empty = document.getElementById('lectures-empty');
+    document.getElementById('count-lectures').textContent = list.length ? '(' + list.length + ')' : '';
+    grid.innerHTML = '';
+    list.forEach(function (l) {
+      var el = document.createElement('article');
+      el.className = 'card';
+      var src = ytEmbedSrc(l);
+      var media = src ? '<div class="video-wrap"><iframe src="' + esc(src) + '" title="' + esc(l.title || 'محاضرة') + '" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>' : '';
+      var playlistLink = l.playlistId ? '<a class="btn btn-outline" href="https://www.youtube.com/playlist?list=' + esc(l.playlistId) + '" target="_blank" rel="noopener">عرض قائمة التشغيل</a>' : '';
+      var channelLink = l.channelUrl ? '<a class="btn btn-outline" href="' + esc(l.channelUrl) + '" target="_blank" rel="noopener">قناة المدرس</a>' : '';
+      el.innerHTML = media +
+        '<h3>' + esc(l.title || 'محاضرة') + '</h3>' +
+        '<p class="book-meta">المدرس: ' + esc(l.teacher || '') + '</p>' +
+        '<p class="book-meta">' + esc(l.subject || '') + ' — ' + esc(l.grade || grade.name) + (l.year ? ' · ' + esc(String(l.year)) : '') + '</p>' +
+        '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' + playlistLink + channelLink + '</div>';
+      grid.appendChild(el);
+    });
+    empty.style.display = list.length ? 'none' : '';
+  }
+
+  function renderAll() { renderBooks(); renderMalazim(); renderLectures(); }
+
+  document.querySelectorAll('.tabs button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      activeTab = btn.getAttribute('data-tab');
+      document.querySelectorAll('.tabs button').forEach(function (b) { b.classList.toggle('active', b === btn); });
+      document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.toggle('active', p.id === 'panel-' + activeTab); });
+    });
+  });
+
+  var tabParam = params.get('tab');
+  if (tabParam === 'malazim' || tabParam === 'lectures' || tabParam === 'books') {
+    var btn = document.querySelector('.tabs button[data-tab="' + tabParam + '"]');
+    if (btn) btn.click();
+  }
+
+  renderChips();
+  renderAll();
+})();
+</script>
+</body>
+</html>

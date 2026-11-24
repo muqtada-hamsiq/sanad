@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سند SANAD — منصة تعليمية عراقية مجانية</title>
+<meta name="description" content="سند — منصة تعليمية عراقية مجانية: دروس وملخصات وامتحانات وزارية لجميع المراحل من الابتدائية إلى الجامعة.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند SANAD" height="44">
+      <span class="logo-text"><span class="logo-name">سند</span><span class="logo-latin">SANAD</span></span>
+    </a>
+    <nav class="main-nav">
+      <a class="nav-link" href="index.html">الرئيسية</a>
+      <a class="nav-link" href="stages.html">المراحل</a>
+      <a class="nav-link" href="library.html">المكتبة</a>
+      <a class="nav-link" href="exams.html">الامتحانات</a>
+      <a class="nav-link" href="lessons.html">الدروس</a>
+      <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="schedule.html">الجدول</a>
+      <a class="nav-link" href="universities.html">الجامعات</a>
+      <a class="nav-link" href="scholarships.html">المنح</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
+      <a class="nav-link" href="search.html">بحث</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <h1 class="hero-title">أهلاً بك في سند</h1>
+    <p class="hero-sub">منصة تعليمية عراقية مجانية — دروس وملخصات وامتحانات وزارية لجميع المراحل، من الابتدائية إلى الجامعة، والتعليم الأساسي فيها مجاني بالكامل.</p>
+    <form class="search-box" action="search.html" method="get">
+      <input class="form-input" type="search" name="q" placeholder="ابحث عن مادة أو اختبار أو جامعة أو منحة..." aria-label="بحث">
+      <button class="btn btn-gold" type="submit">بحث</button>
+    </form>
+    <a class="btn btn-gold" href="stages.html">ابدأ رحلتك التعليمية</a>
+  </section>
+
+  <h2 class="section-title">اختر مرحلتك الدراسية</h2>
+  <div class="grid" id="home-stages"></div>
+
+  <h2 class="section-title">المواد الأكثر استخداماً</h2>
+  <div class="alert alert-info">لا توجد بيانات استخدام بعد — ستظهر هنا المواد الأكثر استخداماً بعد إضافة المحتوى وبدء استخدام الطلاب للمنصة.</div>
+
+  <h2 class="section-title">أحدث الكتب والملخصات</h2>
+  <div class="grid" id="home-books"></div>
+  <div class="empty-state" id="home-books-empty">لا توجد كتب بعد — تضاف قريباً</div>
+
+  <h2 class="section-title">الاختبارات المضافة حديثاً</h2>
+  <div class="grid">
+    <article class="card">
+      <span class="badge">وزاري</span>
+      <h3>رياضيات — الثالث المتوسط — الدور الثالث 2025/2026</h3>
+      <p>الرياضيات · الثالث المتوسط · 17/11/2026</p>
+      <p>المصدر: ورقة الامتحان الوزاري — وزارة التربية العراقية</p>
+      <a class="btn btn-teal" href="exam.html?id=math3-3rd-2026">ابدأ الاختبار</a>
+    </article>
+  </div>
+
+  <h2 class="section-title">الدروس الجديدة</h2>
+  <div class="grid" id="home-lessons"></div>
+  <div class="empty-state" id="home-lessons-empty">لا توجد دروس بعد — تضاف قريباً</div>
+
+  <h2 class="section-title">قسم المعلم الذكي</h2>
+  <div class="card">
+    <span class="badge">تطلق قريباً</span>
+    <h3>المعلم الذكي</h3>
+    <p>معلم ذكي يساعدك على فهم الدروس وحل التمارين ومراجعة الامتحانات — قريباً على منصة سند.</p>
+    <a class="btn btn-outline" href="teacher.html">تعرف على المعلم الذكي</a>
+  </div>
+
+  <h2 class="section-title">إحصائيات المنصة</h2>
+  <div class="alert alert-info">إحصائيات المنصة تظهر هنا بعد إضافة المحتوى.</div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <nav class="footer-links">
+      <a href="index.html">الرئيسية</a>
+      <a href="stages.html">المراحل</a>
+      <a href="library.html">المكتبة</a>
+      <a href="exams.html">الامتحانات</a>
+      <a href="lessons.html">الدروس</a>
+      <a href="teacher.html">المعلم الذكي</a>
+      <a href="schedule.html">الجدول</a>
+      <a href="universities.html">الجامعات</a>
+      <a href="scholarships.html">المنح</a>
+      <a href="profile.html">ملفي</a>
+      <a href="search.html">بحث</a>
+      <a href="about.html">من نحن</a>
+      <a href="contact.html">تواصل معنا</a>
+      <a href="privacy.html">سياسة الخصوصية</a>
+      <a href="terms.html">شروط الاستخدام</a>
+      <a href="copyright.html">حقوق النشر</a>
+      <a href="faq.html">الأسئلة الشائعة</a>
+      <a href="report.html">الإبلاغ عن محتوى</a>
+      <a href="sitemap.html">خريطة المنصة</a>
+    </nav>
+    <p class="footer-note"><span class="footer-tagline">سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</span> · جميع الحقوق محفوظة © <span data-year>2026</span></p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  var wrap = document.getElementById('home-stages');
+  var data = window.SANAD_DATA || { stages: [] };
+  var descs = {
+    primary: 'الصفوف من الأول إلى السادس الابتدائي',
+    middle: 'الصفوف الأول والثاني والثالث المتوسط',
+    prep: 'الصفوف الرابع والخامس والسادس الإعدادي',
+    uni: 'دليل الجامعات العراقية الحكومية والأهلية'
+  };
+  data.stages.forEach(function (stage) {
+    var card = document.createElement('article');
+    card.className = 'card stage-card';
+    var note = stage.note ? '<p>' + stage.note + '</p>' : '';
+    card.innerHTML = '<h3>' + stage.name + '</h3><p>' + (descs[stage.id] || '') + '</p>' + note +
+      '<a class="btn btn-outline" href="stages.html#' + stage.id + '">عرض الصفوف</a>';
+    wrap.appendChild(card);
+  });
+
+  /* أحدث الكتب والمحاضرات من الكتالوج الموحد */
+  var content = window.SANAD_CONTENT || { books: [], malazim: [], lectures: [] };
+  var booksWrap = document.getElementById('home-books');
+  var booksEmpty = document.getElementById('home-books-empty');
+  var books = (content.books || []).slice(0, 3);
+  if (books.length) {
+    booksEmpty.style.display = 'none';
+    books.forEach(function (b) {
+      var card = document.createElement('article');
+      card.className = 'card';
+      card.innerHTML = '<span class="badge">محتوى رسمي</span><h3>' + b.title + '</h3>' +
+        '<p>' + b.subject + ' · ' + b.grade + '</p>' +
+        '<a class="btn btn-teal" href="' + b.url + '" target="_blank" rel="noopener">عرض الكتاب</a>';
+      booksWrap.appendChild(card);
+    });
+  } else {
+    booksWrap.style.display = 'none';
+  }
+  var lessonsWrap = document.getElementById('home-lessons');
+  var lessonsEmpty = document.getElementById('home-lessons-empty');
+  var lectures = (content.lectures || []).slice(0, 3);
+  if (lectures.length) {
+    lessonsEmpty.style.display = 'none';
+    lectures.forEach(function (l) {
+      var card = document.createElement('article');
+      card.className = 'card';
+      var link = l.youtubeId ? 'https://www.youtube.com/watch?v=' + l.youtubeId : (l.playlistId ? 'https://www.youtube.com/playlist?list=' + l.playlistId : 'lessons.html');
+      card.innerHTML = '<span class="badge teal">محاضرة</span><h3>' + l.title + '</h3>' +
+        '<p>المدرس: ' + l.teacher + ' · ' + l.subject + ' · ' + l.grade + '</p>' +
+        '<a class="btn btn-teal" href="' + link + '" target="_blank" rel="noopener">مشاهدة المحاضرة</a>';
+      lessonsWrap.appendChild(card);
+    });
+  } else {
+    lessonsWrap.style.display = 'none';
+  }
+})();
+</script>
+</body>
+</html>

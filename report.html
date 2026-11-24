@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الإبلاغ عن محتوى | سند SANAD</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44">
+      <span>سند</span>
+      <span>SANAD</span>
+    </a>
+    <nav class="main-nav" aria-label="التنقل الرئيسي">
+      <a class="nav-link" href="index.html">الرئيسية</a>
+      <a class="nav-link" href="stages.html">المراحل</a>
+      <a class="nav-link" href="library.html">المكتبة</a>
+      <a class="nav-link" href="exams.html">الامتحانات</a>
+      <a class="nav-link" href="lessons.html">الدروس</a>
+      <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="schedule.html">الجدول</a>
+      <a class="nav-link" href="universities.html">الجامعات</a>
+      <a class="nav-link" href="scholarships.html">المنح</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
+      <a class="nav-link" href="search.html">بحث</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <h1>الإبلاغ عن محتوى</h1>
+    <p>وجدت محتوى خاطئاً أو رابطاً لا يعمل أو محتوى ينتهك حقوق النشر؟ أخبرنا وسنراجعه.</p>
+  </section>
+
+  <div class="card">
+    <form id="reportForm" novalidate>
+      <div id="reportSuccess" class="alert alert-info" hidden>شكراً — حُفظ بلاغك وسيُراجع من الإدارة</div>
+      <label class="form-label" for="reportType">نوع البلاغ</label>
+      <select class="form-input" id="reportType" required>
+        <option value="محتوى خاطئ">محتوى خاطئ</option>
+        <option value="رابط لا يعمل">رابط لا يعمل</option>
+        <option value="محتوى محمي بحقوق نشر">محتوى محمي بحقوق نشر</option>
+        <option value="محتوى مسيء">محتوى مسيء</option>
+        <option value="غير ذلك">غير ذلك</option>
+      </select>
+      <label class="form-label" for="reportRef">الصفحة أو العنصر المُبلَّغ عنه</label>
+      <input class="form-input" type="text" id="reportRef" required placeholder="مثال: library.html — كتاب الرياضيات للثالث المتوسط">
+      <label class="form-label" for="reportDetails">تفاصيل البلاغ</label>
+      <textarea class="form-input" id="reportDetails" rows="5" required placeholder="اشرح المشكلة بالتفصيل..."></textarea>
+      <button class="btn btn-gold" type="submit">إرسال البلاغ</button>
+    </form>
+    <p class="alert alert-info">بلاغك يُحفظ محلياً على جهازك حالياً (في انتظار ربط الخدمة الخلفية)، وستتمكن الإدارة من مراجعته من لوحة الإدارة على هذا الجهاز.</p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <nav class="footer-links" aria-label="روابط المنصة">
+      <a href="index.html">الرئيسية</a>
+      <a href="stages.html">المراحل</a>
+      <a href="library.html">المكتبة</a>
+      <a href="exams.html">الامتحانات</a>
+      <a href="lessons.html">الدروس</a>
+      <a href="teacher.html">المعلم الذكي</a>
+      <a href="schedule.html">الجدول</a>
+      <a href="universities.html">الجامعات</a>
+      <a href="scholarships.html">المنح</a>
+      <a href="profile.html">ملفي</a>
+      <a href="search.html">بحث</a>
+      <a href="about.html">من نحن</a>
+      <a href="contact.html">تواصل معنا</a>
+      <a href="privacy.html">سياسة الخصوصية</a>
+      <a href="terms.html">شروط الاستخدام</a>
+      <a href="copyright.html">حقوق النشر</a>
+      <a href="faq.html">الأسئلة الشائعة</a>
+      <a href="report.html">الإبلاغ عن محتوى</a>
+      <a href="sitemap.html">خريطة المنصة</a>
+    </nav>
+    <p>سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  function readReports() {
+    try { return JSON.parse(localStorage.getItem('sanad_reports') || '[]'); } catch (e) { return []; }
+  }
+  function toast(msg) {
+    if (window.SANAD && typeof window.SANAD.toast === 'function') { window.SANAD.toast(msg); }
+  }
+  document.getElementById('reportForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var type = document.getElementById('reportType').value;
+    var ref = document.getElementById('reportRef').value.trim();
+    var details = document.getElementById('reportDetails').value.trim();
+    if (!ref || !details) { return; }
+    var reports = readReports();
+    reports.push({ type: type, ref: ref, details: details, date: new Date().toISOString(), read: false });
+    try { localStorage.setItem('sanad_reports', JSON.stringify(reports)); } catch (e2) {}
+    document.getElementById('reportSuccess').hidden = false;
+    toast('شكراً — حُفظ بلاغك وسيُراجع من الإدارة');
+    document.getElementById('reportForm').reset();
+    document.getElementById('reportSuccess').scrollIntoView();
+  });
+})();
+</script>
+</body>
+</html>

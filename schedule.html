@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الجدول الدراسي — سند SANAD</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.schedule-days{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.schedule-days label{display:block}
+.check-list{display:flex;flex-wrap:wrap;gap:8px}
+.check-list label{display:inline-flex;align-items:center;gap:6px}
+.session-row{display:flex;align-items:center;gap:8px;padding:6px 0}
+</style>
+</head>
+<body>
+<header class="site-header">
+<div class="container">
+<a class="logo" href="index.html"><img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44"><span>سند</span> <span>SANAD</span></a>
+<nav class="main-nav">
+<a class="nav-link" href="index.html">الرئيسية</a>
+<a class="nav-link" href="stages.html">المراحل</a>
+<a class="nav-link" href="library.html">المكتبة</a>
+<a class="nav-link" href="exams.html">الامتحانات</a>
+<a class="nav-link" href="lessons.html">الدروس</a>
+<a class="nav-link" href="teacher.html">المعلم الذكي</a>
+<a class="nav-link active" href="schedule.html">الجدول</a>
+<a class="nav-link" href="universities.html">الجامعات</a>
+<a class="nav-link" href="scholarships.html">المنح</a>
+<a class="nav-link" href="profile.html">ملفي</a>
+<a class="nav-link" href="search.html">بحث</a>
+</nav>
+</div>
+</header>
+
+<main class="container">
+<section class="hero">
+<h1>الجدول الدراسي</h1>
+<p>حدد موادك وأوقاتك ومواعيد امتحاناتك وأهدافك اليومية، واحفظ جدولك الأسبوعي على جهازك.</p>
+<p class="alert alert-info">جدولك محفوظ على جهازك فقط، ولا يُرسل إلى أي جهة.</p>
+</section>
+
+<section class="card">
+<h2 class="section-title">أنشئ جدولك</h2>
+
+<label class="form-label">المواد التي تريد دراستها</label>
+<div class="check-list" id="subject-list"></div>
+<p><a href="stages.html" class="btn btn-outline">تصفح المراحل والمواد</a></p>
+
+<label class="form-label">أوقات الدراسة لكل يوم</label>
+<div class="schedule-days" id="day-times"></div>
+
+<h3>مواعيد الامتحانات</h3>
+<div id="exam-list"></div>
+<div class="schedule-days">
+<div>
+<label class="form-label" for="exam-name">اسم الامتحان</label>
+<input class="form-input" type="text" id="exam-name" placeholder="مثال: امتحان الرياضيات الشهري">
+</div>
+<div>
+<label class="form-label" for="exam-date">التاريخ</label>
+<input class="form-input" type="date" id="exam-date">
+</div>
+</div>
+<p><button class="btn btn-outline" type="button" id="add-exam-btn">أضف الامتحان</button></p>
+
+<h3>أهدافك اليومية</h3>
+<div class="schedule-days">
+<div>
+<label class="form-label" for="goal-hours">عدد ساعات الدراسة في اليوم</label>
+<input class="form-input" type="number" id="goal-hours" min="0" max="16" step="0.5" placeholder="مثال: 3">
+</div>
+<div>
+<label class="form-label" for="goal-lessons">عدد الدروس في اليوم</label>
+<input class="form-input" type="number" id="goal-lessons" min="0" max="20" step="1" placeholder="مثال: 2">
+</div>
+</div>
+
+<p><button class="btn btn-gold" type="button" id="save-schedule-btn">احفظ جدولي</button></p>
+</section>
+
+<section class="card">
+<h2 class="section-title">جدولك الأسبوعي</h2>
+<div id="weekly-view"></div>
+</section>
+
+<section class="card">
+<h2 class="section-title">نسبة الإنجاز</h2>
+<div id="progress-view"></div>
+</section>
+
+<section class="card">
+<h2 class="section-title">التذكيرات</h2>
+<div id="reminders-view"></div>
+</section>
+</main>
+
+<footer class="site-footer">
+<div class="container">
+<div class="footer-links">
+<a href="index.html">الرئيسية</a>
+<a href="stages.html">المراحل</a>
+<a href="library.html">المكتبة</a>
+<a href="exams.html">الامتحانات</a>
+<a href="lessons.html">الدروس</a>
+<a href="teacher.html">المعلم الذكي</a>
+<a href="schedule.html">الجدول</a>
+<a href="universities.html">الجامعات</a>
+<a href="scholarships.html">المنح</a>
+<a href="profile.html">ملفي</a>
+<a href="search.html">بحث</a>
+<a href="about.html">من نحن</a>
+<a href="contact.html">تواصل معنا</a>
+<a href="privacy.html">سياسة الخصوصية</a>
+<a href="terms.html">شروط الاستخدام</a>
+<a href="copyright.html">حقوق النشر</a>
+<a href="faq.html">الأسئلة الشائعة</a>
+<a href="report.html">الإبلاغ عن محتوى</a>
+<a href="sitemap.html">خريطة المنصة</a>
+</div>
+<p>سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</p>
+</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  var DAYS = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+  var FALLBACK_SUBJECTS = ['الرياضيات', 'اللغة العربية', 'اللغة الإنجليزية', 'الفيزياء', 'الكيمياء', 'الأحياء', 'الاجتماعيات', 'التربية الإسلامية', 'الحاسوب'];
+
+  function readJSON(key, fallback) {
+    try { var v = JSON.parse(localStorage.getItem(key) || 'null'); return v === null || v === undefined ? fallback : v; } catch (e) { return fallback; }
+  }
+  function toast(msg) {
+    if (window.SANAD && typeof window.SANAD.toast === 'function') { window.SANAD.toast(msg); }
+    else { alert(msg); }
+  }
+  function thirdIntermediateSubjects() {
+    try {
+      var data = window.SANAD_DATA;
+      if (data && data.stages) {
+        var stages = Array.isArray(data.stages) ? data.stages : [];
+        for (var i = 0; i < stages.length; i++) {
+          var st = stages[i];
+          var grades = st.grades || st.rows || st.classes || [];
+          if (Array.isArray(grades)) {
+            for (var j = 0; j < grades.length; j++) {
+              var g = grades[j];
+              var name = g.name || g.title || '';
+              if (name.indexOf('الثالث') !== -1 && name.indexOf('المتوسط') !== -1) {
+                if (Array.isArray(g.subjects) && g.subjects.length) {
+                  return g.subjects.map(function (s) { return typeof s === 'string' ? s : (s.name || s.title || ''); }).filter(Boolean);
+                }
+              }
+            }
+          }
+          if (st.name && st.name.indexOf('الثالث المتوسط') !== -1 && Array.isArray(st.subjects) && st.subjects.length) {
+            return st.subjects.map(function (s) { return typeof s === 'string' ? s : (s.name || s.title || ''); }).filter(Boolean);
+          }
+        }
+      }
+    } catch (e) {}
+    return FALLBACK_SUBJECTS;
+  }
+
+  var subjects = thirdIntermediateSubjects();
+  var subjectList = document.getElementById('subject-list');
+  subjects.forEach(function (s) {
+    var label = document.createElement('label');
+    var cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.value = s; cb.className = 'subject-cb';
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(' ' + s));
+    subjectList.appendChild(label);
+  });
+
+  var dayTimes = document.getElementById('day-times');
+  DAYS.forEach(function (d, i) {
+    var div = document.createElement('div');
+    var label = document.createElement('label');
+    label.className = 'form-label';
+    label.textContent = d;
+    var input = document.createElement('input');
+    input.className = 'form-input'; input.type = 'time'; input.id = 'day-time-' + i;
+    div.appendChild(label); div.appendChild(input);
+    dayTimes.appendChild(div);
+  });
+
+  var pendingExams = [];
+  var examListEl = document.getElementById('exam-list');
+  function renderPendingExams() {
+    examListEl.innerHTML = '';
+    if (!pendingExams.length) {
+      var p = document.createElement('p');
+      p.className = 'empty-state';
+      p.textContent = 'لم تضف أي امتحان بعد.';
+      examListEl.appendChild(p);
+      return;
+    }
+    pendingExams.forEach(function (ex, idx) {
+      var row = document.createElement('div');
+      row.className = 'session-row';
+      var span = document.createElement('span');
+      span.textContent = ex.name + ' — ' + ex.date;
+      var btn = document.createElement('button');
+      btn.className = 'btn btn-outline'; btn.type = 'button'; btn.textContent = 'حذف';
+      btn.addEventListener('click', function () { pendingExams.splice(idx, 1); renderPendingExams(); });
+      row.appendChild(span); row.appendChild(btn);
+      examListEl.appendChild(row);
+    });
+  }
+  renderPendingExams();
+
+  document.getElementById('add-exam-btn').addEventListener('click', function () {
+    var name = document.getElementById('exam-name').value.trim();
+    var date = document.getElementById('exam-date').value;
+    if (!name || !date) { toast('اكتب اسم الامتحان وحدد تاريخه أولاً.'); return; }
+    pendingExams.push({ name: name, date: date });
+    document.getElementById('exam-name').value = '';
+    document.getElementById('exam-date').value = '';
+    renderPendingExams();
+  });
+
+  function getSchedule() { return readJSON('sanad_schedule', null); }
+
+  function renderWeekly() {
+    var view = document.getElementById('weekly-view');
+    var s = getSchedule();
+    view.innerHTML = '';
+    if (!s || !s.subjects || !s.subjects.length) {
+      var p = document.createElement('p');
+      p.className = 'empty-state';
+      p.textContent = 'لم تنشئ جدولك بعد — حدد موادك وأوقاتك أعلاه';
+      view.appendChild(p);
+      return;
+    }
+    var table = document.createElement('table');
+    table.className = 'table';
+    var thead = document.createElement('thead');
+    var hr = document.createElement('tr');
+    ['اليوم', 'وقت الدراسة', 'المواد'].forEach(function (h) {
+      var th = document.createElement('th'); th.textContent = h; hr.appendChild(th);
+    });
+    thead.appendChild(hr); table.appendChild(thead);
+    var tbody = document.createElement('tbody');
+    DAYS.forEach(function (d, i) {
+      var tr = document.createElement('tr');
+      var td1 = document.createElement('td'); td1.textContent = d;
+      var td2 = document.createElement('td'); td2.textContent = (s.times && s.times[i]) ? s.times[i] : '—';
+      var td3 = document.createElement('td'); td3.textContent = s.subjects.join('، ');
+      tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    view.appendChild(table);
+    var goals = document.createElement('p');
+    goals.textContent = 'هدفك اليومي: ' + (s.goalHours !== undefined && s.goalHours !== '' ? s.goalHours + ' ساعة دراسة' : 'غير محدد') + ' — ' + (s.goalLessons !== undefined && s.goalLessons !== '' ? s.goalLessons + ' دروس' : 'عدد الدروس غير محدد');
+    view.appendChild(goals);
+  }
+
+  function renderProgress() {
+    var view = document.getElementById('progress-view');
+    var s = getSchedule();
+    view.innerHTML = '';
+    if (!s || !s.subjects || !s.subjects.length) {
+      var p = document.createElement('p');
+      p.className = 'empty-state';
+      p.textContent = 'لا توجد جلسات مخططة بعد — أنشئ جدولك أولاً.';
+      view.appendChild(p);
+      return;
+    }
+    var done = readJSON('sanad_schedule_done', {});
+    var plannedDays = [];
+    DAYS.forEach(function (d, i) { if (s.times && s.times[i]) { plannedDays.push(i); } });
+    if (!plannedDays.length) {
+      var p2 = document.createElement('p');
+      p2.className = 'empty-state';
+      p2.textContent = 'حدد وقت دراسة ليوم واحد على الأقل لتظهر جلساتك هنا.';
+      view.appendChild(p2);
+      return;
+    }
+    var total = plannedDays.length;
+    var doneCount = plannedDays.filter(function (i) { return !!done[i]; }).length;
+    var pct = total ? Math.round((doneCount / total) * 100) : 0;
+    var bar = document.createElement('div');
+    bar.className = 'progress-bar';
+    var fill = document.createElement('div');
+    fill.style.width = pct + '%';
+    bar.appendChild(fill);
+    view.appendChild(bar);
+    var label = document.createElement('p');
+    label.textContent = 'أنجزت ' + doneCount + ' من ' + total + ' جلسات مخططة هذا الأسبوع — ' + pct + '%';
+    view.appendChild(label);
+    plannedDays.forEach(function (i) {
+      var row = document.createElement('div');
+      row.className = 'session-row';
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.checked = !!done[i];
+      cb.addEventListener('change', function () {
+        var d = readJSON('sanad_schedule_done', {});
+        if (cb.checked) { d[i] = true; } else { delete d[i]; }
+        try { localStorage.setItem('sanad_schedule_done', JSON.stringify(d)); } catch (e) {}
+        renderProgress();
+      });
+      var span = document.createElement('span');
+      span.textContent = DAYS[i] + ' — ' + s.times[i] + ' — ' + s.subjects.join('، ');
+      row.appendChild(cb); row.appendChild(span);
+      view.appendChild(row);
+    });
+  }
+
+  function renderReminders() {
+    var view = document.getElementById('reminders-view');
+    var s = getSchedule();
+    view.innerHTML = '';
+    var exams = (s && Array.isArray(s.exams)) ? s.exams.slice() : [];
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var upcoming = exams.filter(function (ex) {
+      var d = new Date(ex.date + 'T00:00:00');
+      return !isNaN(d.getTime()) && d >= today;
+    }).sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+    if (!upcoming.length) {
+      var p = document.createElement('p');
+      p.className = 'empty-state';
+      p.textContent = 'لا توجد امتحانات قادمة في جدولك.';
+      view.appendChild(p);
+      return;
+    }
+    upcoming.forEach(function (ex) {
+      var d = new Date(ex.date + 'T00:00:00');
+      var days = Math.round((d - today) / 86400000);
+      var item = document.createElement('p');
+      var chip = document.createElement('span');
+      chip.className = 'chip';
+      chip.textContent = days === 0 ? 'اليوم' : (days === 1 ? 'غداً' : 'بعد ' + days + ' يوم');
+      item.textContent = ex.name + ' — ' + ex.date + ' ';
+      item.appendChild(chip);
+      view.appendChild(item);
+    });
+  }
+
+  function loadIntoForm() {
+    var s = getSchedule();
+    if (!s) { return; }
+    if (Array.isArray(s.subjects)) {
+      document.querySelectorAll('.subject-cb').forEach(function (cb) { cb.checked = s.subjects.indexOf(cb.value) !== -1; });
+    }
+    if (s.times) {
+      DAYS.forEach(function (d, i) { var el = document.getElementById('day-time-' + i); if (el && s.times[i]) { el.value = s.times[i]; } });
+    }
+    if (Array.isArray(s.exams)) { pendingExams = s.exams.slice(); renderPendingExams(); }
+    if (s.goalHours !== undefined) { document.getElementById('goal-hours').value = s.goalHours; }
+    if (s.goalLessons !== undefined) { document.getElementById('goal-lessons').value = s.goalLessons; }
+  }
+
+  document.getElementById('save-schedule-btn').addEventListener('click', function () {
+    var chosen = [];
+    document.querySelectorAll('.subject-cb:checked').forEach(function (cb) { chosen.push(cb.value); });
+    if (!chosen.length) { toast('اختر مادة واحدة على الأقل.'); return; }
+    var times = DAYS.map(function (d, i) { return document.getElementById('day-time-' + i).value || ''; });
+    var schedule = {
+      subjects: chosen,
+      times: times,
+      exams: pendingExams,
+      goalHours: document.getElementById('goal-hours').value,
+      goalLessons: document.getElementById('goal-lessons').value,
+      savedAt: new Date().toISOString()
+    };
+    try {
+      localStorage.setItem('sanad_schedule', JSON.stringify(schedule));
+      if (window.SANAD && typeof window.SANAD.addPoints === 'function') { window.SANAD.addPoints(5); }
+      toast('تم حفظ جدولك على جهازك.');
+    } catch (e) { toast('تعذر حفظ الجدول على هذا الجهاز.'); return; }
+    renderWeekly(); renderProgress(); renderReminders();
+  });
+
+  loadIntoForm();
+  renderWeekly(); renderProgress(); renderReminders();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الامتحان — سند SANAD</title>
+<meta name="description" content="أداء الامتحان الإلكتروني في منصة سند مع النتيجة والشرح.">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<style>
+.option-btn{display:block;width:100%;text-align:right;margin:.5rem 0;padding:.8rem 1rem;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;font-size:1rem}
+.option-btn.selected{border-color:#0a7d7d;background:#e6f5f5;font-weight:bold}
+.option-btn.correct{border-color:#1a7a3a;background:#e6f7ea}
+.option-btn.wrong{border-color:#b3261e;background:#fdecea}
+.timer{font-weight:bold;font-size:1.1rem}
+.review-item{border-top:1px solid #ddd;padding:.8rem 0}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="container" style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap">
+    <a href="index.html" style="display:flex;align-items:center;gap:.6rem;text-decoration:none;color:inherit">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44">
+      <span class="logo">سند <small>SANAD</small></span>
+    </a>
+    <nav class="main-nav" aria-label="التنقل الرئيسي">
+      <a class="nav-link" href="index.html">الرئيسية</a>
+      <a class="nav-link" href="stages.html">المراحل</a>
+      <a class="nav-link" href="library.html">المكتبة</a>
+      <a class="nav-link active" href="exams.html">الامتحانات</a>
+      <a class="nav-link" href="lessons.html">الدروس</a>
+      <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="schedule.html">الجدول</a>
+      <a class="nav-link" href="universities.html">الجامعات</a>
+      <a class="nav-link" href="scholarships.html">المنح</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
+      <a class="nav-link" href="search.html">بحث</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <div id="not-found" class="empty-state" style="display:none">
+    <h2>الامتحان غير موجود</h2>
+    <p>الرابط الذي فتحته لا يشير إلى امتحان معروف. عد إلى صفحة الامتحانات واختر امتحاناً من القائمة.</p>
+    <a class="btn btn-gold" href="exams.html">العودة إلى الامتحانات</a>
+  </div>
+
+  <div id="runner" style="display:none">
+    <section class="hero">
+      <h1 id="exam-title"></h1>
+      <p id="exam-meta" class="exam-meta"></p>
+      <p id="exam-source" class="exam-meta"></p>
+    </section>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:center">
+        <span id="progress-text" aria-live="polite"></span>
+        <label><input type="checkbox" id="timer-toggle"> تشغيل المؤقت (60 دقيقة)</label>
+        <span id="timer-text" class="timer" style="display:none" aria-live="polite"></span>
+      </div>
+      <div class="progress-bar" style="height:8px;background:#e5e5e5;border-radius:4px;margin:.7rem 0">
+        <div id="progress-fill" style="height:100%;background:#0a7d7d;border-radius:4px;width:0%"></div>
+      </div>
+
+      <h2 id="q-text"></h2>
+      <div id="options" role="radiogroup" aria-label="خيارات الإجابة"></div>
+
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem">
+        <button id="btn-prev" class="btn btn-outline" type="button">السابق</button>
+        <button id="btn-next" class="btn btn-gold" type="button">التالي</button>
+        <button id="btn-finish" class="btn btn-teal" type="button">إنهاء الامتحان</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="results" class="card" style="display:none">
+    <h2 class="section-title">النتيجة</h2>
+    <p id="score-text" style="font-size:1.3rem;font-weight:bold"></p>
+    <p id="score-pct"></p>
+    <div id="review"></div>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem">
+      <button id="btn-retake" class="btn btn-gold" type="button">إعادة الامتحان</button>
+      <a class="btn btn-outline" href="exams.html">العودة إلى الامتحانات</a>
+    </div>
+    <div id="prev-attempts" style="margin-top:1.2rem">
+      <h3>محاولاتك السابقة</h3>
+      <div id="prev-list"></div>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <nav class="footer-links" aria-label="روابط المنصة">
+      <a href="index.html">الرئيسية</a>
+      <a href="stages.html">المراحل</a>
+      <a href="library.html">المكتبة</a>
+      <a href="exams.html">الامتحانات</a>
+      <a href="lessons.html">الدروس</a>
+      <a href="teacher.html">المعلم الذكي</a>
+      <a href="schedule.html">الجدول</a>
+      <a href="universities.html">الجامعات</a>
+      <a href="scholarships.html">المنح</a>
+      <a href="profile.html">ملفي</a>
+      <a href="search.html">بحث</a>
+      <a href="about.html">من نحن</a>
+      <a href="contact.html">تواصل معنا</a>
+      <a href="privacy.html">سياسة الخصوصية</a>
+      <a href="terms.html">شروط الاستخدام</a>
+      <a href="copyright.html">حقوق النشر</a>
+      <a href="faq.html">الأسئلة الشائعة</a>
+      <a href="report.html">الإبلاغ عن محتوى</a>
+      <a href="sitemap.html">خريطة المنصة</a>
+    </nav>
+    <p>سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var examId = params.get('id') || '';
+  var data = (typeof window !== 'undefined' && window.SANAD_DATA) ? window.SANAD_DATA : {};
+  var exams = Array.isArray(data.exams) ? data.exams : [];
+  var exam = null;
+  exams.forEach(function (e) { if (e.id === examId) exam = e; });
+
+  if (!exam || !Array.isArray(exam.questions) || !exam.questions.length) {
+    document.getElementById('not-found').style.display = '';
+    return;
+  }
+
+  var total = exam.questions.length;
+  var idx = 0;
+  var answers = new Array(total).fill(null);
+  var finished = false;
+  var timerOn = false;
+  var secondsLeft = 60 * 60;
+  var timerHandle = null;
+
+  document.getElementById('runner').style.display = '';
+  document.getElementById('exam-title').textContent = exam.title || 'امتحان';
+  document.getElementById('exam-meta').textContent =
+    (exam.subject || '') + ' — ' + (exam.grade || '') + ' · ' + (exam.type || '') + ' · عدد الأسئلة: ' + total;
+  document.getElementById('exam-source').textContent = exam.source ? ('المصدر: ' + exam.source) : '';
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmtTime(sec) {
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
+  }
+
+  function renderQuestion() {
+    var q = exam.questions[idx];
+    document.getElementById('progress-text').textContent = 'سؤال ' + (idx + 1) + ' من ' + total;
+    document.getElementById('progress-fill').style.width = Math.round(((idx + 1) / total) * 100) + '%';
+    document.getElementById('q-text').textContent = q.q || '';
+    var box = document.getElementById('options');
+    box.innerHTML = '';
+    (q.options || []).forEach(function (opt, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'option-btn' + (answers[idx] === i ? ' selected' : '');
+      b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', answers[idx] === i ? 'true' : 'false');
+      b.textContent = opt;
+      b.addEventListener('click', function () {
+        answers[idx] = i;
+        renderQuestion();
+      });
+      box.appendChild(b);
+    });
+    document.getElementById('btn-prev').disabled = idx === 0;
+    document.getElementById('btn-next').textContent = idx === total - 1 ? 'مراجعة الإجابات' : 'التالي';
+  }
+
+  function stopTimer() {
+    if (timerHandle) { clearInterval(timerHandle); timerHandle = null; }
+    document.getElementById('timer-text').style.display = 'none';
+  }
+  function startTimer() {
+    stopTimer();
+    secondsLeft = 60 * 60;
+    var t = document.getElementById('timer-text');
+    t.style.display = '';
+    t.textContent = 'الوقت المتبقي: ' + fmtTime(secondsLeft);
+    timerHandle = setInterval(function () {
+      secondsLeft -= 1;
+      if (secondsLeft <= 0) {
+        t.textContent = 'انتهى الوقت';
+        finish(true);
+        return;
+      }
+      t.textContent = 'الوقت المتبقي: ' + fmtTime(secondsLeft);
+    }, 1000);
+  }
+  document.getElementById('timer-toggle').addEventListener('change', function (e) {
+    timerOn = e.target.checked;
+    if (timerOn && !finished) startTimer(); else stopTimer();
+  });
+
+  document.getElementById('btn-prev').addEventListener('click', function () {
+    if (idx > 0) { idx -= 1; renderQuestion(); }
+  });
+  document.getElementById('btn-next').addEventListener('click', function () {
+    if (idx < total - 1) { idx += 1; renderQuestion(); }
+  });
+  document.getElementById('btn-finish').addEventListener('click', function () { finish(false); });
+
+  function getHistory() {
+    if (typeof window !== 'undefined' && window.SANAD && typeof window.SANAD.getExamHistory === 'function') {
+      try { return window.SANAD.getExamHistory(exam.id) || []; } catch (e) { return []; }
+    }
+    return [];
+  }
+
+  function finish(auto) {
+    if (finished) return;
+    var unanswered = 0;
+    answers.forEach(function (a) { if (a === null) unanswered += 1; });
+    if (!auto && unanswered > 0) {
+      if (!window.confirm('لديك ' + unanswered + ' سؤال بدون إجابة. هل تريد إنهاء الامتحان؟')) return;
+    }
+    finished = true;
+    stopTimer();
+    var score = 0;
+    exam.questions.forEach(function (q, i) {
+      if (answers[i] === q.answer) score += 1;
+    });
+    var pct = Math.round((score / total) * 100);
+
+    if (typeof window !== 'undefined' && window.SANAD) {
+      if (typeof window.SANAD.recordExam === 'function') {
+        try { window.SANAD.recordExam(exam.id, score, total); } catch (e) {}
+      }
+      if (typeof window.SANAD.addPoints === 'function') {
+        try { window.SANAD.addPoints(10, 'إنهاء اختبار'); } catch (e) {}
+      }
+      if (typeof window.SANAD.toast === 'function') {
+        window.SANAD.toast('أنهيت الامتحان — نتيجتك ' + score + ' من ' + total);
+      }
+    }
+
+    document.getElementById('runner').style.display = 'none';
+    var res = document.getElementById('results');
+    res.style.display = '';
+    document.getElementById('score-text').textContent = 'نتيجتك: ' + score + ' من ' + total;
+    document.getElementById('score-pct').textContent = 'النسبة: ' + pct + '٪' + (auto ? ' — انتهى الوقت وتم تسليم الامتحان تلقائياً.' : '');
+
+    var review = document.getElementById('review');
+    review.innerHTML = '<h3>مراجعة الإجابات</h3>';
+    exam.questions.forEach(function (q, i) {
+      var mine = answers[i];
+      var ok = mine === q.answer;
+      var div = document.createElement('div');
+      div.className = 'review-item';
+      var optsHtml = (q.options || []).map(function (opt, j) {
+        var cls = '';
+        if (j === q.answer) cls = 'correct';
+        else if (j === mine) cls = 'wrong';
+        var tag = j === q.answer ? ' (الإجابة الصحيحة)' : (j === mine ? ' (إجابتك)' : '');
+        return '<p class="option-btn ' + cls + '">' + esc(opt) + esc(tag) + '</p>';
+      }).join('');
+      div.innerHTML = '<p><strong>سؤال ' + (i + 1) + ': ' + esc(q.q || '') + '</strong></p>'
+        + optsHtml
+        + (mine === null ? '<p>لم تجب عن هذا السؤال.</p>' : '')
+        + '<p>' + (ok ? 'إجابة صحيحة.' : 'إجابة خاطئة.') + '</p>'
+        + (q.explain ? '<p>الشرح: ' + esc(q.explain) + '</p>' : '');
+      review.appendChild(div);
+    });
+
+    var hist = getHistory();
+    var prevBox = document.getElementById('prev-list');
+    if (hist.length) {
+      prevBox.innerHTML = hist.map(function (h) {
+        var t = h.total || total;
+        return '<p>محاولة بتاريخ ' + esc(h.date || h.at || '') + ' — النتيجة: ' + h.score + ' من ' + t + ' (' + Math.round((h.score / t) * 100) + '٪)</p>';
+      }).join('');
+    } else {
+      prevBox.innerHTML = '<p>هذه محاولتك الأولى في هذا الامتحان.</p>';
+    }
+    window.scrollTo(0, 0);
+  }
+
+  document.getElementById('btn-retake').addEventListener('click', function () {
+    idx = 0;
+    answers = new Array(total).fill(null);
+    finished = false;
+    secondsLeft = 60 * 60;
+    document.getElementById('timer-toggle').checked = false;
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('runner').style.display = '';
+    renderQuestion();
+  });
+
+  renderQuestion();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>المكتبة — سند SANAD</title>
+<meta name="description" content="المكتبة التعليمية في منصة سند — كتب وملازم وملخصات عراقية مجانية.">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<style>
+.book-cover{width:100%;height:180px;object-fit:cover;border-radius:8px;background:#eef2f5}
+.book-meta{color:#555;font-size:.9rem;margin:.3rem 0}
+.filter-bar{display:flex;flex-wrap:wrap;gap:.6rem;margin:1rem 0}
+.filter-bar select{flex:1 1 140px}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="container" style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap">
+    <a href="index.html" style="display:flex;align-items:center;gap:.6rem;text-decoration:none;color:inherit">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند" width="44" height="44">
+      <span class="logo">سند <small>SANAD</small></span>
+    </a>
+    <nav class="main-nav" aria-label="التنقل الرئيسي">
+      <a class="nav-link" href="index.html">الرئيسية</a>
+      <a class="nav-link" href="stages.html">المراحل</a>
+      <a class="nav-link active" href="library.html">المكتبة</a>
+      <a class="nav-link" href="exams.html">الامتحانات</a>
+      <a class="nav-link" href="lessons.html">الدروس</a>
+      <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="schedule.html">الجدول</a>
+      <a class="nav-link" href="universities.html">الجامعات</a>
+      <a class="nav-link" href="scholarships.html">المنح</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
+      <a class="nav-link" href="search.html">بحث</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <h1>المكتبة التعليمية</h1>
+    <p>كتب وملازم وملخصات — نرفع فقط المحتوى المسموح نشره، ونميّز المحتوى الرسمي عن المحتوى الذي أعده المدرسون.</p>
+  </section>
+
+  <div class="filter-bar" role="search" aria-label="فلاتر المكتبة">
+    <label class="form-label" for="f-grade">الصف</label>
+    <select id="f-grade" class="form-input"><option value="">كل الصفوف</option></select>
+    <label class="form-label" for="f-subject">المادة</label>
+    <select id="f-subject" class="form-input"><option value="">كل المواد</option></select>
+    <label class="form-label" for="f-type">نوع المحتوى</label>
+    <select id="f-type" class="form-input">
+      <option value="">كل الأنواع</option>
+      <option value="كتاب">كتاب</option>
+      <option value="ملزمة">ملزمة</option>
+      <option value="ملخص">ملخص</option>
+    </select>
+    <label class="form-label" for="f-year">سنة الإصدار</label>
+    <select id="f-year" class="form-input">
+      <option value="">كل السنوات</option>
+      <option value="2024">2024</option>
+      <option value="2025">2025</option>
+      <option value="2026">2026</option>
+    </select>
+    <input id="f-q" class="search-box form-input" type="search" placeholder="ابحث عن كتاب أو مادة…" aria-label="بحث في المكتبة">
+  </div>
+
+  <div id="book-count" class="badge" aria-live="polite"></div>
+  <div id="book-grid" class="grid"></div>
+
+  <div id="book-empty" class="empty-state">
+    <h2>لا توجد كتب بعد — تضاف قريباً</h2>
+    <p>لا نرفع كتباً أو ملازم محمية بحقوق نشر دون إذن، ونميّز المحتوى الرسمي عن المحتوى الذي أعده المدرسون.</p>
+    <p>تابع هذه الصفحة — سنضيف الكتب والملازم المعتمدة فور توفرها.</p>
+    <a class="btn btn-outline" href="contact.html">اقتراح كتاب أو ملزمة</a>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <nav class="footer-links" aria-label="روابط المنصة">
+      <a href="index.html">الرئيسية</a>
+      <a href="stages.html">المراحل</a>
+      <a href="library.html">المكتبة</a>
+      <a href="exams.html">الامتحانات</a>
+      <a href="lessons.html">الدروس</a>
+      <a href="teacher.html">المعلم الذكي</a>
+      <a href="schedule.html">الجدول</a>
+      <a href="universities.html">الجامعات</a>
+      <a href="scholarships.html">المنح</a>
+      <a href="profile.html">ملفي</a>
+      <a href="search.html">بحث</a>
+      <a href="about.html">من نحن</a>
+      <a href="contact.html">تواصل معنا</a>
+      <a href="privacy.html">سياسة الخصوصية</a>
+      <a href="terms.html">شروط الاستخدام</a>
+      <a href="copyright.html">حقوق النشر</a>
+      <a href="faq.html">الأسئلة الشائعة</a>
+      <a href="report.html">الإبلاغ عن محتوى</a>
+      <a href="sitemap.html">خريطة المنصة</a>
+    </nav>
+    <p>سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var data = (typeof window !== 'undefined' && window.SANAD_DATA) ? window.SANAD_DATA : {};
+  var books = Array.isArray(data.books) ? data.books : [];
+  var stages = Array.isArray(data.stages) ? data.stages : [];
+
+  function gradeNames() {
+    var out = [];
+    stages.forEach(function (st) {
+      var grades = st.grades || st.rows || st.classes || [];
+      grades.forEach(function (g) {
+        var name = typeof g === 'string' ? g : (g.name || g.title || '');
+        if (name && out.indexOf(name) === -1) out.push(name);
+      });
+      if (typeof st === 'string' && out.indexOf(st) === -1) out.push(st);
+    });
+    return out;
+  }
+  function subjectNames() {
+    var out = [];
+    stages.forEach(function (st) {
+      var grades = st.grades || st.rows || st.classes || [];
+      grades.forEach(function (g) {
+        var subs = (g && g.subjects) || (g && g.materials) || [];
+        subs.forEach(function (s) {
+          var name = typeof s === 'string' ? s : (s.name || s.title || '');
+          if (name && out.indexOf(name) === -1) out.push(name);
+        });
+      });
+      (st.subjects || []).forEach(function (s) {
+        var name = typeof s === 'string' ? s : (s.name || '');
+        if (name && out.indexOf(name) === -1) out.push(name);
+      });
+    });
+    return out;
+  }
+  function fillSelect(id, items) {
+    var sel = document.getElementById(id);
+    items.forEach(function (n) {
+      var o = document.createElement('option');
+      o.value = n; o.textContent = n; sel.appendChild(o);
+    });
+  }
+  fillSelect('f-grade', gradeNames());
+  fillSelect('f-subject', subjectNames());
+
+  var grid = document.getElementById('book-grid');
+  var empty = document.getElementById('book-empty');
+  var count = document.getElementById('book-count');
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fav(type, id, title) {
+    if (typeof window !== 'undefined' && window.SANAD && typeof window.SANAD.saveFav === 'function') {
+      window.SANAD.saveFav(type, id);
+      if (typeof window.SANAD.toast === 'function') window.SANAD.toast('أُضيف «' + title + '» إلى المفضلة');
+    }
+  }
+  function offline(type, id, title) {
+    if (typeof window !== 'undefined' && window.SANAD && typeof window.SANAD.saveOffline === 'function') {
+      window.SANAD.saveOffline(type, id, title);
+      if (typeof window.SANAD.toast === 'function') window.SANAD.toast('حُفظ «' + title + '» للقراءة دون إنترنت');
+    }
+  }
+  window.SANAD_LIBRARY = { fav: fav, offline: offline };
+
+  function card(b) {
+    var el = document.createElement('article');
+    el.className = 'card';
+    var cover = b.cover ? '<img class="book-cover" src="' + esc(b.cover) + '" alt="غلاف ' + esc(b.title || b.subject || 'كتاب') + '">' : '';
+    var dl = (b.downloadUrl && b.allowDownload !== false)
+      ? '<a class="btn btn-outline" href="' + esc(b.downloadUrl) + '" download>تنزيل</a>' : '';
+    var view = b.viewUrl
+      ? '<a class="btn btn-gold" href="' + esc(b.viewUrl) + '">عرض الكتاب</a>' : '';
+    el.innerHTML = cover
+      + '<h3>' + esc(b.title || (b.subject || 'كتاب')) + '</h3>'
+      + '<p class="book-meta">' + esc(b.subject || '') + ' — ' + esc(b.grade || '') + '</p>'
+      + '<p class="book-meta">' + esc(b.author || b.publisher || '') + '</p>'
+      + '<p class="book-meta">' + esc(b.type || 'كتاب') + ' · طبعة ' + esc(b.year || b.editionYear || '') + '</p>'
+      + (b.official ? '<span class="badge">محتوى رسمي</span>' : '<span class="badge">من إعداد مدرس</span>')
+      + '<p>' + esc(b.description || '') + '</p>'
+      + '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' + view + dl
+      + '<button class="btn btn-outline" type="button" data-fav="' + esc(b.id || '') + '">إضافة للمفضلة</button>'
+      + '<button class="btn btn-outline" type="button" data-off="' + esc(b.id || '') + '">حفظ دون إنترنت</button></div>';
+    var fb = el.querySelector('[data-fav]');
+    if (fb) fb.addEventListener('click', function () { fav('book', b.id, b.title || b.subject || 'الكتاب'); });
+    var ob = el.querySelector('[data-off]');
+    if (ob) ob.addEventListener('click', function () { offline('book', b.id, b.title || b.subject || 'الكتاب'); });
+    return el;
+  }
+
+  function render() {
+    var g = document.getElementById('f-grade').value;
+    var s = document.getElementById('f-subject').value;
+    var t = document.getElementById('f-type').value;
+    var y = document.getElementById('f-year').value;
+    var q = document.getElementById('f-q').value.trim();
+    var list = books.filter(function (b) {
+      if (g && b.grade !== g) return false;
+      if (s && b.subject !== s) return false;
+      if (t && (b.type || 'كتاب') !== t) return false;
+      if (y && String(b.year || b.editionYear || '') !== y) return false;
+      if (q && ((b.title || '') + ' ' + (b.subject || '') + ' ' + (b.author || '') + ' ' + (b.description || '')).indexOf(q) === -1) return false;
+      return true;
+    });
+    grid.innerHTML = '';
+    list.forEach(function (b) { grid.appendChild(card(b)); });
+    count.textContent = list.length ? ('عدد الكتب: ' + list.length) : '';
+    empty.style.display = list.length ? 'none' : '';
+    if (!list.length && books.length) {
+      empty.querySelector('h2').textContent = 'لا توجد نتائج مطابقة للفلاتر';
+    } else if (!books.length) {
+      empty.querySelector('h2').textContent = 'لا توجد كتب بعد — تضاف قريباً';
+    }
+  }
+  ['f-grade', 'f-subject', 'f-type', 'f-year'].forEach(function (id) {
+    document.getElementById(id).addEventListener('change', render);
+  });
+  document.getElementById('f-q').addEventListener('input', render);
+  render();
+})();
+</script>
+</body>
+</html>
