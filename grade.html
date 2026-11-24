@@ -54,7 +54,7 @@
   </div>
 
   <section id="panel-books" class="tab-panel active">
-    <div class="alert alert-info">كتب رسمية من وزارة التربية العراقية — ملفات PDF أصلية من الموقع الرسمي للوزارة.</div>
+    <div class="alert alert-info">كتب رسمية من وزارة التربية العراقية — ملفات PDF تفتح وتُنزّل مباشرة من الموقع.</div>
     <div id="books-listing"></div>
     <div id="books-grid" class="grid"></div>
     <div id="books-empty" class="empty-state" style="display:none">
@@ -65,7 +65,7 @@
   </section>
 
   <section id="panel-malazim" class="tab-panel">
-    <div class="alert alert-info">ملازم من إعداد المدرسين أنفسهم — الروابط تفتح منشور المدرس الرسمي حيث نشر ملزمته.</div>
+    <div class="alert alert-info">ملازم المدرسين — الملفات المتوفرة بصيغة PDF تفتح مباشرة من الموقع، والباقي يُباع في المكتبات ولا توجد له نسخة PDF مجانية موثقة.</div>
     <div id="malazim-grid" class="grid"></div>
     <div id="malazim-empty" class="empty-state" style="display:none">
       <h2>لا توجد ملازم موثقة بعد لهذا الصف</h2>
@@ -186,10 +186,11 @@
     var grid = document.getElementById('books-grid');
     var empty = document.getElementById('books-empty');
     document.getElementById('count-books').textContent = list.length ? '(' + list.length + ')' : '';
-    /* بطاقة صفحة الكتب الرسمية على موقع الوزارة (مديرية المناهج) */
+    /* بطاقة صفحة الكتب الرسمية على موقع الوزارة (مديرية المناهج) —
+       تظهر فقط للصفوف التي لا توجد لها كتب PDF داخل الموقع بعد */
     var listingWrap = document.getElementById('books-listing');
     var listing = ((content.bookListings || []).find(function (x) { return x.stage === stageId; }) || null);
-    if (listing) {
+    if (listing && !list.length) {
       listingWrap.innerHTML = '<article class="card" style="margin-bottom:16px"><span class="badge">المصدر الرسمي</span>' +
         '<h3>' + esc(listing.label) + '</h3>' +
         '<p>الكتب الرسمية كاملة بصيغة PDF على موقع وزارة التربية العراقية — مديرية المناهج. موقع الوزارة يحجب أحياناً الطلبات الآلية، فإذا لم يفتح الرابط مباشرة جرّبه من متصفح هاتفك.</p>' +
@@ -222,13 +223,21 @@
     list.forEach(function (m) {
       var el = document.createElement('article');
       el.className = 'card';
+      /* ملف PDF داخل الموقع: عرض + تحميل. بلا ملف: لا رابط ولا تحويل خارجي،
+         فقط توضيح صادق أن الملزمة تُباع في المكتبات ولا توجد نسخة PDF موثقة. */
+      var actions = '';
+      if (m.pdf) {
+        actions = '<a class="btn btn-gold" href="' + esc(m.pdf) + '" target="_blank" rel="noopener">عرض PDF</a>' +
+          '<a class="btn btn-outline" href="' + esc(m.pdf) + '" download>تحميل PDF</a>';
+      } else {
+        actions = '<p class="book-meta">لا توجد نسخة PDF مجانية موثقة — تُباع في المكتبات.</p>';
+      }
       el.innerHTML = '<span class="badge teal">من إعداد مدرس</span>' +
         '<h3>' + esc(m.title || ('ملزمة ' + (m.subject || ''))) + '</h3>' +
         '<p class="book-meta">المدرس: ' + esc(m.teacher || '') + '</p>' +
         '<p class="book-meta">' + esc(m.subject || '') + ' — ' + esc(m.grade || grade.name) + '</p>' +
         (m.note ? '<p>' + esc(m.note) + '</p>' : '') +
-        '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' +
-        '<a class="btn btn-gold" href="' + esc(m.url) + '" target="_blank" rel="noopener">عرض الملزمة</a></div>';
+        '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' + actions + '</div>';
       grid.appendChild(el);
     });
     empty.style.display = list.length ? 'none' : '';

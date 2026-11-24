@@ -106,20 +106,33 @@ window.SANAD_CONTENT = {
     { stage: 'prep', label: 'كتب المرحلة الإعدادية — مديرية المناهج', url: 'https://manahj.edu.iq/index.php?name=Pages&op=page&pid=151' }
   ],
   books: [
-    /* { stage, gradeId, grade, subject, title, url, year, source } */
+    /* ملفات PDF مرفوعة داخل الموقع — كتب رسمية موثقة من وزارة التربية، طبعة 1447هـ/2025م.
+       تم التحقق من كل ملف: %PDF + عدد الصفحات + غلاف الكتاب (اسم الكتاب والصف والطبعة). */
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'اللغة العربية', title: 'كتاب اللغة العربية — الجزء الأول — الثالث المتوسط', url: 'pdfs/books/books-m3-arabic-p1.pdf', pdf: 'pdfs/books/books-m3-arabic-p1.pdf', year: 2025, source: 'وزارة التربية العراقية — الطبعة السادسة 1447هـ/2025م', pages: 128 },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'اللغة العربية', title: 'كتاب اللغة العربية — الجزء الثاني — الثالث المتوسط', url: 'pdfs/books/books-m3-arabic-p2.pdf', pdf: 'pdfs/books/books-m3-arabic-p2.pdf', year: 2025, source: 'وزارة التربية العراقية — الطبعة السادسة 1447هـ/2025م', pages: 100 },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'اللغة الإنكليزية', title: 'English for Iraq — 3rd Intermediate — Student\u2019s Book', url: 'pdfs/books/books-m3-english-student.pdf', pdf: 'pdfs/books/books-m3-english-student.pdf', year: 2025, source: 'وزارة التربية العراقية — English for Iraq', pages: 120 },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'اللغة الإنكليزية', title: 'English for Iraq — 3rd Intermediate — Activity Book', url: 'pdfs/books/books-m3-english-activity.pdf', pdf: 'pdfs/books/books-m3-english-activity.pdf', year: 2025, source: 'وزارة التربية العراقية — English for Iraq', pages: 124 },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الرياضيات', title: 'كتاب الرياضيات — الثالث المتوسط', url: 'pdfs/books/books-m3-maths.pdf', pdf: 'pdfs/books/books-m3-maths.pdf', year: 2025, source: 'وزارة التربية العراقية — الطبعة السادسة 1447هـ/2025م', pages: 176 },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الفيزياء', title: 'كتاب الفيزياء — الثالث المتوسط', url: 'pdfs/books/books-m3-physics.pdf', pdf: 'pdfs/books/books-m3-physics.pdf', year: 2025, source: 'وزارة التربية العراقية — الطبعة الرابعة عشرة 1447هـ/2025م', pages: 176 },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الكيمياء', title: 'كتاب الكيمياء — الثالث المتوسط', url: 'pdfs/books/books-m3-chemistry.pdf', pdf: 'pdfs/books/books-m3-chemistry.pdf', year: 2025, source: 'وزارة التربية العراقية — الطبعة الثالثة عشرة 1447هـ/2025م', pages: 152 },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الأحياء', title: 'كتاب علم الأحياء (الإنسان وصحته) — الثالث المتوسط', url: 'pdfs/books/books-m3-biology.pdf', pdf: 'pdfs/books/books-m3-biology.pdf', year: 2025, source: 'وزارة التربية العراقية — الطبعة الثالثة عشرة المنقحة 1447هـ/2025م', pages: 136 },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الاجتماعيات', title: 'كتاب الاجتماعيات — الثالث المتوسط', url: 'pdfs/books/books-m3-social.pdf', pdf: 'pdfs/books/books-m3-social.pdf', year: 2025, source: 'وزارة التربية العراقية — الطبعة الرابعة 1447هـ/2025م', pages: 160 },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'التربية الإسلامية', title: 'كتاب القرآن الكريم والتربية الإسلامية — الثالث المتوسط', url: 'pdfs/books/books-m3-islamic.pdf', pdf: 'pdfs/books/books-m3-islamic.pdf', year: 2025, source: 'وزارة التربية العراقية — الطبعة التاسعة 1447هـ/2025م', pages: 156 }
   ],
   malazim: [
-    /* الملزمة تُعرض عبر قناة المدرس الرسمية على تيليجرام حيث ينشر ملزمته */
-    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الفيزياء', teacher: 'علي الذهبي', title: 'ملزمة فيزياء الثالث المتوسط 2027', url: 'https://t.me/alqamf', note: 'ملزمة فيزياء 2027 — تُباع في المكتبات؛ رابط قناة المدرس الرسمية على تيليجرام' },
-    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الفيزياء', teacher: 'عوض غفار المشرفاوي', title: 'ملزمة فيزياء الثالث المتوسط', url: 'https://t.me/awadg13', note: 'رابط قناة المدرس الرسمية على تيليجرام' },
-    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الكيمياء', teacher: 'حسين حمزة', title: 'ملزمة كيمياء الثالث المتوسط 2027', url: 'https://t.me/hussainhamza98', note: 'تحمل شعار مكتب الطابعي وتُباع في مكتبات جميع المحافظات' },
-    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الأحياء', teacher: 'أحمد الجاف', title: 'ملزمة أحياء الثالث المتوسط 2027', url: 'https://t.me/ahmedjaleell', note: 'ملزمة أحياء 2027 — تُباع في المكتبات' },
-    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'اللغة الإنكليزية', teacher: 'سجاد العبيدي', title: 'ملزمة English FOR IRAQ 2027', url: 'https://t.me/sajjadobaidy', note: 'ملزمة طبعة 2027' },
-    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'اللغة الإنكليزية', teacher: 'أحمد البيجاوي', title: 'ملزمة إنكليزي الثالث المتوسط', url: 'https://t.me/abj_86', note: 'رابط قناة المدرس الرسمية على تيليجرام' },
-    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'اللغة العربية', teacher: 'مازن الهلالي', title: 'ملزمة النجاح في اللغة العربية 2027', url: 'https://t.me/mazen3333', note: 'ملزمة 2027 للثالث المتوسط' },
-    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الرياضيات', teacher: 'عباس الدراجي', title: 'ملزمة رياضيات الثالث المتوسط 2027 — دفعة البوكيمون', url: 'https://t.me/abassali92', note: 'الملزمة تُباع عبر دار الأعرجي؛ رابط قناة المدرس الرسمية على تيليجرام' },
-    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الرياضيات', teacher: 'حيدر وليد', title: 'ملزمة رياضيات الثالث المتوسط — حيدر وليد', url: 'https://t.me/haiderwaleed', note: 'دورة الثالث المتوسط 2027 على تيليجرام؛ محاضرات يوتيوب مجانية' },
-    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الرياضيات', teacher: 'خالد وليد', title: 'ملزمة سينما الرياضيات 2027 — خالد وليد', url: 'https://t.me/Khalidwalid_33', note: 'ملزمة طبعة 2027 تُباع عبر دار الأعرجي' }
+    /* الملزمة المتوفرة بصيغة PDF تُرفع داخل الموقع (حقل pdf).
+       الملازم التسع الباقية لا توجد لها نسخة PDF مجانية موثقة — تُباع مطبوعة في المكتبات —
+       فلا رابط تيليجرام ولا أي تحويل خارجي؛ تظهر كـ«غير متوفرة PDF» حتى تتوفر نسخة موثقة. */
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الفيزياء', teacher: 'علي الذهبي', title: 'ملزمة فيزياء الثالث المتوسط 2027', note: 'ملزمة فيزياء 2027 — تُباع في المكتبات؛ لا توجد نسخة PDF مجانية موثقة' },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الفيزياء', teacher: 'عوض غفار المشرفاوي', title: 'ملزمة فيزياء الثالث المتوسط', note: 'ملزمة فيزياء 2027 — تُباع في المكتبات؛ لا توجد نسخة PDF مجانية موثقة' },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الكيمياء', teacher: 'حسين حمزة', title: 'ملزمة كيمياء الثالث المتوسط 2027', note: 'تحمل شعار مكتب الطابعي وتُباع في مكتبات جميع المحافظات؛ لا توجد نسخة PDF مجانية موثقة' },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الأحياء', teacher: 'أحمد الجاف', title: 'ملزمة أحياء الثالث المتوسط 2027', note: 'ملزمة أحياء 2027 — تُباع في المكتبات؛ لا توجد نسخة PDF مجانية موثقة' },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'اللغة الإنكليزية', teacher: 'سجاد العبيدي', title: 'ملزمة English FOR IRAQ 2027', url: 'pdfs/malazim/malazim-obaidi-english-m3-p1.pdf', pdf: 'pdfs/malazim/malazim-obaidi-english-m3-p1.pdf', year: 2027, note: 'نسخة PDF كاملة — الجزء الأول — 84 صفحة — العام الدراسي 2026–2027' },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'اللغة الإنكليزية', teacher: 'أحمد البيجاوي', title: 'ملزمة إنكليزي الثالث المتوسط', note: 'ملزمة إنكليزي 2027 — تُباع في المكتبات؛ لا توجد نسخة PDF مجانية موثقة' },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'اللغة العربية', teacher: 'مازن الهلالي', title: 'ملزمة النجاح في اللغة العربية 2027', note: 'ملزمة 2027 للثالث المتوسط — تُباع في المكتبات؛ لا توجد نسخة PDF مجانية موثقة' },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الرياضيات', teacher: 'عباس الدراجي', title: 'ملزمة رياضيات الثالث المتوسط 2027 — دفعة البوكيمون', note: 'الملزمة تُباع عبر دار الأعرجي؛ لا توجد نسخة PDF مجانية موثقة' },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الرياضيات', teacher: 'حيدر وليد', title: 'ملزمة رياضيات الثالث المتوسط — حيدر وليد', note: 'ملزمة «المسند في الرياضيات» 2027 — تُباع في المكتبات؛ لا توجد نسخة PDF مجانية موثقة' },
+    { stage: 'middle', gradeId: 'm3', grade: 'الثالث المتوسط', subject: 'الرياضيات', teacher: 'خالد وليد', title: 'ملزمة سينما الرياضيات 2027 — خالد وليد', note: 'ملزمة طبعة 2027 تُباع عبر دار الأعرجي؛ لا توجد نسخة PDF مجانية موثقة' }
   ],
   lectures: [
     /* ===== الرياضيات — الثالث المتوسط ===== */
@@ -194,10 +207,28 @@ window.SANAD_CONTENT = {
       type: 'كتاب',
       year: b.year || '',
       official: true,
-      viewUrl: b.url,
-      downloadUrl: b.url,
+      viewUrl: b.pdf || b.url,
+      downloadUrl: b.pdf || b.url,
       description: 'كتاب رسمي — ' + (b.source || 'وزارة التربية العراقية')
     };
+  });
+  /* الملازم المتوفرة بصيغة PDF داخل الموقع تظهر في المكتبة أيضاً */
+  (c.malazim || []).forEach(function (m, i) {
+    if (!m.pdf) return;
+    window.SANAD_DATA.books.push({
+      id: 'malz-' + i,
+      title: m.title || ('ملزمة ' + (m.subject || '')),
+      subject: m.subject || '',
+      grade: m.grade || '',
+      author: m.teacher || '',
+      publisher: '',
+      type: 'ملزمة',
+      year: m.year || '',
+      official: false,
+      viewUrl: m.pdf,
+      downloadUrl: m.pdf,
+      description: m.note || ''
+    });
   });
   window.SANAD_DATA.lessons = (c.lectures || []).map(function (l, i) {
     return {
