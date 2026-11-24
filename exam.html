@@ -78,6 +78,7 @@
     <p id="score-text" style="font-size:1.3rem;font-weight:bold"></p>
     <p id="score-pct"></p>
     <p id="score-note" class="exam-meta"></p>
+    <p id="save-note" class="exam-meta"></p>
     <div id="review"></div>
     <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem">
       <button id="btn-retake" class="btn btn-gold" type="button">إعادة الامتحان</button>
@@ -182,6 +183,23 @@
   var secondsLeft = durationMinutes * 60;
   var timerHandle = null;
   var lastScore = 0;
+
+  /* ===== حفظ المحاولة في حساب الطالب (W4 — Phase 2) =====
+     العقد مع window.SANAD.store (يضيفه W2 في app.js):
+       store.ready -> Promise للمستخدم الحالي أو null
+       store.isLoggedIn() -> boolean
+       store.saveExamResult(examId, score, totalMarks, detail) -> row|null
+         حيث detail = {answers: [{index, type, answer, selfMarked}], durationSeconds}
+       store.getExamResults(examId?) -> [{examId, score, total, at}]
+     عند تسجيل الدخول يحفظ الخادم المحاولة (والنقاط/الشارات من جهته)،
+     فلا نكرر الحفظ المحلي ولا نضيف نقاطاً محلية. وعند عدم تسجيل الدخول
+     أو غياب store نبقي السلوك القديم: recordExam + addPoints محلياً فقط. */
+  var attemptId = null;
+  var savedMode = null; /* 'server' | 'local' | 'local-fallback' | null */
+  var savedLocalAt = null; /* قيمة at لسجل هذه المحاولة في localStorage */
+  var lastSavedScore = null;
+  var finishSaveScheduled = false;
+  var persistQueue = Promise.resolve();
 
   document.getElementById('runner').style.display = '';
   document.getElementById('exam-title').textContent = exam.title || 'امتحان';
@@ -314,6 +332,222 @@
     });
   }
 
+  function getStore() {
+    try {
+      if (typeof window !== 'undefined' && window.SANAD && window.SANAD.store) return window.SANAD.store;
+    } catch (e) {}
+    return null;
+  }
+
+  /* انتظار store.ready مع مهلة 5 ثوانٍ حتى لا يعلق الحفظ/العرض أبداً. */
+  function awaitStoreReady(store) {
+    try {
+      if (store && store.ready && typeof store.ready.then === 'function') {
+        return new Promise(function (resolve) {
+          var done = false;
+          var timer = setTimeout(function () { if (!done) { done = true; resolve(null); } }, 5000);
+          store.ready.then(function (u) {
+            if (!done) { done = true; clearTimeout(timer); resolve(u); }
+          }, function () {
+            if (!done) { done = true; clearTimeout(timer); resolve(null); }
+          });
+        });
+      }
+    } catch (e) {}
+    return Promise.resolve(null);
+  }
+
+  function resolveLoggedIn(store) {
+    if (store) {
+      return awaitStoreReady(store).then(function (user) {
+        if (user) return true;
+        try {
+          if (typeof store.isLoggedIn === 'function') return !!store.isLoggedIn();
+        } catch (e) {}
+        return false;
+      });
+    }
+    /* لا store بعد: تحقق من الجلسة عبر Supabase مباشرة إن كان العميل موجوداً،
+       دون استدعاء getSessionUser عند غياب العميل حتى لا يظهر تنبيه خطأ. */
+    try {
+      if (window.SANAD && window.SANAD.supabase && typeof window.SANAD.getSessionUser === 'function') {
+        return window.SANAD.getSessionUser().then(function (u) { return !!u; }).catch(function () { return false; });
+      }
+    } catch (e) {}
+    return Promise.resolve(false);
+  }
+
+  function setSaveNote(text, isGuest) {
+    var el = document.getElementById('save-note');
+    if (!el) return;
+    if (isGuest) {
+      el.innerHTML = esc(text) + ' <a href="login.html">تسجيل الدخول</a> · <a href="signup.html">إنشاء حساب</a>';
+    } else {
+      el.textContent = text;
+    }
+  }
+  function clearSaveNote() {
+    var el = document.getElementById('save-note');
+    if (el) el.textContent = '';
+  }
+
+  function buildDetail() {
+    var elapsed = durationMinutes * 60 - secondsLeft;
+    if (!(elapsed > 0)) elapsed = 0;
+    return {
+      answers: qs.map(function (q, i) {
+        var ans = null;
+        if (q.type === 'mcq') {
+          ans = (answers[i] === null || answers[i] === undefined) ? null : q.options[answers[i]];
+        } else {
+          ans = (typeof answers[i] === 'string') ? answers[i] : '';
+        }
+        return { index: i, type: q.type, answer: ans, selfMarked: !!selfMarked[i] };
+      }),
+      durationSeconds: elapsed,
+      /* معرّف ثابت لهذه المحاولة: إعادة الحفظ بعد تغيّر التقييم الذاتي
+         ترسل نفس attemptId حتى يتمكن الخادم من تحديث السجل نفسه بدلاً
+         من إنشاء سجل مكرر. */
+      attemptId: attemptId
+    };
+  }
+
+  /* حفظ محلي دون تكرار: أول حفظ عبر recordExam، وأي تحديث لاحق
+     (تغيّر التقييم الذاتي) يعدّل السجل نفسه في localStorage بدلاً
+     من إضافة سجل جديد. */
+  function localSave(score, isUpdate) {
+    try {
+      if (!window.SANAD || typeof window.SANAD.recordExam !== 'function') return false;
+      if (!isUpdate || !savedLocalAt) {
+        var hist = window.SANAD.recordExam(exam.id, score, totalMarks);
+        if (Array.isArray(hist)) {
+          for (var i = hist.length - 1; i >= 0; i--) {
+            if (hist[i] && hist[i].examId === exam.id && hist[i].at) { savedLocalAt = hist[i].at; break; }
+          }
+        }
+        return true;
+      }
+      var raw = window.localStorage.getItem('sanad_exam_history');
+      if (!raw) return false;
+      var h = JSON.parse(raw);
+      if (!Array.isArray(h)) return false;
+      for (var j = h.length - 1; j >= 0; j--) {
+        if (h[j] && h[j].examId === exam.id && h[j].at === savedLocalAt) {
+          h[j].score = score;
+          h[j].total = totalMarks;
+          window.localStorage.setItem('sanad_exam_history', JSON.stringify(h));
+          return true;
+        }
+      }
+      return false;
+    } catch (e) { return false; }
+  }
+
+  function doPersist(isUpdate) {
+    var score = computeScore();
+    if (isUpdate && lastSavedScore !== null && score === lastSavedScore) return Promise.resolve();
+    var store = getStore();
+    return resolveLoggedIn(store).then(function (loggedIn) {
+      if (store && loggedIn) {
+        var res = null;
+        try {
+          res = store.saveExamResult(exam.id, score, totalMarks, buildDetail());
+        } catch (e) {
+          res = Promise.reject(e);
+        }
+        return Promise.resolve(res).then(function (row) {
+          if (row) {
+            savedMode = 'server';
+            lastSavedScore = score;
+            setSaveNote('تم حفظ هذه المحاولة في حسابك.', false);
+            renderPrevAttempts();
+            return true;
+          }
+          throw new Error('saveExamResult returned null');
+        }).catch(function () {
+          /* فشل الخادم: احفظ نسخة محلية حتى لا تضيع المحاولة،
+             وأخبر الطالب بذلك بصراحة دون ادعاء حفظ لم يحدث. */
+          localSave(score, isUpdate && savedMode === 'local-fallback');
+          savedMode = 'local-fallback';
+          lastSavedScore = score;
+          setSaveNote('تعذّر حفظ المحاولة على الخادم — حُفظت على هذا الجهاز فقط.', false);
+          renderPrevAttempts();
+          return false;
+        });
+      }
+      /* ضيف أو store غير متوفر: المسار المحلي القديم فقط،
+         والنقاط محلياً للضيف فقط (الخادم يتولاها عند تسجيل الدخول). */
+      localSave(score, isUpdate);
+      if (!isUpdate && window.SANAD && typeof window.SANAD.addPoints === 'function') {
+        try { window.SANAD.addPoints(10, 'إنهاء اختبار'); } catch (e) {}
+      }
+      savedMode = 'local';
+      lastSavedScore = score;
+      setSaveNote('سجّل الدخول لحفظ نتائجك في حسابك ومتابعة تقدمك — بدون تسجيل دخول تُحفظ النتيجة على هذا الجهاز فقط.', true);
+      renderPrevAttempts();
+      return true;
+    }).catch(function () {
+      return false;
+    });
+  }
+
+  /* حفظ متسلسل: طلب واحد في كل مرة، فلا يتداخل حفظ الإنهاء مع
+     حفظ تحديث التقييم الذاتي ولا ينشئ سجلاً مكرراً. */
+  function schedulePersist(isUpdate) {
+    if (!isUpdate) {
+      if (finishSaveScheduled) return persistQueue;
+      finishSaveScheduled = true;
+    }
+    persistQueue = persistQueue.then(function () { return doPersist(isUpdate); });
+    return persistQueue;
+  }
+
+  function renderPrevAttempts() {
+    var prevBox = document.getElementById('prev-list');
+    if (!prevBox) return Promise.resolve();
+    var store = getStore();
+    function renderLocal() {
+      var hist = getHistory();
+      if (hist.length) {
+        prevBox.innerHTML = hist.map(function (h) {
+          var t = h.total || totalMarks;
+          return '<p>محاولة بتاريخ ' + esc(h.date || h.at || '') + ' — النتيجة: ' + h.score + ' من ' + t + ' (' + Math.round((h.score / t) * 100) + '٪)</p>';
+        }).join('');
+      } else {
+        prevBox.innerHTML = '<p>هذه محاولتك الأولى في هذا الامتحان.</p>';
+      }
+    }
+    function renderRows(rows) {
+      var list = rows.slice().sort(function (a, b) {
+        var ta = (a && a.at) ? new Date(a.at).getTime() : 0;
+        var tb = (b && b.at) ? new Date(b.at).getTime() : 0;
+        if (isNaN(ta)) ta = 0;
+        if (isNaN(tb)) tb = 0;
+        return tb - ta;
+      }).slice(0, 10);
+      if (!list.length) { prevBox.innerHTML = '<p>هذه محاولتك الأولى في هذا الامتحان.</p>'; return; }
+      prevBox.innerHTML = list.map(function (r) {
+        var t = r.total || totalMarks;
+        var pct = t ? Math.round((r.score / t) * 100) : 0;
+        var dateText = r.at || '';
+        try {
+          var d = new Date(r.at);
+          if (!isNaN(d.getTime())) dateText = d.toLocaleString('ar', { dateStyle: 'medium', timeStyle: 'short' });
+        } catch (e) {}
+        return '<p>محاولة بتاريخ ' + esc(dateText) + ' — النتيجة: ' + r.score + ' من ' + t + ' (' + pct + '٪)</p>';
+      }).join('');
+    }
+    if (!store || typeof store.getExamResults !== 'function') { renderLocal(); return Promise.resolve(); }
+    return awaitStoreReady(store).then(function () {
+      var res = null;
+      try { res = store.getExamResults(exam.id); } catch (e) { renderLocal(); return; }
+      return Promise.resolve(res).then(function (rows) {
+        if (Array.isArray(rows)) renderRows(rows);
+        else renderLocal();
+      }).catch(function () { renderLocal(); });
+    }).catch(function () { renderLocal(); });
+  }
+
   function finish(auto) {
     if (finished) return;
     var unanswered = 0;
@@ -324,14 +558,8 @@
     finished = true;
     stopTimer();
 
-    if (typeof window !== 'undefined' && window.SANAD) {
-      if (typeof window.SANAD.recordExam === 'function') {
-        try { window.SANAD.recordExam(exam.id, computeScore(), totalMarks); } catch (e) {}
-      }
-      if (typeof window.SANAD.addPoints === 'function') {
-        try { window.SANAD.addPoints(10, 'إنهاء اختبار'); } catch (e) {}
-      }
-    }
+    attemptId = 'att-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    schedulePersist(false);
 
     document.getElementById('runner').style.display = 'none';
     var res = document.getElementById('results');
@@ -381,20 +609,12 @@
       cb.addEventListener('change', function () {
         selfMarked[parseInt(cb.getAttribute('data-i'), 10)] = cb.checked;
         updateScoreDisplay();
+        schedulePersist(true);
       });
     });
     updateScoreDisplay();
 
-    var hist = getHistory();
-    var prevBox = document.getElementById('prev-list');
-    if (hist.length) {
-      prevBox.innerHTML = hist.map(function (h) {
-        var t = h.total || totalMarks;
-        return '<p>محاولة بتاريخ ' + esc(h.date || h.at || '') + ' — النتيجة: ' + h.score + ' من ' + t + ' (' + Math.round((h.score / t) * 100) + '٪)</p>';
-      }).join('');
-    } else {
-      prevBox.innerHTML = '<p>هذه محاولتك الأولى في هذا الامتحان.</p>';
-    }
+    renderPrevAttempts();
     if (typeof window.scrollTo === 'function') { try { window.scrollTo(0, 0); } catch (e) {} }
   }
 
@@ -403,6 +623,12 @@
     answers = new Array(total).fill(null);
     selfMarked = new Array(total).fill(false);
     finished = false;
+    attemptId = null;
+    savedMode = null;
+    savedLocalAt = null;
+    lastSavedScore = null;
+    finishSaveScheduled = false;
+    clearSaveNote();
     document.getElementById('results').style.display = 'none';
     document.getElementById('runner').style.display = '';
     startTimer();

@@ -40,7 +40,7 @@
 <main class="container">
   <section class="hero">
     <h1>بنك الأسئلة الوزارية</h1>
-    <p>اختبر نفسك بأسئلة وزارية حقيقية، واحصل على النتيجة والشرح فوراً — نتائجك محفوظة محلياً في جهازك لتقارن محاولاتك.</p>
+    <p>اختبر نفسك بأسئلة وزارية حقيقية، واحصل على النتيجة والشرح فوراً — نتائجك محفوظة في حسابك وتظهر في ملفك، وبدون تسجيل دخول تُحفظ محلياً في جهازك لتقارن محاولاتك.</p>
     <p class="exam-meta">ملاحظة: في الورقة الوزارية الأصلية تُجيب عن 5 أسئلة من 6 (20 درجة لكل سؤال)، أما في البنك فتُحسب الدرجة من مجموع درجات كل الفروع المدرجة في الامتحان.</p>
   </section>
 
@@ -112,6 +112,9 @@
   var data = (typeof window !== 'undefined' && window.SANAD_DATA) ? window.SANAD_DATA : {};
   var exams = Array.isArray(data.exams) ? data.exams : [];
   var currentFilter = 'all';
+  /* أفضل نتيجة من حسابك (Supabase) لكل امتحان — تُملأ بعد التحميل،
+     وتُستخدم مع النتائج المحلية في بطاقات الامتحانات. */
+  var serverBestByExam = {};
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -219,6 +222,7 @@
       var marks = totalMarks(e);
       var hist = getHistory(e.id);
       var best = hist.length ? Math.max.apply(null, hist.map(function (h) { return h.score; })) : null;
+      if (typeof serverBestByExam[e.id] === 'number' && (best === null || serverBestByExam[e.id] > best)) best = serverBestByExam[e.id];
       var el = document.createElement('article');
       el.className = 'card exam-card';
       el.setAttribute('data-exam-id', e.id);
@@ -251,19 +255,68 @@
   });
   render();
 
-  /* Previous attempts for the real maths exam */
-  var mathId = 'math3-3rd-2026';
-  var hist = getHistory(mathId);
-  if (hist.length) {
+  /* محاولاتك السابقة: دمج المحاولات المحلية (ضيوف + محاولات قديمة)
+     مع نتائج حسابك في Supabase، مع إسقاط المكرر المتطابق تماماً
+     (محاولة واحدة لها نفس الامتحان والنتيجة والتاريخ لا تُعرض مرتين). */
+  var examById = {};
+  exams.forEach(function (e) { examById[e.id] = e; });
+  var serverHist = [];
+  function histKey(h) {
+    return (h.examId || '') + '|' + (h.score || 0) + '|' + (h.total || '') + '|' + (h.at || h.date || '');
+  }
+  function mergeHist(localArr, serverArr) {
+    var seen = {};
+    var out = [];
+    (localArr || []).concat(serverArr || []).forEach(function (h) {
+      var k = histKey(h);
+      if (!seen[k]) { seen[k] = true; out.push(h); }
+    });
+    return out;
+  }
+  function fmtAt(at) {
+    var s = String(at || '');
+    if (!s) return '';
+    var d = s.slice(0, 10);
+    var t = s.length > 11 ? s.slice(11, 16) : '';
+    return fmtDate(d) + (t ? ' — ' + t : '');
+  }
+  function renderHistory() {
     var sec = document.getElementById('history-section');
     var box = document.getElementById('history-list');
+    var merged = mergeHist(getHistory(), serverHist);
+    merged.sort(function (a, b) {
+      return String(b.at || b.date || '').localeCompare(String(a.at || a.date || ''));
+    });
+    if (!merged.length) { sec.style.display = 'none'; return; }
     sec.style.display = '';
-    box.innerHTML = hist.map(function (h) {
+    box.innerHTML = merged.map(function (h) {
       var total = h.total || 8;
       var pct = total ? Math.round((h.score / total) * 100) : 0;
-      return '<p>محاولة بتاريخ ' + esc(h.date || h.at || '') + ' — النتيجة: ' + h.score + ' من ' + total + ' (' + pct + '٪)</p>';
+      var e = examById[h.examId];
+      var title = e ? (e.title || e.id) : (h.examId || 'امتحان');
+      return '<p>' + esc(title) + ' — محاولة بتاريخ ' + esc(fmtAt(h.at || h.date)) + ' — النتيجة: ' + h.score + ' من ' + total + ' (' + pct + '٪)</p>';
     }).join('');
   }
+  function loadServerHistory() {
+    try {
+      if (window.SANAD && window.SANAD.store && typeof window.SANAD.store.getExamResults === 'function') {
+        return window.SANAD.store.getExamResults().then(function (rows) {
+          serverHist = Array.isArray(rows) ? rows : [];
+          serverBestByExam = {};
+          serverHist.forEach(function (h) {
+            if (typeof serverBestByExam[h.examId] !== 'number' || h.score > serverBestByExam[h.examId]) {
+              serverBestByExam[h.examId] = h.score;
+            }
+          });
+          renderHistory();
+          render();
+        }).catch(function () { renderHistory(); });
+      }
+    } catch (err) { /* تجاهل */ }
+    renderHistory();
+    return Promise.resolve();
+  }
+  loadServerHistory();
 })();
 </script>
 </body>

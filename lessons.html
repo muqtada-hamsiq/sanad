@@ -44,6 +44,30 @@
     <p>أو تصفح المحاضرات حسب الصف من <a href="stages.html">صفحة المراحل الدراسية</a> — كل صف يعرض كتبه وملازمه ومحاضراته.</p>
   </section>
 
+  <div class="tabs" role="tablist" aria-label="طريقة تصفح الدروس">
+    <button type="button" role="tab" data-view="teachers" class="active">المدرسون</button>
+    <button type="button" role="tab" data-view="all">كل المحاضرات</button>
+  </div>
+
+  <div id="view-teachers">
+    <p>اختر المادة ثم المدرس — تظهر محاضراته كاملة، وتشاهدها داخل الموقع.</p>
+    <div id="teacher-subject-chips" style="margin:12px 0;"></div>
+    <div id="teacher-grid" class="grid"></div>
+    <div id="teacher-empty" class="empty-state" style="display:none">
+      <h2>لا يوجد مدرسون موثقون لهذه المادة بعد</h2>
+      <p>نضيف مدرسين موثقين فور توثيق قنواتهم الرسمية.</p>
+      <a class="btn btn-outline" href="contact.html">اقتراح مدرس</a>
+    </div>
+    <div id="teacher-detail" style="display:none">
+      <p><button type="button" class="btn btn-outline" id="teacher-back">← كل المدرسين</button></p>
+      <h2 class="section-title" id="teacher-detail-name"></h2>
+      <p id="teacher-detail-meta"></p>
+      <div id="teacher-chapter-chips" style="margin:12px 0;"></div>
+      <div id="teacher-detail-grid" class="grid"></div>
+    </div>
+  </div>
+
+  <div id="view-all" style="display:none">
   <div class="filter-bar" role="search" aria-label="فلاتر الدروس">
     <label class="form-label" for="f-subject">المادة</label>
     <select id="f-subject" class="form-input"><option value="">كل المواد</option></select>
@@ -58,6 +82,7 @@
     <h2>لا توجد دروس بعد — تضاف قريباً</h2>
     <p>نعمل على إضافة شروحات مُراجعة لكل مادة وصف. تابع هذه الصفحة — ستظهر الدروس هنا فور توفرها.</p>
     <a class="btn btn-outline" href="contact.html">اقتراح درس أو شرح</a>
+  </div>
   </div>
 </main>
 
@@ -150,6 +175,138 @@
   }
   window.SANAD_LESSONS = { saveLesson: saveLesson };
 
+  /* ===== إكمال الدروس (المرحلة 2 — W5 + تكامل) =====
+     يستخدم window.SANAD.store عند توفره (حساب مسجّل أو ضيف)،
+     ويعود إلى مفتاح sanad_lesson_log المحلي — نفس المفتاح والشكل
+     ({key, title, grade, subject, at}) الذي يستخدمه المتجر في app.js —
+     إن لم يوجد المتجر بعد. مفتاح الدرس: youtubeId، أو 'pl:' + playlistId
+     لقوائم التشغيل، أو 'lesson:' + id. الزر تبديل حقيقي: إكمال/إلغاء
+     عبر store.completeLesson / store.uncompleteLesson.
+     أي فشل يُظهر تنبيهاً ولا يرمي خطأً. */
+  function getStore() {
+    try { return (window.SANAD && window.SANAD.store) || null; } catch (e) { return null; }
+  }
+  function toastMsg(msg) {
+    try { if (window.SANAD && typeof window.SANAD.toast === 'function') window.SANAD.toast(msg); } catch (e) {}
+  }
+  function lessonKey(l) {
+    if (!l) return '';
+    if (l.youtubeId) return l.youtubeId;
+    if (l.playlistId) return 'pl:' + l.playlistId;
+    if (l.id) return 'lesson:' + l.id;
+    return '';
+  }
+  function legacyLog() {
+    try {
+      var raw = window.localStorage.getItem('sanad_lesson_log');
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+  function legacyCompletedKeys() {
+    var keys = [];
+    legacyLog().forEach(function (x) {
+      if (typeof x === 'string') { if (x) keys.push(x); }
+      else if (x && x.key) keys.push(x.key);
+    });
+    return keys;
+  }
+  function legacyMarkCompleted(key, meta) {
+    try {
+      var log = legacyLog();
+      if (log.some(function (x) { return (x && x.key) === key || x === key; })) return true;
+      var m = meta || {};
+      log.push({
+        key: key, title: m.title || '', grade: m.grade || '',
+        subject: m.subject || '', at: new Date().toISOString()
+      });
+      window.localStorage.setItem('sanad_lesson_log', JSON.stringify(log));
+      return true;
+    } catch (e) { return false; }
+  }
+  function legacyUnmarkCompleted(key) {
+    try {
+      var log = legacyLog().filter(function (x) {
+        return x && x.key !== key && x !== key;
+      });
+      window.localStorage.setItem('sanad_lesson_log', JSON.stringify(log));
+      return true;
+    } catch (e) { return false; }
+  }
+  /* رسم فوري عند بناء البطاقة من السجل المحلي فقط (متزامن)؛
+     refreshDoneButtons يصحّح الحالة بعد جاهزية المتجر. */
+  function isCompletedNow(key) {
+    if (!key) return false;
+    return legacyCompletedKeys().indexOf(key) !== -1;
+  }
+  function setDoneState(btn, badge, done) {
+    if (btn) {
+      btn.textContent = done ? 'أكملت الدرس ✓' : 'إكمال الدرس';
+      btn.setAttribute('aria-pressed', done ? 'true' : 'false');
+      btn.setAttribute('data-done', done ? '1' : '0');
+    }
+    if (badge) badge.style.display = done ? '' : 'none';
+  }
+  function completedKeysFromList(list) {
+    var keys = [];
+    if (!Array.isArray(list)) return keys;
+    list.forEach(function (x) {
+      if (typeof x === 'string') { if (x) keys.push(x); }
+      else if (x && x.key) keys.push(x.key);
+    });
+    return keys;
+  }
+  async function fetchCompletedKeys() {
+    var s = getStore();
+    if (s && typeof s.getCompletedLessons === 'function') {
+      try {
+        var done = s.getCompletedLessons();
+        if (done && typeof done.then === 'function') done = await done;
+        return completedKeysFromList(done);
+      } catch (e) { /* fall through to legacy */ }
+    }
+    return legacyCompletedKeys();
+  }
+  async function refreshDoneButtons() {
+    var keys = await fetchCompletedKeys();
+    var btns = document.querySelectorAll('[data-done-key]');
+    btns.forEach(function (btn) {
+      try {
+        var card = btn.closest ? btn.closest('.card') : null;
+        var badge = card ? card.querySelector('[data-done-badge]') : null;
+        setDoneState(btn, badge, keys.indexOf(btn.getAttribute('data-done-key')) !== -1);
+      } catch (e) {}
+    });
+  }
+  function markComplete(btn, badge, key, meta) {
+    var store = getStore();
+    var isDone = btn.getAttribute('data-done') === '1';
+    function done(ok, nowDone) {
+      if (ok) { setDoneState(btn, badge, nowDone); toastMsg(nowDone ? 'أحسنت! أكملت الدرس ✓' : 'ألغيت إكمال الدرس'); }
+      else toastMsg('تعذّر الحفظ — تحقق من اتصالك');
+    }
+    try {
+      if (isDone) {
+        if (store && typeof store.uncompleteLesson === 'function') {
+          var r = store.uncompleteLesson(key);
+          if (r && typeof r.then === 'function') r.then(function (ok) { done(ok !== false, false); }, function () { done(false, false); });
+          else done(true, false);
+        } else { done(legacyUnmarkCompleted(key), false); }
+      } else if (store && typeof store.completeLesson === 'function') {
+        var r2 = store.completeLesson(key, meta);
+        if (r2 && typeof r2.then === 'function') r2.then(function (ok) { done(ok !== false, true); }, function () { done(false, true); });
+        else done(true, true);
+      } else { done(legacyMarkCompleted(key, meta), true); }
+    } catch (e) { done(false, isDone); }
+  }
+  /* بعد جاهزية المتجر (حساب/ضيف) أعد تقييم حالة كل درس ظاهر. */
+  (function () {
+    var s = getStore();
+    if (s && s.ready && typeof s.ready.then === 'function') {
+      s.ready.then(function () { refreshDoneButtons(); }, function () { refreshDoneButtons(); });
+    }
+  })();
+
   function card(l) {
     var el = document.createElement('article');
     el.className = 'card';
@@ -163,14 +320,18 @@
     if (Array.isArray(l.questions) && l.questions.length) {
       qs = '<h4>أسئلة بعد الدرس</h4><ol>' + l.questions.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ol>';
     }
+    var key = lessonKey(l);
+    var meta = { title: l.title || 'درس', grade: l.grade || '', subject: l.subject || '', youtubeId: l.youtubeId || '', playlistId: l.playlistId || '' };
     el.innerHTML = thumb + '<h3>' + esc(l.title || 'درس') + '</h3>'
       + '<p class="lesson-meta">المدرس: ' + esc(l.teacher || '') + '</p>'
       + '<p class="lesson-meta">' + esc(l.subject || '') + ' — ' + esc(l.grade || '') + '</p>'
       + (l.duration ? '<p class="lesson-meta">مدة الدرس: ' + esc(l.duration) + '</p>' : '')
       + (l.summary ? '<p>' + esc(l.summary) + '</p>' : '')
       + qs
+      + (key ? '<span class="badge" data-done-badge style="display:none">أكملت الدرس ✓</span>' : '')
       + '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' + media
       + '<button class="btn btn-outline" type="button" data-save="' + esc(l.id || '') + '">حفظ الدرس</button>'
+      + (key ? '<button class="btn btn-outline" type="button" data-done-key="' + esc(key) + '" data-done="0" aria-pressed="false">إكمال الدرس</button>' : '')
       + '<a class="btn btn-outline" href="report.html">الإبلاغ عن رابط لا يعمل</a></div>';
     var tb = el.querySelector('.lecture-thumb');
     if (tb && window.SANAD && window.SANAD.playLectureInPlace) {
@@ -178,6 +339,12 @@
     }
     var sb = el.querySelector('[data-save]');
     if (sb) sb.addEventListener('click', function () { saveLesson(l.id, l.title || 'الدرس'); });
+    var db = el.querySelector('[data-done-key]');
+    if (db) {
+      var badge = el.querySelector('[data-done-badge]');
+      setDoneState(db, badge, isCompletedNow(key));
+      db.addEventListener('click', function () { markComplete(db, badge, key, meta); });
+    }
     return el;
   }
 
@@ -193,6 +360,7 @@
     });
     grid.innerHTML = '';
     list.forEach(function (l) { grid.appendChild(card(l)); });
+    refreshDoneButtons();
     empty.style.display = list.length ? 'none' : '';
     if (!list.length && lessons.length) {
       empty.querySelector('h2').textContent = 'لا توجد دروس مطابقة للفلاتر';
@@ -200,6 +368,168 @@
       empty.querySelector('h2').textContent = 'لا توجد دروس بعد — تضاف قريباً';
     }
   }
+  /* ===== التصفح حسب المدرس: اختر المادة ثم المدرس فتظهر محاضراته ===== */
+  var CHANNEL_NAMES = ['التلفزيون التربوي العراقي', 'قناة العلوم الأول المتوسط', 'قناة المنهج الجديد', 'العراقية التربوية', 'المرجع الإلكتروني للمعلوماتية', 'الشرح البسيط', 'قناة كوانتم'];
+  function isChannelName(name) { return CHANNEL_NAMES.indexOf(name) !== -1; }
+  function teacherStats(subject) {
+    var map = {};
+    lessons.forEach(function (l) {
+      if (subject && l.subject !== subject) return;
+      var name = l.teacher || 'مدرس غير معروف';
+      if (!map[name]) map[name] = { name: name, count: 0, subjects: [], grades: [], channelUrl: l.channelUrl || '' };
+      var t = map[name];
+      t.count++;
+      if (l.subject && t.subjects.indexOf(l.subject) === -1) t.subjects.push(l.subject);
+      if (l.grade && t.grades.indexOf(l.grade) === -1) t.grades.push(l.grade);
+      if (!t.channelUrl && l.channelUrl) t.channelUrl = l.channelUrl;
+    });
+    var arr = Object.keys(map).map(function (k) { return map[k]; });
+    arr.sort(function (a, b) { return b.count - a.count || (a.name < b.name ? -1 : 1); });
+    return arr;
+  }
+  var teacherSubject = '';
+  function renderTeacherChips() {
+    var wrap = document.getElementById('teacher-subject-chips');
+    var subs = [];
+    lessons.forEach(function (l) { if (l.subject && subs.indexOf(l.subject) === -1) subs.push(l.subject); });
+    subs.sort(function (a, b) {
+      var ca = 0, cb = 0;
+      lessons.forEach(function (l) { if (l.subject === a) ca++; if (l.subject === b) cb++; });
+      return cb - ca;
+    });
+    var html = '<button type="button" class="chip' + (teacherSubject === '' ? ' active' : '') + '" data-tsubject="">كل المواد</button>';
+    subs.forEach(function (s) {
+      html += '<button type="button" class="chip" data-tsubject="' + esc(s) + '">' + esc(s) + '</button>';
+    });
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('[data-tsubject]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        teacherSubject = btn.getAttribute('data-tsubject') || '';
+        renderTeacherChips();
+        renderTeachers();
+      });
+      if (btn.getAttribute('data-tsubject') === teacherSubject) btn.classList.add('active');
+    });
+  }
+  function renderTeachers() {
+    var grid = document.getElementById('teacher-grid');
+    var empty = document.getElementById('teacher-empty');
+    var detail = document.getElementById('teacher-detail');
+    detail.style.display = 'none';
+    grid.style.display = '';
+    var stats = teacherStats(teacherSubject);
+    /* الأكثر محاضرات: أول 3 مدرسين حقيقيين (ليسوا قنوات) في المادة المختارة */
+    var featured = [];
+    stats.forEach(function (t) { if (featured.length < 3 && !isChannelName(t.name)) featured.push(t.name); });
+    grid.innerHTML = '';
+    stats.forEach(function (t) {
+      var el = document.createElement('article');
+      el.className = 'card';
+      var initial = (t.name || '?').trim().charAt(0);
+      var isFeat = featured.indexOf(t.name) !== -1;
+      el.innerHTML =
+        '<div style="display:flex;gap:12px;align-items:center">' +
+          '<span style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;background:#0A1A3A;color:#fff;font-size:24px;font-weight:800;flex:none">' + esc(initial) + '</span>' +
+          '<div><h3 style="margin:0">' + esc(t.name) + '</h3>' +
+          '<p class="book-meta" style="margin:4px 0 0">' + (isChannelName(t.name) ? 'قناة رسمية' : 'مدرس') + ' · ' + t.count + ' محاضرة</p></div></div>' +
+        (isFeat ? '<span class="badge" style="margin-top:10px">الأكثر محاضرات في هذه المادة</span>' : '') +
+        '<p class="book-meta">' + esc(t.subjects.join('، ')) + '</p>' +
+        '<p class="book-meta">' + esc(t.grades.join('، ')) + '</p>' +
+        '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' +
+        '<button class="btn btn-gold" type="button">عرض محاضراته</button>' +
+        (t.channelUrl ? '<a class="btn btn-outline" href="' + esc(t.channelUrl) + '" target="_blank" rel="noopener">قناة المدرس</a>' : '') + '</div>';
+      el.querySelector('.btn-gold').addEventListener('click', function () { showTeacher(t.name); });
+      grid.appendChild(el);
+    });
+    empty.style.display = stats.length ? 'none' : '';
+  }
+  /* ===== الفصل داخل صفحة المدرس: يستخرج من العنوان أو من حقل chapter ===== */
+  var CHAPTER_WORDS = { 'الأول': 1, 'الثاني': 2, 'الثالث': 3, 'الرابع': 4, 'الخامس': 5, 'السادس': 6, 'السابع': 7, 'الثامن': 8, 'التاسع': 9, 'العاشر': 10 };
+  var AR_DIGITS = { '١': 1, '٢': 2, '٣': 3, '٤': 4, '٥': 5, '٦': 6, '٧': 7, '٨': 8, '٩': 9, '٠': 0 };
+  function lectureChapter(l) {
+    if (l.chapter) return { key: 'ch-' + l.chapter, label: l.chapter };
+    var title = l.title || '';
+    var m = title.match(/الفصل\s*(الأول|الثاني|الثالث|الرابع|الخامس|السادس|السابع|الثامن|التاسع|العاشر|[0-9١-٩]+)/);
+    if (m) {
+      var n = CHAPTER_WORDS[m[1]] || parseInt(String(m[1]).replace(/[١-٩]/g, function (d) { return AR_DIGITS[d]; }), 10);
+      var word = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر'][n - 1] || String(n);
+      return { key: 'ch' + n, label: 'الفصل ' + word };
+    }
+    var u = title.match(/يونت\s*([0-9١-٩]+)/i);
+    if (u) {
+      var un = parseInt(String(u[1]).replace(/[١-٩]/g, function (d) { return AR_DIGITS[d]; }), 10);
+      return { key: 'unit' + un, label: 'يونت ' + un };
+    }
+    return null;
+  }
+  var teacherChapter = '';
+  var currentTeacherList = [];
+  function renderTeacherChapters(list) {
+    var wrap = document.getElementById('teacher-chapter-chips');
+    var map = {};
+    list.forEach(function (l) { var c = lectureChapter(l); if (c) map[c.key] = c.label; });
+    var keys = Object.keys(map).sort(function (a, b) {
+      var na = parseInt(a.replace(/\D/g, ''), 10) || 0, nb = parseInt(b.replace(/\D/g, ''), 10) || 0;
+      return na - nb;
+    });
+    if (!keys.length) { wrap.innerHTML = ''; return; }
+    if (teacherChapter && teacherChapter !== 'general' && !map[teacherChapter]) teacherChapter = '';
+    var html = '<button type="button" class="chip' + (teacherChapter === '' ? ' active' : '') + '" data-tchapter="">كل الفصول</button>';
+    keys.forEach(function (k) {
+      html += '<button type="button" class="chip" data-tchapter="' + esc(k) + '">' + esc(map[k]) + '</button>';
+    });
+    var hasGeneral = list.some(function (l) { return !lectureChapter(l); });
+    if (hasGeneral) html += '<button type="button" class="chip" data-tchapter="general">محاضرات عامة</button>';
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('[data-tchapter]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        teacherChapter = btn.getAttribute('data-tchapter') || '';
+        renderTeacherDetailGrid();
+        renderTeacherChapters(list);
+      });
+      if (btn.getAttribute('data-tchapter') === teacherChapter) btn.classList.add('active');
+    });
+  }
+  function renderTeacherDetailGrid() {
+    var g = document.getElementById('teacher-detail-grid');
+    g.innerHTML = '';
+    currentTeacherList.filter(function (l) {
+      if (!teacherChapter) return true;
+      if (teacherChapter === 'general') return !lectureChapter(l);
+      var c = lectureChapter(l);
+      return c && c.key === teacherChapter;
+    }).forEach(function (l) { g.appendChild(card(l)); });
+    refreshDoneButtons();
+  }
+  function showTeacher(name) {
+    var stats = teacherStats(teacherSubject);
+    var t = null;
+    stats.forEach(function (x) { if (x.name === name) t = x; });
+    if (!t) return;
+    document.getElementById('teacher-grid').style.display = 'none';
+    document.getElementById('teacher-empty').style.display = 'none';
+    var detail = document.getElementById('teacher-detail');
+    detail.style.display = '';
+    document.getElementById('teacher-detail-name').textContent = t.name;
+    document.getElementById('teacher-detail-meta').textContent = (isChannelName(t.name) ? 'قناة رسمية' : 'مدرس') + ' · ' + t.count + ' محاضرة · ' + t.subjects.join('، ') + ' · ' + t.grades.join('، ');
+    teacherChapter = '';
+    currentTeacherList = lessons.filter(function (l) { return (l.teacher || 'مدرس غير معروف') === name && (!teacherSubject || l.subject === teacherSubject); });
+    renderTeacherChapters(currentTeacherList);
+    renderTeacherDetailGrid();
+    window.scrollTo(0, 0);
+  }
+  document.getElementById('teacher-back').addEventListener('click', function () { renderTeachers(); });
+  document.querySelectorAll('.tabs button[data-view]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var view = btn.getAttribute('data-view');
+      document.querySelectorAll('.tabs button[data-view]').forEach(function (b) { b.classList.toggle('active', b === btn); });
+      document.getElementById('view-teachers').style.display = view === 'teachers' ? '' : 'none';
+      document.getElementById('view-all').style.display = view === 'all' ? '' : 'none';
+    });
+  });
+  renderTeacherChips();
+  renderTeachers();
+
   document.getElementById('f-subject').addEventListener('change', render);
   document.getElementById('f-grade').addEventListener('change', render);
   document.getElementById('f-q').addEventListener('input', render);

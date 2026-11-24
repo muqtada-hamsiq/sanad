@@ -35,7 +35,7 @@
 <main class="container">
 <section class="hero">
 <h1>تقرير مستواك</h1>
-<p>يُحسب هذا التقرير من بياناتك الحقيقية المحفوظة على جهازك فقط — نتائج امتحاناتك ودروسك المكتملة وجدولك. لا نخترع أي مستوى.</p>
+<p>يُحسب هذا التقرير من بياناتك الحقيقية — من حسابك عند تسجيل الدخول، أو من جهازك دون تسجيل دخول. لا نخترع أي مستوى.</p>
 </section>
 
 <div id="empty-report" style="display:none">
@@ -46,6 +46,11 @@
 </div>
 
 <div id="report-content" style="display:none">
+
+<section class="card">
+<h2 class="section-title">معلوماتك وملخصك</h2>
+<div id="student-summary"></div>
+</section>
 
 <section class="card">
 <h2 class="section-title">متوسط درجاتك حسب المادة</h2>
@@ -120,6 +125,9 @@
     p.textContent = text;
     el.appendChild(p);
   }
+  function getStore() {
+    try { return (window.SANAD && window.SANAD.store) ? window.SANAD.store : null; } catch (e) { return null; }
+  }
   function subjectOfExam(examId) {
     try {
       var data = window.SANAD_DATA;
@@ -132,149 +140,247 @@
     if (examId === 'math3-3rd-2026') { return 'الرياضيات'; }
     return examId;
   }
-
-  // sanad_exam_history is a flat array of attempts:
-  // [{examId, score, total, at}] (see app.js recordExam). Tolerate an
-  // object keyed by examId as well.
-  var historyRaw = readJSON('sanad_exam_history', []);
-  var attemptsList = [];
-  if (Array.isArray(historyRaw)) {
-    attemptsList = historyRaw;
-  } else if (historyRaw && typeof historyRaw === 'object') {
-    Object.keys(historyRaw).forEach(function (examId) {
-      var a = historyRaw[examId];
-      if (Array.isArray(a)) { a.forEach(function (x) { attemptsList.push(x); }); }
-      else if (a) { attemptsList.push(a); }
-    });
-  }
-  var lessonLog = readJSON('sanad_lesson_log', []);
-  var sched = readJSON('sanad_schedule', null);
-
-  // Exam averages per subject (percent)
-  var perSubject = {}; // subject -> {sum, count}
-  var totalAttempts = 0;
-  attemptsList.forEach(function (a) {
-    var examId = (a && a.examId) || '';
-    var subject = subjectOfExam(examId);
-    var score = (a && a.score !== undefined) ? a.score : (a && a.correct !== undefined ? a.correct : null);
-    var total = (a && (a.total !== undefined ? a.total : a.totalQuestions)) || null;
-    if (score === null || total === null || total === 0) { return; }
-    var pct = (score / total) * 100;
-    if (!perSubject[subject]) { perSubject[subject] = { sum: 0, count: 0 }; }
-    perSubject[subject].sum += pct;
-    perSubject[subject].count += 1;
-    totalAttempts++;
-  });
-
-  // Lessons completed per subject
-  var lessonsPerSubject = {};
-  lessonLog.forEach(function (l) {
-    var s = (l && (l.subject || l.subjectName)) || 'مادة غير محددة';
-    lessonsPerSubject[s] = (lessonsPerSubject[s] || 0) + 1;
-  });
-
-  var hasExamData = totalAttempts > 0;
-  var hasLessonData = lessonLog.length > 0;
-  var hasSchedule = !!(sched && sched.subjects && sched.subjects.length);
-
-  if (!hasExamData && !hasLessonData) {
-    document.getElementById('empty-report').style.display = '';
-    document.getElementById('report-content').style.display = 'none';
-    return;
-  }
-  document.getElementById('empty-report').style.display = 'none';
-  document.getElementById('report-content').style.display = '';
-
-  // Averages
-  var avgEl = document.getElementById('subject-averages');
-  var avgNames = Object.keys(perSubject);
-  if (!avgNames.length) {
-    emptyInto(avgEl, 'لا توجد نتائج امتحانات محفوظة بعد.');
-  } else {
-    var ul = document.createElement('ul');
-    avgNames.forEach(function (s) {
-      var avg = Math.round(perSubject[s].sum / perSubject[s].count);
-      var li = document.createElement('li');
-      li.textContent = s + ': متوسط ' + avg + '% من ' + perSubject[s].count + ' محاولة';
-      ul.appendChild(li);
-    });
-    avgEl.appendChild(ul);
-  }
-
-  // Lessons per subject
-  var lesEl = document.getElementById('lessons-per-subject');
-  var lesNames = Object.keys(lessonsPerSubject);
-  if (!lesNames.length) {
-    emptyInto(lesEl, 'لم تكمل أي درس بعد.');
-  } else {
-    var ul2 = document.createElement('ul');
-    lesNames.forEach(function (s) {
-      var li = document.createElement('li');
-      li.textContent = s + ': ' + lessonsPerSubject[s] + ' درس مكتمل';
-      ul2.appendChild(li);
-    });
-    lesEl.appendChild(ul2);
-  }
-
-  // Schedule completion %
-  var schedEl = document.getElementById('schedule-completion');
-  if (!hasSchedule) {
-    emptyInto(schedEl, 'لم تنشئ جدولك الدراسي بعد.');
-  } else {
-    var done = readJSON('sanad_schedule_done', {});
-    var planned = 0, doneCount = 0;
-    for (var i = 0; i < 7; i++) {
-      if (sched.times && sched.times[i]) { planned++; if (done[i]) { doneCount++; } }
+  function normalizeHistory(historyRaw) {
+    var list = [];
+    if (Array.isArray(historyRaw)) { list = historyRaw; }
+    else if (historyRaw && typeof historyRaw === 'object') {
+      Object.keys(historyRaw).forEach(function (examId) {
+        var a = historyRaw[examId];
+        if (Array.isArray(a)) { a.forEach(function (x) { list.push(x); }); }
+        else if (a) { list.push(a); }
+      });
     }
-    var p = document.createElement('p');
-    if (!planned) {
-      p.textContent = 'أنشأت جدولك لكنك لم تحدد وقت دراسة لأي يوم بعد.';
+    return list;
+  }
+
+  async function loadData() {
+    // Local fallback: the same keys this page always used.
+    var data = {
+      loggedIn: false,
+      profile: null,
+      attemptsList: normalizeHistory(readJSON('sanad_exam_history', [])),
+      lessonLog: readJSON('sanad_lesson_log', []),
+      sched: readJSON('sanad_schedule', null),
+      done: readJSON('sanad_schedule_done', {}),
+      points: 0,
+      badgeCount: 0,
+      savedCount: 0,
+      savedLabel: 'عناصر محفوظة للقراءة دون اتصال'
+    };
+    try {
+      if (window.SANAD && typeof window.SANAD.getPoints === 'function') { data.points = window.SANAD.getPoints() || 0; }
+      else { data.points = readJSON('sanad_points', 0) || 0; }
+    } catch (e) { data.points = readJSON('sanad_points', 0) || 0; }
+    try {
+      if (window.SANAD && typeof window.SANAD.getBadges === 'function') { var b = window.SANAD.getBadges() || []; data.badgeCount = Array.isArray(b) ? b.length : 0; }
+      else { var lb = readJSON('sanad_badges', []); data.badgeCount = Array.isArray(lb) ? lb.length : 0; }
+    } catch (e) {}
+    // Saved books (guest): offline-saved titles + favourited books, deduped.
+    try {
+      var offline = [];
+      if (window.SANAD && typeof window.SANAD.getOffline === 'function') { offline = window.SANAD.getOffline() || []; }
+      else { offline = readJSON('sanad_offline', []); }
+      var titles = [];
+      (Array.isArray(offline) ? offline : []).forEach(function (it) {
+        var t = typeof it === 'string' ? it : (it && (it.title || it.name)) || '';
+        if (t && titles.indexOf(t) === -1) { titles.push(t); }
+      });
+      var favs = readJSON('sanad_favs', []);
+      (Array.isArray(favs) ? favs : []).forEach(function (f) {
+        if (f && f.type === 'book') {
+          var bt = f.title || f.name || '';
+          if (!bt) {
+            try {
+              var d = window.SANAD_DATA;
+              if (d && Array.isArray(d.books)) {
+                for (var i = 0; i < d.books.length; i++) {
+                  if (d.books[i].id === f.id) { bt = d.books[i].title || d.books[i].name || ''; break; }
+                }
+              }
+            } catch (e) {}
+          }
+          if (bt && titles.indexOf(bt) === -1) { titles.push(bt); }
+        }
+      });
+      data.savedCount = titles.length;
+    } catch (e) {}
+
+    var store = getStore();
+    if (!store) { return data; }
+    try { if (store.ready) { await store.ready; } } catch (e) { return data; }
+    var loggedIn = false;
+    try { loggedIn = typeof store.isLoggedIn === 'function' ? !!store.isLoggedIn() : false; } catch (e) { return data; }
+    if (!loggedIn) { return data; }
+    data.loggedIn = true;
+    try { if (typeof store.getProfile === 'function') { var pr = store.getProfile(); if (pr && typeof pr.then === 'function') { pr = await pr; } if (pr) { data.profile = pr; } } } catch (e) {}
+    try { if (typeof store.getExamResults === 'function') { var ex = store.getExamResults(); if (ex && typeof ex.then === 'function') { ex = await ex; } if (Array.isArray(ex)) { data.attemptsList = ex; } } } catch (e) {}
+    try { if (typeof store.getCompletedLessons === 'function') { var ls = store.getCompletedLessons(); if (ls && typeof ls.then === 'function') { ls = await ls; } if (Array.isArray(ls)) { data.lessonLog = ls; } } } catch (e) {}
+    try { if (typeof store.getProgress === 'function') { var pg = store.getProgress(); if (pg && typeof pg.then === 'function') { pg = await pg; } if (pg) { data.points = Number(pg.points) || 0; } } } catch (e) {}
+    try { if (typeof store.getAchievements === 'function') { var ac = store.getAchievements(); if (ac && typeof ac.then === 'function') { ac = await ac; } if (Array.isArray(ac)) { data.badgeCount = ac.length; } } } catch (e) {}
+    try {
+      if (typeof store.getSavedItems === 'function') {
+        var sv = store.getSavedItems();
+        if (sv && typeof sv.then === 'function') { sv = await sv; }
+        if (Array.isArray(sv)) { data.savedCount = sv.length; data.savedLabel = 'كتب محفوظة'; }
+      }
+    } catch (e) {}
+    try { if (typeof store.getSchedule === 'function') { var sc = store.getSchedule(); if (sc && typeof sc.then === 'function') { sc = await sc; } if (sc && sc.schedule) { data.sched = sc.schedule; data.done = sc.done || {}; } } } catch (e) {}
+    return data;
+  }
+
+  loadData().then(function (data) {
+    var attemptsList = data.attemptsList || [];
+    var lessonLog = Array.isArray(data.lessonLog) ? data.lessonLog : [];
+    var sched = data.sched;
+
+    // Exam averages per subject (percent), from real attempts only.
+    var perSubject = {}; // subject -> {sum, count}
+    var totalAttempts = 0;
+    attemptsList.forEach(function (a) {
+      var examId = (a && a.examId) || '';
+      var subject = (a && (a.subject || a.subjectName)) || subjectOfExam(examId);
+      var score = (a && a.score !== undefined) ? a.score : (a && a.correct !== undefined ? a.correct : null);
+      var total = (a && (a.total !== undefined ? a.total : a.totalQuestions)) || null;
+      if (score === null || total === null || total === 0) { return; }
+      var pct = (score / total) * 100;
+      if (!perSubject[subject]) { perSubject[subject] = { sum: 0, count: 0 }; }
+      perSubject[subject].sum += pct;
+      perSubject[subject].count += 1;
+      totalAttempts++;
+    });
+
+    // Lessons completed per subject
+    var lessonsPerSubject = {};
+    lessonLog.forEach(function (l) {
+      var s = (l && (l.subject || l.subjectName)) || 'مادة غير محددة';
+      lessonsPerSubject[s] = (lessonsPerSubject[s] || 0) + 1;
+    });
+
+    var hasExamData = totalAttempts > 0;
+    var hasLessonData = lessonLog.length > 0;
+    var hasSchedule = !!(sched && sched.subjects && sched.subjects.length);
+
+    if (!hasExamData && !hasLessonData) {
+      document.getElementById('empty-report').style.display = '';
+      document.getElementById('report-content').style.display = 'none';
+      return;
+    }
+    document.getElementById('empty-report').style.display = 'none';
+    document.getElementById('report-content').style.display = '';
+
+    // Student summary — real data only.
+    var sumEl = document.getElementById('student-summary');
+    sumEl.innerHTML = '';
+    var profile = data.profile || {};
+    var sumUl = document.createElement('ul');
+    var sumLines = [
+      'الاسم: ' + (profile.display_name || 'غير مسجل'),
+      'المرحلة: ' + (profile.stage || 'غير مسجلة في ملفك'),
+      'الصف: ' + (profile.grade || 'غير مسجل في ملفك'),
+      'الدروس المكتملة: ' + lessonLog.length + ' درس',
+      'الاختبارات المكتملة: ' + totalAttempts + ' اختبار',
+      data.savedLabel + ': ' + data.savedCount,
+      'النقاط: ' + data.points + ' نقطة',
+      'الشارات المكتسبة: ' + data.badgeCount
+    ];
+    sumLines.forEach(function (t) { var li = document.createElement('li'); li.textContent = t; sumUl.appendChild(li); });
+    sumEl.appendChild(sumUl);
+    if (!data.loggedIn) {
+      var guestNote = document.createElement('p');
+      guestNote.className = 'empty-state';
+      guestNote.textContent = 'أنت تتصفح دون تسجيل دخول — هذا التقرير من بيانات جهازك فقط. سجّل دخولك لحفظ تقدمك في حسابك.';
+      sumEl.appendChild(guestNote);
+    }
+
+    // Averages
+    var avgEl = document.getElementById('subject-averages');
+    var avgNames = Object.keys(perSubject);
+    if (!avgNames.length) {
+      emptyInto(avgEl, 'لا توجد نتائج امتحانات محفوظة بعد.');
     } else {
-      p.textContent = 'أنجزت ' + doneCount + ' من ' + planned + ' جلسات مخططة هذا الأسبوع — ' + Math.round((doneCount / planned) * 100) + '%';
+      var ul = document.createElement('ul');
+      avgNames.forEach(function (s) {
+        var avg = Math.round(perSubject[s].sum / perSubject[s].count);
+        var li = document.createElement('li');
+        li.textContent = s + ': متوسط ' + avg + '% من ' + perSubject[s].count + ' محاولة';
+        ul.appendChild(li);
+      });
+      avgEl.appendChild(ul);
     }
-    schedEl.appendChild(p);
-  }
 
-  // Mastered vs review lists
-  var allSubjects = {};
-  avgNames.forEach(function (s) { allSubjects[s] = true; });
-  lesNames.forEach(function (s) { allSubjects[s] = true; });
-  var mastered = [];
-  var review = [];
-  Object.keys(allSubjects).forEach(function (s) {
-    var avg = perSubject[s] ? Math.round(perSubject[s].sum / perSubject[s].count) : null;
-    var lessons = lessonsPerSubject[s] || 0;
-    if (avg !== null && avg >= 70) {
-      mastered.push(s + ' — متوسط ' + avg + '%');
-    } else if (avg === null && lessons > 0) {
-      mastered.push(s + ' — أكملت ' + lessons + ' درس');
-    } else if (avg !== null && avg < 70) {
-      review.push(s + ' — متوسط ' + avg + '%');
-    } else if (avg === null && lessons === 0) {
-      review.push(s + ' — لم تختبر بعد');
+    // Lessons per subject
+    var lesEl = document.getElementById('lessons-per-subject');
+    var lesNames = Object.keys(lessonsPerSubject);
+    if (!lesNames.length) {
+      emptyInto(lesEl, 'لم تكمل أي درس بعد.');
+    } else {
+      var ul2 = document.createElement('ul');
+      lesNames.forEach(function (s) {
+        var li = document.createElement('li');
+        li.textContent = s + ': ' + lessonsPerSubject[s] + ' درس مكتمل';
+        ul2.appendChild(li);
+      });
+      lesEl.appendChild(ul2);
+    }
+
+    // Schedule completion %
+    var schedEl = document.getElementById('schedule-completion');
+    if (!hasSchedule) {
+      emptyInto(schedEl, 'لم تنشئ جدولك الدراسي بعد.');
+    } else {
+      var done = data.done || {};
+      var planned = 0, doneCount = 0;
+      for (var i = 0; i < 7; i++) {
+        if (sched.times && sched.times[i]) { planned++; if (done[i]) { doneCount++; } }
+      }
+      var p = document.createElement('p');
+      if (!planned) {
+        p.textContent = 'أنشأت جدولك لكنك لم تحدد وقت دراسة لأي يوم بعد.';
+      } else {
+        p.textContent = 'أنجزت ' + doneCount + ' من ' + planned + ' جلسات مخططة هذا الأسبوع — ' + Math.round((doneCount / planned) * 100) + '%';
+      }
+      schedEl.appendChild(p);
+    }
+
+    // Strengths / weaknesses: only subjects with at least 2 real attempts.
+    // A subject with fewer attempts is never called strong or weak.
+    var mastered = [];
+    var review = [];
+    var insufficient = [];
+    avgNames.forEach(function (s) {
+      var count = perSubject[s].count;
+      var avg = Math.round(perSubject[s].sum / count);
+      if (count < 2) { insufficient.push(s + ' (' + count + ' محاولة)'); return; }
+      if (avg >= 70) { mastered.push(s + ' — متوسط ' + avg + '%'); }
+      else { review.push(s + ' — متوسط ' + avg + '%'); }
+    });
+
+    var masteredEl = document.getElementById('mastered-list');
+    if (!mastered.length) {
+      emptyInto(masteredEl, 'لا توجد محاولات كافية بعد — تحتاج كل مادة إلى محاولتين على الأقل لتحديد مستواك فيها.');
+    } else {
+      var ul3 = document.createElement('ul');
+      mastered.forEach(function (t) { var li = document.createElement('li'); li.textContent = t; ul3.appendChild(li); });
+      masteredEl.appendChild(ul3);
+    }
+
+    var reviewEl = document.getElementById('review-list');
+    if (!review.length) {
+      emptyInto(reviewEl, 'لا توجد محاولات كافية بعد — تحتاج كل مادة إلى محاولتين على الأقل لتحديد مستواك فيها.');
+    } else {
+      var ul4 = document.createElement('ul');
+      review.forEach(function (t) { var li = document.createElement('li'); li.textContent = t; ul4.appendChild(li); });
+      reviewEl.appendChild(ul4);
+      var hint = document.createElement('p');
+      hint.textContent = 'راجع هذه المواد من صفحة الدروس، ثم أعد الاختبار لقياس تقدمك.';
+      reviewEl.appendChild(hint);
+    }
+    if (insufficient.length) {
+      var note = document.createElement('p');
+      note.textContent = 'مواد لا توجد فيها محاولات كافية بعد: ' + insufficient.join('، ') + ' — أكمل اختباراً آخر فيها قبل الحكم على مستواك.';
+      reviewEl.appendChild(note);
     }
   });
-
-  var masteredEl = document.getElementById('mastered-list');
-  if (!mastered.length) {
-    emptyInto(masteredEl, 'لا توجد مواد تتقنها بعد حسب بياناتك الحالية.');
-  } else {
-    var ul3 = document.createElement('ul');
-    mastered.forEach(function (t) { var li = document.createElement('li'); li.textContent = t; ul3.appendChild(li); });
-    masteredEl.appendChild(ul3);
-  }
-
-  var reviewEl = document.getElementById('review-list');
-  if (!review.length) {
-    emptyInto(reviewEl, 'لا توجد مواد تحتاج إلى مراجعة حسب بياناتك الحالية.');
-  } else {
-    var ul4 = document.createElement('ul');
-    review.forEach(function (t) { var li = document.createElement('li'); li.textContent = t; ul4.appendChild(li); });
-    reviewEl.appendChild(ul4);
-    var hint = document.createElement('p');
-    hint.textContent = 'راجع هذه المواد من صفحة الدروس، ثم أعد الاختبار لقياس تقدمك.';
-    reviewEl.appendChild(hint);
-  }
 })();
 </script>
 </body>

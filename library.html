@@ -65,6 +65,7 @@
     <input id="f-q" class="search-box form-input" type="search" placeholder="ابحث عن كتاب أو مادة…" aria-label="بحث في المكتبة">
   </div>
 
+  <p><a class="btn btn-outline" href="profile.html#saved-books">محفوظاتي</a></p>
   <div id="book-count" class="badge" aria-live="polite"></div>
   <div id="book-grid" class="grid"></div>
 
@@ -159,11 +160,91 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  function fav(type, id, title) {
-    if (typeof window !== 'undefined' && window.SANAD && typeof window.SANAD.saveFav === 'function') {
-      window.SANAD.saveFav(type, id);
-      if (typeof window.SANAD.toast === 'function') window.SANAD.toast('أُضيف «' + title + '» إلى المفضلة');
+  /* ===== حفظ الكتب/الملازم (المرحلة 2 — W5) =====
+     يستخدم window.SANAD.store عند توفره (حساب مسجّل أو ضيف عبر localStorage)،
+     ويعود إلى SANAD.saveFav / مفتاح sanad_favs القديم إن لم يوجد المتجر بعد.
+     أي فشل يُظهر تنبيهاً ولا يرمي خطأً. */
+  function getStore() {
+    try { return (window.SANAD && window.SANAD.store) || null; } catch (e) { return null; }
+  }
+  function toastFail() {
+    try { if (window.SANAD && typeof window.SANAD.toast === 'function') window.SANAD.toast('تعذّر الحفظ — تحقق من اتصالك'); } catch (e) {}
+  }
+  function toastOk(msg) {
+    try { if (window.SANAD && typeof window.SANAD.toast === 'function') window.SANAD.toast(msg); } catch (e) {}
+  }
+  function legacyIsSaved(type, id) {
+    try {
+      var favs = (window.SANAD && typeof window.SANAD.getFavs === 'function') ? window.SANAD.getFavs() : [];
+      return favs.some(function (f) { return f.type === type && String(f.id) === String(id); });
+    } catch (e) { return false; }
+  }
+  function legacyUnsave(type, id) {
+    try {
+      var raw = window.localStorage.getItem('sanad_favs');
+      var favs = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(favs)) return false;
+      var next = favs.filter(function (f) { return !(f.type === type && String(f.id) === String(id)); });
+      window.localStorage.setItem('sanad_favs', JSON.stringify(next));
+      return true;
+    } catch (e) { return false; }
+  }
+  function isSavedNow(type, id) {
+    var s = getStore();
+    if (s && typeof s.isSaved === 'function') {
+      try {
+        var r = s.isSaved(type, id);
+        if (r && typeof r.then === 'function') return legacyIsSaved(type, id);
+        return !!r;
+      } catch (e) { return legacyIsSaved(type, id); }
     }
+    return legacyIsSaved(type, id);
+  }
+  function setSaveBtn(btn, saved) {
+    btn.textContent = saved ? 'محفوظ ✓' : 'حفظ';
+    btn.setAttribute('aria-pressed', saved ? 'true' : 'false');
+    btn.setAttribute('data-saved', saved ? '1' : '0');
+  }
+  function refreshSaveButtons() {
+    var btns = document.querySelectorAll('[data-save-type]');
+    btns.forEach(function (btn) {
+      try { setSaveBtn(btn, isSavedNow(btn.getAttribute('data-save-type'), btn.getAttribute('data-save-id'))); } catch (e) {}
+    });
+  }
+  function toggleSave(btn, type, id, title) {
+    var saved = btn.getAttribute('data-saved') === '1';
+    var store = getStore();
+    function done(ok, silent) {
+      if (ok) { setSaveBtn(btn, !saved); if (!silent) toastOk(saved ? 'أُزيل من المحفوظات' : 'حُفظ في محفوظاتي'); }
+      else toastFail();
+    }
+    try {
+      if (store && typeof store.saveItem === 'function' && typeof store.unsaveItem === 'function') {
+        var r = saved ? store.unsaveItem(type, id) : store.saveItem(type, id, title);
+        if (r && typeof r.then === 'function') r.then(function () { done(true); }, function () { done(false); });
+        else done(true);
+      } else if (!saved && window.SANAD && typeof window.SANAD.saveFav === 'function') {
+        window.SANAD.saveFav(type, id);
+        done(true, true); /* saveFav يُظهر تنبيهه الخاص */
+      } else if (saved) {
+        done(legacyUnsave(type, id));
+      } else {
+        done(false);
+      }
+    } catch (e) { done(false); }
+  }
+  /* بعد جاهزية المتجر (حساب/ضيف) أعد تقييم حالة كل زر ظاهر. */
+  (function () {
+    var s = getStore();
+    if (s && s.ready && typeof s.ready.then === 'function') {
+      s.ready.then(function () { refreshSaveButtons(); }, function () { refreshSaveButtons(); });
+    }
+  })();
+  function fav(type, id, title) {
+    /* واجهة قديمة: أبقيناها للتوافق، وتحوّل الآن إلى زر الحفظ نفسه. */
+    var btn = document.querySelector('[data-save-type="' + type + '"][data-save-id="' + String(id).replace(/"/g, '') + '"]');
+    if (btn) toggleSave(btn, type, id, title);
+    else if (window.SANAD && typeof window.SANAD.saveFav === 'function') window.SANAD.saveFav(type, id);
   }
   function offline(type, id, title) {
     if (typeof window !== 'undefined' && window.SANAD && typeof window.SANAD.saveOffline === 'function') {
@@ -183,6 +264,9 @@
       ? '<a class="btn btn-gold" href="' + esc((window.SANAD && window.SANAD.readerUrl)
           ? window.SANAD.readerUrl(pdfPath, { title: b.title, source: b.source, rights: b.rights, year: b.year })
           : ('reader.html?pdf=' + encodeURIComponent(pdfPath))) + '">قراءة</a>' : '';
+    var saveType = (b.type === 'ملزمة') ? 'malazim' : 'book';
+    var saveId = b.id || b.viewUrl || b.downloadUrl || b.title || '';
+    var saveTitle = b.title || b.subject || 'الكتاب';
     el.innerHTML = cover
       + '<h3>' + esc(b.title || (b.subject || 'كتاب')) + '</h3>'
       + ((b.rights || b.source) ? '<p class="book-meta">الحقوق: ' + esc(b.rights || b.source) + '</p>' : '')
@@ -192,10 +276,13 @@
       + (b.official ? '<span class="badge">محتوى رسمي</span>' : '<span class="badge">من إعداد مدرس</span>')
       + '<p>' + esc(b.description || '') + '</p>'
       + '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' + read
-      + '<button class="btn btn-outline" type="button" data-fav="' + esc(b.id || '') + '">إضافة للمفضلة</button>'
+      + (saveId ? '<button class="btn btn-outline" type="button" data-save-type="' + esc(saveType) + '" data-save-id="' + esc(saveId) + '" data-saved="0" aria-pressed="false">حفظ</button>' : '')
       + '<button class="btn btn-outline" type="button" data-off="' + esc(b.id || '') + '">حفظ دون إنترنت</button></div>';
-    var fb = el.querySelector('[data-fav]');
-    if (fb) fb.addEventListener('click', function () { fav('book', b.id, b.title || b.subject || 'الكتاب'); });
+    var sb = el.querySelector('[data-save-type]');
+    if (sb) {
+      setSaveBtn(sb, isSavedNow(saveType, saveId));
+      sb.addEventListener('click', function () { toggleSave(sb, saveType, saveId, saveTitle); });
+    }
     var ob = el.querySelector('[data-off]');
     if (ob) ob.addEventListener('click', function () { offline('book', b.id, b.title || b.subject || 'الكتاب'); });
     return el;
@@ -217,6 +304,7 @@
     });
     grid.innerHTML = '';
     list.forEach(function (b) { grid.appendChild(card(b)); });
+    refreshSaveButtons();
     count.textContent = list.length ? ('عدد الكتب: ' + list.length) : '';
     empty.style.display = list.length ? 'none' : '';
     if (!list.length && books.length) {

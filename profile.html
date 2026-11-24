@@ -130,6 +130,9 @@
 <script src="app.js"></script>
 <script>
 (function () {
+  'use strict';
+
+  /* ===== أدوات مساعدة (محلية، بلا اعتماد على الخادم) ===== */
   function readJSON(key, fallback) {
     try { var v = JSON.parse(localStorage.getItem(key) || 'null'); return v === null || v === undefined ? fallback : v; } catch (e) { return fallback; }
   }
@@ -147,23 +150,101 @@
     items.forEach(function (t) { var li = document.createElement('li'); li.textContent = t; ul.appendChild(li); });
     el.appendChild(ul);
   }
-  function getPoints() {
-    if (window.SANAD && typeof window.SANAD.getPoints === 'function') {
-      try { return window.SANAD.getPoints() || 0; } catch (e) { return 0; }
-    }
-    return readJSON('sanad_points', 0) || 0;
+  function textEl(tag, text, cls) {
+    var el = document.createElement(tag);
+    if (cls) { el.className = cls; }
+    el.textContent = text;
+    return el;
   }
-  function getFavs() {
-    if (window.SANAD && typeof window.SANAD.getFavs === 'function') {
-      try { return window.SANAD.getFavs() || []; } catch (e) { return []; }
-    }
-    return readJSON('sanad_favs', []);
+  function fmtDate(v) {
+    if (!v) { return ''; }
+    return String(v).slice(0, 10);
   }
-  function getOffline() {
-    if (window.SANAD && typeof window.SANAD.getOffline === 'function') {
-      try { return window.SANAD.getOffline() || []; } catch (e) { return []; }
+  function pctOf(score, total) {
+    if (score === null || score === undefined || !total) { return null; }
+    var t = Number(total);
+    if (!t) { return null; }
+    return Math.round((Number(score) / t) * 100);
+  }
+  function sortNewest(list, atKey) {
+    return list.slice().sort(function (a, b) {
+      var x = String((a && a[atKey]) || '');
+      var y = String((b && b[atKey]) || '');
+      if (y < x) { return -1; }
+      if (y > x) { return 1; }
+      return 0;
+    });
+  }
+
+  /* ===== المتجر (window.SANAD.store) مع الرجوع إلى localStorage عند غيابه =====
+     كل استدعاء للمتجر محاط بـ try/catch؛ إن لم يوجد المتجر (نسخة app.js أقدم)
+     يُستخدم مسار localStorage نفسه الذي كانت الصفحة تعتمد عليه. */
+  function getStore() {
+    try { return (window.SANAD && window.SANAD.store) || null; } catch (e) { return null; }
+  }
+  /* تعيد Promise تحلّ إلى {ok:true, value} عند نجاح استدعاء المتجر،
+     و{ok:false} عند غيابه أو فشله. قيمة المتجر — حتى لو كانت مصفوفة
+     فارغة أو null — معتمدة ولا يُرجع بعدها إلى localStorage، لأن المتجر
+     هو المصدر الرسمي عند وجوده. ملاحظة: دوال المتجر غير متزامنة
+     (تعيد Promise) فيجب انتظارها هنا — وإلا وصلت Promise خاماً
+     إلى العرض وظهرت كل الأقسام فارغة. */
+  async function storeCall(name, args) {
+    var s = getStore();
+    if (s && typeof s[name] === 'function') {
+      try {
+        var v = s[name].apply(s, args || []);
+        if (v && typeof v.then === 'function') { v = await v; }
+        return { ok: true, value: v };
+      }
+      catch (e) { return { ok: false, value: null }; }
     }
-    return readJSON('sanad_offline', []);
+    return { ok: false, value: null };
+  }
+
+  /* ===== بيانات SANAD_DATA ===== */
+  function findGrade(gradeVal) {
+    if (!gradeVal) { return null; }
+    try {
+      var stages = (window.SANAD_DATA && window.SANAD_DATA.stages) || [];
+      for (var i = 0; i < stages.length; i++) {
+        var grades = stages[i].grades || [];
+        for (var j = 0; j < grades.length; j++) {
+          var g = grades[j];
+          if (!g) { continue; }
+          if (typeof g === 'string') { if (g === gradeVal) { return { id: '', name: g, subjects: [] }; } continue; }
+          if (g.id === gradeVal || g.name === gradeVal) { return g; }
+        }
+      }
+    } catch (e) {}
+    return null;
+  }
+  function booksOfGrade(gradeName) {
+    try {
+      var books = (window.SANAD_DATA && window.SANAD_DATA.books) || [];
+      return books.filter(function (b) { return b && b.grade === gradeName; });
+    } catch (e) { return []; }
+  }
+  function lessonsOfGrade(gradeName) {
+    try {
+      var lessons = (window.SANAD_DATA && window.SANAD_DATA.lessons) || [];
+      return lessons.filter(function (l) { return l && l.grade === gradeName; });
+    } catch (e) { return []; }
+  }
+  /* يطابق معرّف الكتاب المحفوظ بكل الأشكال التي تُحفظ بها:
+     'book-N' من library.html، ومسار PDF من grade.html
+     (b.pdf || b.url)، وعنوان الكتاب كاحتياط. بدون هذا تُتخطى
+     الكتب المحفوظة من صفحة الصف بصمت ويظهر القسم فارغاً. */
+  function findBookById(id) {
+    if (!id) { return null; }
+    try {
+      var books = (window.SANAD_DATA && window.SANAD_DATA.books) || [];
+      for (var i = 0; i < books.length; i++) {
+        var b = books[i];
+        if (!b) { continue; }
+        if (b.id === id || b.viewUrl === id || b.downloadUrl === id || b.title === id) { return b; }
+      }
+    } catch (e) {}
+    return null;
   }
   function examTitle(examId) {
     try {
@@ -176,13 +257,360 @@
     } catch (e) {}
     return examId;
   }
-  async function init() {
-    var user = null;
+
+  /* ===== مصادر البيانات: المتجر أولاً، ثم localStorage ===== */
+  function localExamAttempts() {
+    var raw = readJSON('sanad_exam_history', []);
+    var list = [];
+    if (Array.isArray(raw)) {
+      list = raw;
+    } else if (raw && typeof raw === 'object') {
+      Object.keys(raw).forEach(function (examId) {
+        var a = raw[examId];
+        if (Array.isArray(a)) { a.forEach(function (x) { list.push(x); }); }
+        else if (a) { list.push(a); }
+      });
+    }
+    return list.map(function (a) {
+      if (!a || typeof a !== 'object') { return null; }
+      return {
+        examId: a.examId || '',
+        score: (a.score !== undefined) ? a.score : (a.correct !== undefined ? a.correct : null),
+        total: (a.total !== undefined) ? a.total : (a.totalQuestions !== undefined ? a.totalQuestions : null),
+        at: a.at || a.date || a.finishedAt || ''
+      };
+    }).filter(Boolean);
+  }
+  async function getExamResults() {
+    var r = await storeCall('getExamResults', []);
+    if (r.ok) { return Array.isArray(r.value) ? r.value : []; }
+    return localExamAttempts();
+  }
+  async function getSavedItems() {
+    var r1 = await storeCall('getSavedItems', ['book']);
+    var r2 = await storeCall('getSavedItems', ['malazim']);
+    if (r1.ok || r2.ok) {
+      var out = [];
+      [r1, r2].forEach(function (r) { if (r.ok && Array.isArray(r.value)) { out = out.concat(r.value); } });
+      return out;
+    }
+    var favs = [];
+    try { favs = (window.SANAD && typeof window.SANAD.getFavs === 'function') ? (window.SANAD.getFavs() || []) : readJSON('sanad_favs', []); }
+    catch (e) { favs = readJSON('sanad_favs', []); }
+    var offline = [];
+    try { offline = (window.SANAD && typeof window.SANAD.getOffline === 'function') ? (window.SANAD.getOffline() || []) : readJSON('sanad_offline', []); }
+    catch (e) { offline = readJSON('sanad_offline', []); }
+    var items = [];
+    (Array.isArray(favs) ? favs : []).forEach(function (f) {
+      if (f && typeof f === 'object' && (f.type === 'book' || f.type === 'malazim') && f.id) {
+        items.push({ type: f.type, id: f.id, title: f.title || '', at: f.at || '' });
+      }
+    });
+    (Array.isArray(offline) ? offline : []).forEach(function (o) {
+      if (o && typeof o === 'object' && (o.type === 'book' || o.type === 'malazim') && o.id) {
+        items.push({ type: o.type, id: o.id, title: o.title || o.name || '', at: o.at || '' });
+      }
+    });
+    return items;
+  }
+  async function getCompletedLessons() {
+    var r = await storeCall('getCompletedLessons', []);
+    if (r.ok) { return Array.isArray(r.value) ? r.value : []; }
+    var log = readJSON('sanad_lesson_log', []);
+    if (!Array.isArray(log)) { return []; }
+    return log.map(function (l) {
+      if (typeof l === 'string') { return { key: l, title: l, grade: '', subject: '', at: '' }; }
+      if (!l || typeof l !== 'object') { return null; }
+      return {
+        key: l.key || l.id || l.title || '',
+        title: l.title || l.lessonTitle || l.name || '',
+        grade: l.grade || '',
+        subject: l.subject || l.subjectName || '',
+        at: l.at || l.date || l.completedAt || ''
+      };
+    }).filter(function (x) { return x && x.title; });
+  }
+  async function getScheduleData() {
+    var r = await storeCall('getSchedule', []);
+    if (r.ok) {
+      if (!r.value) { return { schedule: null, done: {} }; }
+      return { schedule: r.value.schedule || null, done: r.value.done || {} };
+    }
+    return { schedule: readJSON('sanad_schedule', null), done: readJSON('sanad_schedule_done', {}) || {} };
+  }
+  async function getAchievements() {
+    var r = await storeCall('getAchievements', []);
+    if (r.ok) {
+      if (!Array.isArray(r.value)) { return []; }
+      return r.value.map(function (b) {
+        if (typeof b === 'string') { return b; }
+        return (b && (b.badgeName || b.name || b.badgeId)) || '';
+      }).filter(Boolean);
+    }
+    var badges = readJSON('sanad_badges', []);
+    if (!Array.isArray(badges)) { return []; }
+    return badges.map(function (b) {
+      if (typeof b === 'string') { return b; }
+      return (b && (b.badgeName || b.name)) || '';
+    }).filter(Boolean);
+  }
+  async function getProgress(attempts, lessonCount) {
+    var best = null;
+    attempts.forEach(function (a) {
+      var p = pctOf(a.score, a.total);
+      if (p !== null && (best === null || p > best)) { best = p; }
+    });
+    var r = await storeCall('getProgress', []);
+    if (r.ok && r.value && typeof r.value === 'object') {
+      return {
+        points: (typeof r.value.points === 'number') ? r.value.points : 0,
+        lessons: (typeof r.value.lessons === 'number') ? r.value.lessons : lessonCount,
+        exams: (typeof r.value.exams === 'number') ? r.value.exams : attempts.length,
+        bestPct: (typeof r.value.bestPct === 'number') ? r.value.bestPct : best
+      };
+    }
+    var points = 0;
+    try { points = (window.SANAD && typeof window.SANAD.getPoints === 'function') ? (window.SANAD.getPoints() || 0) : (readJSON('sanad_points', 0) || 0); }
+    catch (e) { points = readJSON('sanad_points', 0) || 0; }
+    return { points: points, lessons: lessonCount, exams: attempts.length, bestPct: best };
+  }
+
+  /* ===== العرض ===== */
+  var ADMIN_ROLES = ['مدير عام', 'مشرف محتوى', 'مدرس', 'مراجع'];
+
+  function renderStudyInfo(el, user, profile) {
+    el.innerHTML = '';
+    var meta = (user && user.user_metadata) || {};
+    var name = (profile && profile.display_name) || meta.name || (user && user.email) || 'طالب';
+    var stage = (profile && profile.stage) || meta.stage || '';
+    var grade = (profile && profile.grade) || meta.grade || '';
+    var email = (user && user.email) || '';
+    var role = (profile && profile.role) || '';
+    /* إن كان الصف محفوظاً كمعرّف (مثل m3) اعرض اسمه الكامل من SANAD_DATA */
+    var foundGrade = findGrade(grade);
+    var gradeShown = foundGrade ? (foundGrade.name || grade) : grade;
+    var line = 'الاسم: ' + name;
+    if (stage) { line += ' — المرحلة: ' + stage; }
+    if (gradeShown) { line += ' — الصف: ' + gradeShown; }
+    if (email) { line += ' — البريد: ' + email; }
+    el.appendChild(textEl('p', line));
+    if (role && ADMIN_ROLES.indexOf(role) !== -1) {
+      var rp = document.createElement('p');
+      rp.textContent = 'الدور: ' + role + ' — ';
+      var a = document.createElement('a');
+      a.href = 'admin.html';
+      a.textContent = 'لوحة الإدارة';
+      rp.appendChild(a);
+      el.appendChild(rp);
+    }
+    if (!stage || !grade) {
+      el.appendChild(textEl('p', 'أكمل بيانات مرحلتك وصفك من صفحة التسجيل', 'empty-state'));
+    }
+    /* نص صادق عن مكان حفظ البيانات: مع المتجر تُحفظ في الحساب على الخادم،
+       وبدونه تبقى على الجهاز فقط. */
+    var note = getStore()
+      ? 'بياناتك الدراسية — وأنت مسجل الدخول — محفوظة في حسابك على خادم سند، ويمكنك الوصول إليها من أي جهاز؛ أما بيانات الضيف فتبقى على جهازه فقط.'
+      : 'بياناتك الدراسية تُحفظ في متصفح هذا الجهاز فقط في هذه النسخة.';
+    el.appendChild(textEl('p', note, 'alert alert-info'));
+  }
+
+  function renderSubjects(el, foundGrade, gradeName) {
+    el.innerHTML = '';
+    if (!gradeName) {
+      emptyInto(el, 'لم نتمكن من تحديد صفك — أكمل بيانات مرحلتك وصفك من صفحة التسجيل لعرض موادك.');
+      return;
+    }
+    var subjects = (foundGrade && foundGrade.subjects) || [];
+    if (!subjects.length) {
+      emptyInto(el, 'لا توجد مواد مسجلة لصف ' + gradeName + ' بعد.');
+      return;
+    }
+    var books = booksOfGrade(gradeName);
+    var lessons = lessonsOfGrade(gradeName);
+    var ul = document.createElement('ul');
+    subjects.forEach(function (s) {
+      var bc = books.filter(function (b) { return b.subject === s; }).length;
+      var lc = lessons.filter(function (l) { return l.subject === s; }).length;
+      var li = document.createElement('li');
+      li.textContent = s + ' — ' + bc + ' كتاب، ' + lc + ' درس';
+      ul.appendChild(li);
+    });
+    el.appendChild(ul);
+  }
+
+  async function renderSavedBooks(el) {
+    el.innerHTML = '';
+    var items = await getSavedItems();
+    var links = [];
+    items.forEach(function (it) {
+      var b = findBookById(it && it.id);
+      if (!b) { return; } /* عنصر لا يمكن حله من data.js — يُتخطى بصمت */
+      var pdf = (b.viewUrl || b.downloadUrl) || '';
+      if (!pdf) { return; }
+      var href = '';
+      try {
+        href = (window.SANAD && typeof window.SANAD.readerUrl === 'function')
+          ? window.SANAD.readerUrl(pdf, { title: b.title || '', source: b.source || '', rights: b.rights || '', year: b.year || '' })
+          : '';
+      } catch (e) { href = ''; }
+      if (!href) { return; }
+      links.push({ href: href, title: b.title || it.title || 'كتاب', type: b.type || '' });
+    });
+    if (!links.length) {
+      emptyInto(el, 'لم تحفظ أي كتاب بعد — يمكنك حفظ الكتب من المكتبة');
+      return;
+    }
+    var ul = document.createElement('ul');
+    links.forEach(function (l) {
+      var li = document.createElement('li');
+      var a = document.createElement('a');
+      a.href = l.href;
+      a.textContent = l.title + (l.type ? ' (' + l.type + ')' : '');
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
+    el.appendChild(ul);
+  }
+
+  function renderExamResults(el, attempts) {
+    el.innerHTML = '';
+    if (!attempts.length) {
+      emptyInto(el, 'لم تكمل أي امتحان بعد');
+      return;
+    }
+    var sorted = sortNewest(attempts, 'at');
+    var best = null;
+    sorted.forEach(function (a) {
+      var p = pctOf(a.score, a.total);
+      if (p !== null && (best === null || p > best)) { best = p; }
+    });
+    var ul = document.createElement('ul');
+    sorted.forEach(function (a) {
+      var pct = pctOf(a.score, a.total);
+      var row = examTitle(a.examId || '') + ': ' +
+        (a.score !== null && a.score !== undefined ? a.score : '—') +
+        (a.total !== null && a.total !== undefined ? ' من ' + a.total : '') +
+        (pct !== null ? ' — ' + pct + '%' : '') +
+        (a.at ? ' — ' + fmtDate(a.at) : '');
+      var li = document.createElement('li');
+      li.textContent = row;
+      ul.appendChild(li);
+    });
+    el.appendChild(ul);
+    if (best !== null) {
+      el.appendChild(textEl('p', 'أفضل نتيجة: ' + best + '%'));
+    }
+  }
+
+  function renderLessonLog(el, completed) {
+    el.innerHTML = '';
+    if (!completed.length) {
+      emptyInto(el, 'لم تكمل أي درس بعد');
+      return;
+    }
+    var sorted = sortNewest(completed, 'at');
+    var ul = document.createElement('ul');
+    sorted.forEach(function (l) {
+      var row = (l.title || 'درس') +
+        (l.subject ? ' — ' + l.subject : '') +
+        (l.grade ? ' — ' + l.grade : '') +
+        (l.at ? ' — ' + fmtDate(l.at) : '');
+      var li = document.createElement('li');
+      li.textContent = row;
+      ul.appendChild(li);
+    });
+    el.appendChild(ul);
+  }
+
+  async function renderSchedule(el) {
+    el.innerHTML = '';
+    var data = await getScheduleData();
+    var sched = data.schedule;
+    var done = data.done || {};
+    if (!sched || !sched.subjects || !sched.subjects.length) {
+      emptyInto(el, 'لم تنشئ جدولك الدراسي بعد');
+      return;
+    }
+    el.appendChild(textEl('p', 'موادك: ' + sched.subjects.join('، ')));
+    var goal = 'هدفك اليومي: غير محدد';
+    if (sched.goalHours !== undefined && sched.goalHours !== '' && sched.goalHours !== null) {
+      goal = 'هدفك اليومي: ' + sched.goalHours + ' ساعة دراسة';
+    } else if (sched.goalLessons !== undefined && sched.goalLessons !== '' && sched.goalLessons !== null) {
+      goal = 'هدفك اليومي: ' + sched.goalLessons + ' دروس';
+    }
+    el.appendChild(textEl('p', goal));
+    var planned = 0, doneCount = 0;
+    for (var i = 0; i < 7; i++) {
+      if (sched.times && sched.times[i]) {
+        planned++;
+        if (done[i] || done[String(i)]) { doneCount++; }
+      }
+    }
+    if (planned) {
+      el.appendChild(textEl('p', 'إنجاز هذا الأسبوع: ' + doneCount + ' من ' + planned + ' جلسات (' + Math.round((doneCount / planned) * 100) + '%)'));
+    } else {
+      el.appendChild(textEl('p', 'لم تحدد وقت دراسة لأي يوم بعد — عدّل جدولك من صفحة الجدول.'));
+    }
+  }
+
+  function lessonMatchesGrade(l, gradeName, gradeId) {
+    var g = (l && l.grade) || '';
+    return g === gradeName || (gradeId && g === gradeId);
+  }
+
+  async function renderProgress(el, progress, completed, gradeName, gradeId) {
+    el.innerHTML = '';
+    el.appendChild(textEl('p', 'نقاطك: ' + progress.points + ' نقطة'));
+    el.appendChild(textEl('p', 'الدروس المكتملة: ' + progress.lessons + ' — الامتحانات المكتملة: ' + progress.exams));
+    if (progress.bestPct !== null && progress.bestPct !== undefined) {
+      el.appendChild(textEl('p', 'أفضل نتيجة في الامتحانات: ' + progress.bestPct + '%'));
+    }
+    /* نسبة التقدم: دروس الصف المكتملة ÷ كل دروس الصف في SANAD_DATA.
+       بلا صف معروف لا تُحسب نسبة أبداً — تُعرض الأعداد فقط. */
+    if (gradeName) {
+      var total = lessonsOfGrade(gradeName).length;
+      if (total > 0) {
+        var doneForGrade = completed.filter(function (l) { return lessonMatchesGrade(l, gradeName, gradeId); }).length;
+        var pct = Math.round((doneForGrade / total) * 100);
+        el.appendChild(textEl('p', 'تقدمك في دروس صفك: ' + doneForGrade + ' من ' + total + ' درساً — ' + pct + '%'));
+      }
+    }
+    var badges = await getAchievements();
+    if (badges.length) {
+      var b = document.createElement('p');
+      badges.forEach(function (name) {
+        var chip = document.createElement('span');
+        chip.className = 'badge';
+        chip.textContent = name;
+        b.appendChild(chip);
+        b.appendChild(document.createTextNode(' '));
+      });
+      el.appendChild(b);
+    } else {
+      el.appendChild(textEl('p', 'لم تحصل على أي شارة بعد — أكمل درساً أو اختباراً لتبدأ.', 'empty-state'));
+    }
+  }
+
+  /* ===== الدخول ===== */
+  async function getUser() {
+    var s = getStore();
+    if (s && s.ready) {
+      try {
+        var u = await s.ready;
+        if (u) { return u; }
+      } catch (e) { /* رجوع إلى فحص الجلسة أدناه */ }
+    }
     try {
       if (window.SANAD && typeof window.SANAD.getSessionUser === 'function') {
-        user = await window.SANAD.getSessionUser();
+        return await window.SANAD.getSessionUser();
       }
-    } catch (e) { user = null; }
+    } catch (e) { return null; }
+    return null;
+  }
+
+  async function init() {
+    var user = null;
+    try { user = await getUser(); } catch (e) { user = null; }
 
     var promptEl = document.getElementById('login-prompt');
     var contentEl = document.getElementById('profile-content');
@@ -194,176 +622,46 @@
     promptEl.style.display = 'none';
     contentEl.style.display = '';
 
-    // Study info — from the Supabase session (email + user_metadata)
-    var meta = user.user_metadata || {};
-    var infoEl = document.getElementById('study-info');
-    var name = meta.name || user.email || 'طالب';
-    var stage = meta.stage || '';
-    var grade = meta.grade || '';
-    var email = user.email || '';
-    var info = document.createElement('p');
-    info.textContent = 'الاسم: ' + name +
-      (stage ? ' — المرحلة: ' + stage : '') +
-      (grade ? ' — الصف: ' + grade : '') +
-      (email ? ' — البريد: ' + email : '');
-    infoEl.appendChild(info);
-    var note = document.createElement('p');
-    note.className = 'alert alert-info';
-    note.textContent = 'بيانات حسابك محفوظة في خدمة سند الآمنة، وبياناتك الدراسية (المفضلة والنتائج والجدول) محفوظة على جهازك.';
-    infoEl.appendChild(note);
-
-  // Favorite subjects — favs are stored as {type, id} references; resolve the
-  // subject from the shared data where possible.
-  var favs = getFavs();
-  function resolveFav(f) {
-    if (typeof f === 'string') { return f; }
-    if (!f) { return ''; }
+    var profile = null;
     try {
-      var d = window.SANAD_DATA;
-      if (d) {
-        var list = f.type === 'exam' ? d.exams : (f.type === 'book' ? d.books : (f.type === 'lesson' ? d.lessons : null));
-        if (Array.isArray(list)) {
-          for (var i = 0; i < list.length; i++) {
-            if (list[i].id === f.id) { return list[i].subject || list[i].subjectName || list[i].title || list[i].name || ''; }
-          }
-        }
-      }
-    } catch (e) {}
-    return (f && (f.subject || f.title || f.name)) || '';
-  }
-  var favNames = favs.map(resolveFav).filter(Boolean);
-  var userFavSubjects = Array.isArray(user.favSubjects) ? user.favSubjects : [];
-  var allFavs = userFavSubjects.concat(favNames.filter(function (n) { return userFavSubjects.indexOf(n) === -1; }));
-  listInto(document.getElementById('fav-subjects'), allFavs, 'لم تضف مواد مفضلة بعد.');
+      var pr = await storeCall('getProfile', []);
+      if (pr.ok) { profile = pr.value || null; }
+    } catch (e) { profile = null; }
 
-  // Saved books — offline items carry their title; favs are {type, id}
-  // references, resolved against the shared book data.
-  var offline = getOffline();
-  var savedNames = offline.map(function (b) {
-    if (typeof b === 'string') { return b; }
-    return (b && (b.title || b.name)) || '';
-  }).filter(Boolean);
-  var favBookNames = favs.map(function (f) {
-    if (f && typeof f === 'object' && f.type === 'book') {
+    var meta = (user && user.user_metadata) || {};
+    var gradeVal = (profile && profile.grade) || meta.grade || '';
+    var foundGrade = findGrade(gradeVal);
+    var gradeName = foundGrade ? (foundGrade.name || '') : (typeof gradeVal === 'string' ? gradeVal : '');
+    var gradeId = (foundGrade && foundGrade.id) || '';
+
+    renderStudyInfo(document.getElementById('study-info'), user, profile);
+    renderSubjects(document.getElementById('fav-subjects'), foundGrade, gradeName);
+    await renderSavedBooks(document.getElementById('saved-books'));
+
+    var attempts = await getExamResults();
+    renderExamResults(document.getElementById('exam-results'), attempts);
+
+    var completed = await getCompletedLessons();
+    renderLessonLog(document.getElementById('lesson-log'), completed);
+
+    await renderSchedule(document.getElementById('schedule-summary'));
+
+    var progress = await getProgress(attempts, completed.length);
+    await renderProgress(document.getElementById('student-progress'), progress, completed, gradeName, gradeId);
+
+    document.getElementById('logout-btn').addEventListener('click', async function () {
       try {
-        var d = window.SANAD_DATA;
-        if (d && Array.isArray(d.books)) {
-          for (var i = 0; i < d.books.length; i++) {
-            if (d.books[i].id === f.id) { return d.books[i].title || d.books[i].name || ''; }
-          }
+        if (window.SANAD && typeof window.SANAD.signOut === 'function') {
+          await window.SANAD.signOut();
         }
       } catch (e) {}
-      return f.title || f.name || '';
-    }
-    return '';
-  }).filter(Boolean);
-  var allSaved = savedNames.concat(favBookNames.filter(function (n) { return savedNames.indexOf(n) === -1; }));
-  listInto(document.getElementById('saved-books'), allSaved, 'لم تحفظ أي كتاب بعد — يمكنك حفظ الكتب من المكتبة للقراءة لاحقاً دون إنترنت.');
-
-  // Exam results — sanad_exam_history is a flat array of attempts:
-  // [{examId, score, total, at}] (see app.js recordExam). Also tolerate
-  // an object keyed by examId, in case the shape ever changes.
-  var resultsEl = document.getElementById('exam-results');
-  var historyRaw = readJSON('sanad_exam_history', []);
-  var attemptsList = [];
-  if (Array.isArray(historyRaw)) {
-    attemptsList = historyRaw;
-  } else if (historyRaw && typeof historyRaw === 'object') {
-    Object.keys(historyRaw).forEach(function (examId) {
-      var a = historyRaw[examId];
-      if (Array.isArray(a)) { a.forEach(function (x) { attemptsList.push(x); }); }
-      else if (a) { attemptsList.push(a); }
+      location.reload();
     });
-  }
-  var rows = attemptsList.map(function (a) {
-    var examId = (a && a.examId) || '';
-    var score = (a && a.score !== undefined) ? a.score : (a && a.correct !== undefined ? a.correct : null);
-    var total = (a && (a.total !== undefined ? a.total : a.totalQuestions)) || null;
-    var date = (a && (a.at || a.date || a.finishedAt)) || '';
-    return examTitle(examId) + ': ' +
-      (score !== null ? score : '—') +
-      (total !== null ? ' من ' + total : '') +
-      (date ? ' — ' + String(date).slice(0, 10) : '');
-  });
-  listInto(resultsEl, rows, 'لم تكمل أي امتحان بعد — جرّب الامتحانات من صفحة الامتحانات.');
-
-  // Lesson log
-  var lessonLog = readJSON('sanad_lesson_log', []);
-  var lessonNames = lessonLog.map(function (l) {
-    if (typeof l === 'string') { return l; }
-    var t = (l && (l.title || l.lessonTitle || l.name)) || '';
-    var s = (l && (l.subject || l.subjectName)) || '';
-    var d = (l && (l.date || l.completedAt)) || '';
-    return t + (s ? ' — ' + s : '') + (d ? ' — ' + d : '');
-  }).filter(Boolean);
-  listInto(document.getElementById('lesson-log'), lessonNames, 'لم تكمل أي درس بعد — سجل دروسك يظهر هنا.');
-
-  // Schedule summary
-  var schedEl = document.getElementById('schedule-summary');
-  var sched = readJSON('sanad_schedule', null);
-  if (!sched || !sched.subjects || !sched.subjects.length) {
-    emptyInto(schedEl, 'لم تنشئ جدولك الدراسي بعد.');
-  } else {
-    var s = document.createElement('p');
-    s.textContent = 'موادك: ' + sched.subjects.join('، ') +
-      (sched.goalHours ? ' — هدفك اليومي: ' + sched.goalHours + ' ساعة' : '') +
-      (sched.goalLessons ? ' — ' + sched.goalLessons + ' دروس' : '');
-    schedEl.appendChild(s);
-    var done = readJSON('sanad_schedule_done', {});
-    var days = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
-    var planned = 0, doneCount = 0;
-    days.forEach(function (d, i) {
-      if (sched.times && sched.times[i]) { planned++; if (done[i]) { doneCount++; } }
-    });
-    if (planned) {
-      var p2 = document.createElement('p');
-      p2.textContent = 'إنجاز هذا الأسبوع: ' + doneCount + ' من ' + planned + ' جلسات (' + Math.round((doneCount / planned) * 100) + '%)';
-      schedEl.appendChild(p2);
-    }
-  }
-
-  // Progress
-  var progEl = document.getElementById('student-progress');
-  var points = getPoints();
-  var p = document.createElement('p');
-  p.textContent = 'نقاطك: ' + points + ' نقطة';
-  progEl.appendChild(p);
-  var badges = [];
-  if (lessonLog.length) { badges.push('أول درس'); }
-  if (rows.length) { badges.push('أول اختبار'); }
-  if (points >= 100) { badges.push('100 نقطة'); }
-  var totalAttempts = rows.length;
-  if (totalAttempts >= 5) { badges.push('5 اختبارات'); }
-  if (sched && sched.subjects && sched.subjects.length) { badges.push('أسبوع منظم'); }
-  if (badges.length) {
-    var b = document.createElement('p');
-    badges.forEach(function (name) {
-      var chip = document.createElement('span');
-      chip.className = 'badge';
-      chip.textContent = name;
-      b.appendChild(chip);
-      b.appendChild(document.createTextNode(' '));
-    });
-    progEl.appendChild(b);
-  } else {
-    var pe = document.createElement('p');
-    pe.className = 'empty-state';
-    pe.textContent = 'لم تحصل على أي شارة بعد — أكمل درساً أو اختباراً لتبدأ.';
-    progEl.appendChild(pe);
-  }
-
-  document.getElementById('logout-btn').addEventListener('click', async function () {
-    try {
-      if (window.SANAD && typeof window.SANAD.signOut === 'function') {
-        await window.SANAD.signOut();
-      }
-    } catch (e) {}
-    location.reload();
-  });
   }
 
   init();
 })();
 </script>
+
 </body>
 </html>

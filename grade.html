@@ -53,6 +53,7 @@
     <div id="books-empty" class="empty-state" style="display:none">
       <h2>لا توجد كتب رسمية موثقة بعد لهذا الصف</h2>
       <p>نضيف الكتب الرسمية فور توفر روابطها من الموقع الرسمي لوزارة التربية — لا نرفع نسخاً غير رسمية.</p>
+      <div id="books-empty-hint"></div>
       <a class="btn btn-outline" href="contact.html">طلب إضافة كتاب</a>
     </div>
   </section>
@@ -63,16 +64,19 @@
     <div id="malazim-empty" class="empty-state" style="display:none">
       <h2>لا توجد ملازم موثقة بعد لهذا الصف</h2>
       <p>نضيف ملازم المدرسين المعروفين فور توثيق مصدرها الرسمي.</p>
+      <div id="malazim-empty-hint"></div>
       <a class="btn btn-outline" href="contact.html">اقتراح ملزمة</a>
     </div>
   </section>
 
   <section id="panel-lectures" class="tab-panel">
     <div class="alert alert-info">محاضرات فيديو من قنوات المدرسين الرسمية على يوتيوب — تشاهدها داخل الموقع مباشرة.</div>
+    <div id="lecture-teacher-chips" style="margin:0 0 12px;"></div>
     <div id="lectures-grid" class="grid"></div>
     <div id="lectures-empty" class="empty-state" style="display:none">
       <h2>لا توجد محاضرات موثقة بعد لهذا الصف</h2>
       <p>نضيف محاضرات المدرسين المعروفين فور توثيق قنواتهم الرسمية.</p>
+      <div id="lectures-empty-hint"></div>
       <a class="btn btn-outline" href="contact.html">اقتراح محاضرة</a>
     </div>
   </section>
@@ -124,6 +128,93 @@
     });
   }
 
+  /* ===== حفظ الكتب/الملازم (المرحلة 2 — W5) =====
+     يستخدم window.SANAD.store عند توفره (حساب مسجّل أو ضيف عبر localStorage)،
+     ويعود إلى SANAD.saveFav / مفتاح sanad_favs القديم إن لم يوجد المتجر بعد.
+     معرّف الكتاب/الملزمة: مسار PDF عند توفره، وإلا العنوان (بيانات SANAD_CONTENT بلا حقل id).
+     أي فشل يُظهر تنبيهاً ولا يرمي خطأً. */
+  function getStore() {
+    try { return (window.SANAD && window.SANAD.store) || null; } catch (e) { return null; }
+  }
+  function toastFail() {
+    try { if (window.SANAD && typeof window.SANAD.toast === 'function') window.SANAD.toast('تعذّر الحفظ — تحقق من اتصالك'); } catch (e) {}
+  }
+  function toastOk(msg) {
+    try { if (window.SANAD && typeof window.SANAD.toast === 'function') window.SANAD.toast(msg); } catch (e) {}
+  }
+  function legacyIsSaved(type, id) {
+    try {
+      var favs = (window.SANAD && typeof window.SANAD.getFavs === 'function') ? window.SANAD.getFavs() : [];
+      return favs.some(function (f) { return f.type === type && String(f.id) === String(id); });
+    } catch (e) { return false; }
+  }
+  function legacyUnsave(type, id) {
+    try {
+      var raw = window.localStorage.getItem('sanad_favs');
+      var favs = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(favs)) return false;
+      var next = favs.filter(function (f) { return !(f.type === type && String(f.id) === String(id)); });
+      window.localStorage.setItem('sanad_favs', JSON.stringify(next));
+      return true;
+    } catch (e) { return false; }
+  }
+  function isSavedNow(type, id) {
+    var s = getStore();
+    if (s && typeof s.isSaved === 'function') {
+      try {
+        var r = s.isSaved(type, id);
+        if (r && typeof r.then === 'function') return legacyIsSaved(type, id);
+        return !!r;
+      } catch (e) { return legacyIsSaved(type, id); }
+    }
+    return legacyIsSaved(type, id);
+  }
+  function setSaveBtn(btn, saved) {
+    btn.textContent = saved ? 'محفوظ ✓' : 'حفظ';
+    btn.setAttribute('aria-pressed', saved ? 'true' : 'false');
+    btn.setAttribute('data-saved', saved ? '1' : '0');
+  }
+  function refreshSaveButtons() {
+    var btns = document.querySelectorAll('[data-save-type]');
+    btns.forEach(function (btn) {
+      try { setSaveBtn(btn, isSavedNow(btn.getAttribute('data-save-type'), btn.getAttribute('data-save-id'))); } catch (e) {}
+    });
+  }
+  function toggleSave(btn, type, id, title) {
+    var saved = btn.getAttribute('data-saved') === '1';
+    var store = getStore();
+    function done(ok, silent) {
+      if (ok) { setSaveBtn(btn, !saved); if (!silent) toastOk(saved ? 'أُزيل من المحفوظات' : 'حُفظ في محفوظاتي'); }
+      else toastFail();
+    }
+    try {
+      if (store && typeof store.saveItem === 'function' && typeof store.unsaveItem === 'function') {
+        var r = saved ? store.unsaveItem(type, id) : store.saveItem(type, id, title);
+        if (r && typeof r.then === 'function') r.then(function () { done(true); }, function () { done(false); });
+        else done(true);
+      } else if (!saved && window.SANAD && typeof window.SANAD.saveFav === 'function') {
+        window.SANAD.saveFav(type, id);
+        done(true, true); /* saveFav يُظهر تنبيهه الخاص */
+      } else if (saved) {
+        done(legacyUnsave(type, id));
+      } else {
+        done(false);
+      }
+    } catch (e) { done(false); }
+  }
+  function wireSaveBtn(btn, type, id, title) {
+    if (!btn || !id) return;
+    setSaveBtn(btn, isSavedNow(type, id));
+    btn.addEventListener('click', function () { toggleSave(btn, type, id, title); });
+  }
+  /* بعد جاهزية المتجر (حساب/ضيف) أعد تقييم حالة كل زر ظاهر. */
+  (function () {
+    var s = getStore();
+    if (s && s.ready && typeof s.ready.then === 'function') {
+      s.ready.then(function () { refreshSaveButtons(); }, function () { refreshSaveButtons(); });
+    }
+  })();
+
   var stage = (data.stages || []).find(function (s) { return s.id === stageId; }) || null;
   var grade = stage ? ((stage.grades || []).find(function (g) { return g.id === gradeId; }) || null) : null;
 
@@ -140,6 +231,7 @@
   subEl.textContent = 'الكتب الرسمية والملازم والمحاضرات لهذا الصف.';
 
   var activeSubject = '';
+  var activeLectureTeacher = '';
   var activeTab = 'books';
 
   var chipsWrap = document.getElementById('subject-chips');
@@ -154,6 +246,15 @@
         activeSubject = btn.getAttribute('data-subject') || '';
         renderChips();
         renderAll();
+        /* إذا كان التبويب الحالي فارغاً لهذه المادة، انتقل تلقائياً
+           إلى أول تبويب فيه محتوى، حتى لا يرى الطالب صفحة فارغة */
+        var c = tabCounts();
+        if (c[activeTab] === 0) {
+          var order = ['books', 'malazim', 'lectures'];
+          for (var i = 0; i < order.length; i++) {
+            if (c[order[i]] > 0) { switchTab(order[i]); break; }
+          }
+        }
       });
       if (btn.getAttribute('data-subject') === activeSubject) btn.classList.add('active');
     });
@@ -169,13 +270,79 @@
     });
   }
 
+  function tabCounts() {
+    return {
+      books: byGrade(content.books).length,
+      malazim: byGrade(content.malazim).length,
+      lectures: byGrade(content.lectures).length
+    };
+  }
+
+  function switchTab(name) {
+    activeTab = name;
+    document.querySelectorAll('.tabs button').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-tab') === name); });
+    document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.toggle('active', p.id === 'panel-' + name); });
+  }
+
+  /* تلميح داخل الحالة الفارغة: دلّ الطالب على التبويب الذي فيه محتوى لهذه المادة */
+  function fillEmptyHint(hintId, thisTab, counts) {
+    var hint = document.getElementById(hintId);
+    if (!hint) return;
+    hint.innerHTML = '';
+    if (!activeSubject) return;
+    var labels = { books: 'الكتب الرسمية', malazim: 'الملازم', lectures: 'المحاضرات' };
+    var order = ['books', 'malazim', 'lectures'];
+    for (var i = 0; i < order.length; i++) {
+      var t = order[i];
+      if (t !== thisTab && counts[t] > 0) {
+        var p = document.createElement('p');
+        p.textContent = 'لا يوجد هنا محتوى لمادة «' + activeSubject + '»، لكن توجد مواد في تبويب آخر:';
+        hint.appendChild(p);
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn btn-gold';
+        b.textContent = 'عرض ' + labels[t] + ' لمادة «' + activeSubject + '» (' + counts[t] + ')';
+        (function (tab) { b.addEventListener('click', function () { switchTab(tab); }); })(t);
+        hint.appendChild(b);
+        return;
+      }
+    }
+  }
+
   /* المحاضرات: تشغيل بالنقر داخل البطاقة — لا تحميل مسبق لمشغّل يوتيوب،
      ولا زر تحويل إلى يوتيوب (قائمة التشغيل نفسها تُشغَّل داخل الموقع). */
+  /* تصفية المحاضرات حسب المدرس داخل هذا الصف */
+  function renderLectureTeacherChips() {
+    var wrap = document.getElementById('lecture-teacher-chips');
+    if (!wrap) return;
+    var base = byGrade(content.lectures);
+    var map = {};
+    base.forEach(function (l) { var n = l.teacher || 'مدرس غير معروف'; map[n] = (map[n] || 0) + 1; });
+    var names = Object.keys(map).sort(function (a, b) { return map[b] - map[a]; });
+    if (activeLectureTeacher && !map[activeLectureTeacher]) activeLectureTeacher = '';
+    var html = '<button type="button" class="chip' + (activeLectureTeacher === '' ? ' active' : '') + '" data-lteacher="">كل المدرسين</button>';
+    names.forEach(function (n) {
+      html += '<button type="button" class="chip" data-lteacher="' + esc(n) + '">' + esc(n) + ' (' + map[n] + ')</button>';
+    });
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('[data-lteacher]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        activeLectureTeacher = btn.getAttribute('data-lteacher') || '';
+        renderLectureTeacherChips();
+        renderLectures();
+      });
+      if (btn.getAttribute('data-lteacher') === activeLectureTeacher) btn.classList.add('active');
+    });
+  }
+
   function renderLectures() {
     var list = byGrade(content.lectures);
+    if (activeLectureTeacher) {
+      list = list.filter(function (l) { return (l.teacher || 'مدرس غير معروف') === activeLectureTeacher; });
+    }
     var grid = document.getElementById('lectures-grid');
     var empty = document.getElementById('lectures-empty');
-    document.getElementById('count-lectures').textContent = list.length ? '(' + list.length + ')' : '';
+    document.getElementById('count-lectures').textContent = '(' + list.length + ')';
     grid.innerHTML = '';
     list.forEach(function (l) {
       var el = document.createElement('article');
@@ -200,7 +367,7 @@
     var list = byGrade(content.books);
     var grid = document.getElementById('books-grid');
     var empty = document.getElementById('books-empty');
-    document.getElementById('count-books').textContent = list.length ? '(' + list.length + ')' : '';
+    document.getElementById('count-books').textContent = '(' + list.length + ')';
     /* بطاقة صفحة الكتب الرسمية على موقع الوزارة (مديرية المناهج) —
        تظهر فقط للصفوف التي لا توجد لها كتب PDF داخل الموقع بعد */
     var listingWrap = document.getElementById('books-listing');
@@ -221,13 +388,17 @@
       var readerHref = (window.SANAD && window.SANAD.readerUrl)
         ? window.SANAD.readerUrl(b.pdf || b.url, { title: b.title, source: b.source, rights: b.rights, year: b.year })
         : 'reader.html?pdf=' + encodeURIComponent(b.pdf || b.url);
+      var saveId = b.pdf || b.url || b.title || '';
+      var saveTitle = b.title || ('كتاب ' + (b.subject || ''));
       el.innerHTML = '<span class="badge">محتوى رسمي</span>' +
         '<h3>' + esc(b.title || ('كتاب ' + (b.subject || ''))) + '</h3>' +
         (rightsText ? '<p class="book-meta">الحقوق: ' + esc(rightsText) + '</p>' : '') +
         '<p class="book-meta">' + esc(b.subject || '') + ' — ' + esc(b.grade || grade.name) + '</p>' +
         '<p class="book-meta">' + esc(b.source || 'وزارة التربية العراقية') + (b.year ? ' · طبعة ' + esc(String(b.year)) : '') + '</p>' +
         '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' +
-        '<a class="btn btn-gold" href="' + esc(readerHref) + '">قراءة</a></div>';
+        '<a class="btn btn-gold" href="' + esc(readerHref) + '">قراءة</a>' +
+        (saveId ? '<button class="btn btn-outline" type="button" data-save-type="book" data-save-id="' + esc(saveId) + '" data-saved="0" aria-pressed="false">حفظ</button>' : '') + '</div>';
+      wireSaveBtn(el.querySelector('[data-save-type="book"]'), 'book', saveId, saveTitle);
       grid.appendChild(el);
     });
     empty.style.display = list.length ? 'none' : '';
@@ -237,7 +408,7 @@
     var list = byGrade(content.malazim);
     var grid = document.getElementById('malazim-grid');
     var empty = document.getElementById('malazim-empty');
-    document.getElementById('count-malazim').textContent = list.length ? '(' + list.length + ')' : '';
+    document.getElementById('count-malazim').textContent = '(' + list.length + ')';
     grid.innerHTML = '';
     list.forEach(function (m) {
       var el = document.createElement('article');
@@ -254,24 +425,33 @@
       } else {
         actions = '<p class="book-meta">لا توجد نسخة PDF مجانية موثقة — تُباع في المكتبات.</p>';
       }
+      var saveId = m.pdf || m.title || '';
+      var saveTitle = m.title || ('ملزمة ' + (m.subject || ''));
       el.innerHTML = '<span class="badge teal">من إعداد مدرس</span>' +
         '<h3>' + esc(m.title || ('ملزمة ' + (m.subject || ''))) + '</h3>' +
         '<p class="book-meta">المدرس: ' + esc(m.teacher || '') + '</p>' +
         '<p class="book-meta">' + esc(m.subject || '') + ' — ' + esc(m.grade || grade.name) + '</p>' +
         (m.note ? '<p>' + esc(m.note) + '</p>' : '') +
-        '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' + actions + '</div>';
+        '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' + actions +
+        (saveId ? '<button class="btn btn-outline" type="button" data-save-type="malazim" data-save-id="' + esc(saveId) + '" data-saved="0" aria-pressed="false">حفظ</button>' : '') + '</div>';
+      wireSaveBtn(el.querySelector('[data-save-type="malazim"]'), 'malazim', saveId, saveTitle);
       grid.appendChild(el);
     });
     empty.style.display = list.length ? 'none' : '';
   }
 
-  function renderAll() { renderBooks(); renderMalazim(); renderLectures(); }
+  function renderAll() {
+    renderLectureTeacherChips();
+    renderBooks(); renderMalazim(); renderLectures(); refreshSaveButtons();
+    var c = tabCounts();
+    fillEmptyHint('books-empty-hint', 'books', c);
+    fillEmptyHint('malazim-empty-hint', 'malazim', c);
+    fillEmptyHint('lectures-empty-hint', 'lectures', c);
+  }
 
   document.querySelectorAll('.tabs button').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      activeTab = btn.getAttribute('data-tab');
-      document.querySelectorAll('.tabs button').forEach(function (b) { b.classList.toggle('active', b === btn); });
-      document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.toggle('active', p.id === 'panel-' + activeTab); });
+      switchTab(btn.getAttribute('data-tab'));
     });
   });
 

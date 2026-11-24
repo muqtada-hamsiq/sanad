@@ -35,8 +35,8 @@
 <main class="container">
 <section class="hero">
 <h1>الجدول الدراسي</h1>
-<p>حدد موادك وأوقاتك ومواعيد امتحاناتك وأهدافك اليومية، واحفظ جدولك الأسبوعي على جهازك.</p>
-<p class="alert alert-info">جدولك محفوظ على جهازك فقط، ولا يُرسل إلى أي جهة.</p>
+<p>حدد موادك وأوقاتك ومواعيد امتحاناتك وأهدافك اليومية، واحفظ جدولك الأسبوعي.</p>
+<p class="alert alert-info">عند تسجيل الدخول يُحفظ جدولك في حسابك، وتُحفظ نسخة منه على جهازك للعمل دون اتصال. دون تسجيل دخول يُحفظ جدولك على جهازك فقط.</p>
 </section>
 
 <section class="card">
@@ -224,7 +224,58 @@
     renderPendingExams();
   });
 
-  function getSchedule() { return readJSON('sanad_schedule', null); }
+  function getStore() {
+    try { return (window.SANAD && window.SANAD.store) ? window.SANAD.store : null; } catch (e) { return null; }
+  }
+  async function isLoggedIn() {
+    var store = getStore();
+    if (!store) { return false; }
+    try { if (store.ready) { await store.ready; } } catch (e) { return false; }
+    try { return typeof store.isLoggedIn === 'function' ? !!store.isLoggedIn() : false; } catch (e) { return false; }
+  }
+  // In-memory copy of the schedule actually shown. Local storage is the
+  // offline cache; the server copy (when logged in) wins on load.
+  var currentSchedule = readJSON('sanad_schedule', null);
+  var currentDone = readJSON('sanad_schedule_done', {});
+  function getSchedule() { return currentSchedule; }
+  function getDone() { return currentDone || {}; }
+  function writeLocal(schedule, done) {
+    try { localStorage.setItem('sanad_schedule', JSON.stringify(schedule)); } catch (e) {}
+    try { localStorage.setItem('sanad_schedule_done', JSON.stringify(done || {})); } catch (e) {}
+  }
+  async function persistSchedule(schedule, done) {
+    currentSchedule = schedule;
+    currentDone = done || {};
+    writeLocal(schedule, currentDone);
+    if (await isLoggedIn()) {
+      var store = getStore();
+      try {
+        var ok = store.saveSchedule(schedule, currentDone);
+        if (ok && typeof ok.then === 'function') { ok = await ok; }
+        if (!ok) { toast('تم الحفظ على جهازك، وتعذر الحفظ في حسابك — حاول مجدداً عند توفر الاتصال.'); return false; }
+      } catch (e) { toast('تم الحفظ على جهازك، وتعذر الحفظ في حسابك — حاول مجدداً عند توفر الاتصال.'); return false; }
+    }
+    return true;
+  }
+  async function loadScheduleFromServerOrLocal() {
+    var local = readJSON('sanad_schedule', null);
+    var localDone = readJSON('sanad_schedule_done', {});
+    if (await isLoggedIn()) {
+      var store = getStore();
+      try {
+        var res = store.getSchedule();
+        if (res && typeof res.then === 'function') { res = await res; }
+        if (res && res.schedule && res.schedule.subjects && res.schedule.subjects.length) {
+          currentSchedule = res.schedule;
+          currentDone = res.done || {};
+          writeLocal(currentSchedule, currentDone);
+          return;
+        }
+      } catch (e) { /* server unreachable — fall back to local copy */ }
+    }
+    currentSchedule = local;
+    currentDone = localDone;
+  }
 
   function renderWeekly() {
     var view = document.getElementById('weekly-view');
@@ -272,7 +323,7 @@
       view.appendChild(p);
       return;
     }
-    var done = readJSON('sanad_schedule_done', {});
+    var done = getDone();
     var plannedDays = [];
     DAYS.forEach(function (d, i) { if (s.times && s.times[i]) { plannedDays.push(i); } });
     if (!plannedDays.length) {
@@ -287,7 +338,7 @@
     var pct = total ? Math.round((doneCount / total) * 100) : 0;
     var bar = document.createElement('div');
     bar.className = 'progress-bar';
-    var fill = document.createElement('div');
+    var fill = document.createElement('span');
     fill.style.width = pct + '%';
     bar.appendChild(fill);
     view.appendChild(bar);
@@ -300,10 +351,9 @@
       var cb = document.createElement('input');
       cb.type = 'checkbox'; cb.checked = !!done[i];
       cb.addEventListener('change', function () {
-        var d = readJSON('sanad_schedule_done', {});
+        var d = getDone();
         if (cb.checked) { d[i] = true; } else { delete d[i]; }
-        try { localStorage.setItem('sanad_schedule_done', JSON.stringify(d)); } catch (e) {}
-        renderProgress();
+        persistSchedule(getSchedule(), d).then(function () { renderProgress(); });
       });
       var span = document.createElement('span');
       span.textContent = DAYS[i] + ' — ' + s.times[i] + ' — ' + s.subjects.join('، ');
@@ -312,10 +362,126 @@
     });
   }
 
+  var reminderTimers = [];
+  var reminderStatusEl = null;
+  function clearReminderTimers() {
+    reminderTimers.forEach(function (t) { try { clearTimeout(t); } catch (e) {} });
+    reminderTimers = [];
+  }
+  function dayIndexOf(date) { return (date.getDay() + 1) % 7; } // DAYS starts Saturday
+  function upcomingSessions() {
+    var s = getSchedule();
+    var out = [];
+    if (!s || !s.times) { return out; }
+    var now = new Date();
+    [0, 1].forEach(function (offset) {
+      var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
+      var idx = dayIndexOf(d);
+      var time = s.times[idx];
+      if (!time) { return; }
+      var parts = String(time).split(':');
+      var at = new Date(d.getFullYear(), d.getMonth(), d.getDate(), parseInt(parts[0], 10) || 0, parseInt(parts[1], 10) || 0);
+      if (offset === 0 && at.getTime() <= now.getTime()) { return; } // today's session already passed
+      out.push({ dayName: DAYS[idx], dayLabel: offset === 0 ? 'اليوم' : 'غداً', time: time, at: at, subjects: s.subjects || [] });
+    });
+    return out;
+  }
+  function setReminderStatus(text) {
+    if (reminderStatusEl) { reminderStatusEl.textContent = text; }
+  }
+  function scheduleBrowserReminders() {
+    clearReminderTimers();
+    if (typeof Notification === 'undefined' || !Notification) {
+      setReminderStatus('متصفحك لا يدعم إشعارات المتصفح.');
+      return;
+    }
+    var sessions = upcomingSessions();
+    if (!sessions.length) {
+      setReminderStatus('لا توجد جلسة قادمة للتذكير بها — حدد وقت دراسة في جدولك.');
+      return;
+    }
+    var next = sessions[0];
+    setReminderStatus('التذكير التالي: ' + next.dayLabel + ' (' + next.dayName + ') الساعة ' + next.time + ' — يعمل فقط أثناء فتح الموقع في هذا المتصفح.');
+    sessions.forEach(function (sess) {
+      var delay = sess.at.getTime() - Date.now();
+      if (delay <= 0) { return; }
+      var t = setTimeout(function () {
+        try {
+          if (typeof Notification !== 'undefined' && Notification && Notification.permission === 'granted') {
+            new Notification('سند — وقت الدراسة', { body: 'جلسة ' + sess.subjects.join('، ') + ' الساعة ' + sess.time });
+          } else {
+            toast('وقت جلسة الدراسة: ' + sess.subjects.join('، ') + ' الساعة ' + sess.time);
+          }
+        } catch (e) { toast('وقت جلسة الدراسة: ' + sess.subjects.join('، ') + ' الساعة ' + sess.time); }
+        scheduleBrowserReminders();
+      }, delay);
+      reminderTimers.push(t);
+    });
+  }
   function renderReminders() {
     var view = document.getElementById('reminders-view');
     var s = getSchedule();
     view.innerHTML = '';
+    var note = document.createElement('p');
+    note.className = 'alert alert-info';
+    note.textContent = 'التذكير يعمل من المتصفح فقط أثناء فتح الموقع — لا رسائل نصية ولا بريد ولا إشعارات خارج المتصفح.';
+    view.appendChild(note);
+
+    var h3 = document.createElement('h3');
+    h3.textContent = 'الجلسات القادمة';
+    view.appendChild(h3);
+    var sessions = upcomingSessions();
+    if (!sessions.length) {
+      var p0 = document.createElement('p');
+      p0.className = 'empty-state';
+      p0.textContent = 'لا توجد جلسات مخططة اليوم أو غداً — حدد وقت دراسة في جدولك.';
+      view.appendChild(p0);
+    } else {
+      sessions.forEach(function (sess) {
+        var row = document.createElement('p');
+        row.textContent = sess.dayLabel + ' (' + sess.dayName + ') — الساعة ' + sess.time + ' — ' + sess.subjects.join('، ');
+        view.appendChild(row);
+      });
+    }
+
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-gold'; btn.type = 'button';
+    btn.textContent = 'تفعيل تذكير المتصفح';
+    btn.addEventListener('click', function () {
+      if (typeof Notification === 'undefined' || !Notification) {
+        setReminderStatus('متصفحك لا يدعم إشعارات المتصفح.');
+        toast('متصفحك لا يدعم إشعارات المتصفح.');
+        return;
+      }
+      try {
+        if (Notification.permission === 'granted') {
+          scheduleBrowserReminders();
+          toast('تذكير المتصفح مفعّل — يعمل فقط أثناء فتح الموقع.');
+        } else if (Notification.permission === 'denied') {
+          setReminderStatus('رفضت إشعارات المتصفح سابقاً — فعّلها من إعدادات المتصفح إن أردت التذكير.');
+        } else {
+          var req = Notification.requestPermission();
+          if (req && typeof req.then === 'function') {
+            req.then(function (perm) {
+              if (perm === 'granted') { scheduleBrowserReminders(); toast('تذكير المتصفح مفعّل — يعمل فقط أثناء فتح الموقع.'); }
+              else { setReminderStatus('لم يُمنح إذن إشعارات المتصفح — لن تصل تذكيرات.'); }
+            }, function () { setReminderStatus('تعذر طلب إذن إشعارات المتصفح.'); });
+          }
+        }
+      } catch (e) { setReminderStatus('تعذر تفعيل تذكير المتصفح في هذا المتصفح.'); }
+    });
+    view.appendChild(btn);
+    reminderStatusEl = document.createElement('p');
+    view.appendChild(reminderStatusEl);
+    if (typeof Notification !== 'undefined' && Notification && Notification.permission === 'granted') {
+      scheduleBrowserReminders();
+    } else {
+      setReminderStatus('التذكير غير مفعّل بعد — اضغط الزر أعلاه لتفعيله.');
+    }
+
+    var h3b = document.createElement('h3');
+    h3b.textContent = 'الامتحانات القادمة';
+    view.appendChild(h3b);
     var exams = (s && Array.isArray(s.exams)) ? s.exams.slice() : [];
     var today = new Date(); today.setHours(0, 0, 0, 0);
     var upcoming = exams.filter(function (ex) {
@@ -369,16 +535,19 @@
       goalLessons: document.getElementById('goal-lessons').value,
       savedAt: new Date().toISOString()
     };
-    try {
-      localStorage.setItem('sanad_schedule', JSON.stringify(schedule));
-      if (window.SANAD && typeof window.SANAD.addPoints === 'function') { window.SANAD.addPoints(5); }
-      toast('تم حفظ جدولك على جهازك.');
-    } catch (e) { toast('تعذر حفظ الجدول على هذا الجهاز.'); return; }
-    renderWeekly(); renderProgress(); renderReminders();
+    persistSchedule(schedule, getDone()).then(function (saved) {
+      if (saved) {
+        if (window.SANAD && typeof window.SANAD.addPoints === 'function') { window.SANAD.addPoints(5); }
+        toast('تم حفظ جدولك.');
+      }
+      renderWeekly(); renderProgress(); renderReminders();
+    });
   });
 
-  loadIntoForm();
-  renderWeekly(); renderProgress(); renderReminders();
+  loadScheduleFromServerOrLocal().then(function () {
+    loadIntoForm();
+    renderWeekly(); renderProgress(); renderReminders();
+  });
 })();
 </script>
 </body>

@@ -42,7 +42,12 @@
 <section class="card">
 <h2 class="section-title">نقاطك الحالية</h2>
 <div class="grid" id="points-view"></div>
-<p>نقاطك وشاراتك محفوظة على جهازك.</p>
+<p>عند تسجيل الدخول تُحفظ نقاطك وشاراتك في حسابك، وإلا تُحفظ على جهازك فقط.</p>
+</section>
+
+<section class="card">
+<h2 class="section-title">شاراتك المكتسبة</h2>
+<div id="earned-view"></div>
 </section>
 
 <section class="card">
@@ -88,11 +93,19 @@
   function readJSON(key, fallback) {
     try { var v = JSON.parse(localStorage.getItem(key) || 'null'); return v === null || v === undefined ? fallback : v; } catch (e) { return fallback; }
   }
-  function getPoints() {
-    if (window.SANAD && typeof window.SANAD.getPoints === 'function') {
-      try { return window.SANAD.getPoints() || 0; } catch (e) { return 0; }
-    }
-    return readJSON('sanad_points', 0) || 0;
+  function getStore() {
+    try { return (window.SANAD && window.SANAD.store) ? window.SANAD.store : null; } catch (e) { return null; }
+  }
+  async function loadStoreData() {
+    var store = getStore();
+    if (!store) { return null; }
+    try { if (store.ready) { await store.ready; } } catch (e) { return null; }
+    try { if (typeof store.isLoggedIn !== 'function' || !store.isLoggedIn()) { return null; } } catch (e) { return null; }
+    var data = { loggedIn: true, points: 0, lessons: 0, exams: 0, bestPct: null, hasSchedule: false, earned: [] };
+    try { if (typeof store.getProgress === 'function') { var p = store.getProgress(); if (p && typeof p.then === 'function') { p = await p; } if (p) { data.points = Number(p.points) || 0; data.lessons = Number(p.lessons) || 0; data.exams = Number(p.exams) || 0; data.bestPct = (p.bestPct === null || p.bestPct === undefined) ? null : Number(p.bestPct); } } } catch (e) {}
+    try { if (typeof store.getAchievements === 'function') { var a = store.getAchievements(); if (a && typeof a.then === 'function') { a = await a; } if (Array.isArray(a)) { data.earned = a; } } } catch (e) {}
+    try { if (typeof store.getSchedule === 'function') { var s = store.getSchedule(); if (s && typeof s.then === 'function') { s = await s; } var sched = s && s.schedule ? s.schedule : s; data.hasSchedule = !!(sched && sched.subjects && sched.subjects.length); } } catch (e) {}
+    return data;
   }
   function totalExamAttempts() {
     // sanad_exam_history is a flat array of attempts (see app.js recordExam).
@@ -108,52 +121,131 @@
     }
     return 0;
   }
+  function formatDate(at) {
+    if (!at) { return 'التاريخ غير مسجل'; }
+    try {
+      var d = new Date(at);
+      if (isNaN(d.getTime())) { return String(at).slice(0, 10); }
+      return d.toLocaleDateString('ar', { year: 'numeric', month: 'long', day: 'numeric' });
+    } catch (e) { return String(at).slice(0, 10); }
+  }
 
-  var points = getPoints();
-  var lessonLog = readJSON('sanad_lesson_log', []);
-  var attempts = totalExamAttempts();
-  var hasSchedule = !!(readJSON('sanad_schedule', null) && readJSON('sanad_schedule', null).subjects && readJSON('sanad_schedule', null).subjects.length);
-
-  var pointsView = document.getElementById('points-view');
-  var stat = document.createElement('div');
-  stat.className = 'stat-card';
-  stat.textContent = 'نقاطك: ' + points + ' نقطة';
-  pointsView.appendChild(stat);
-  var stat2 = document.createElement('div');
-  stat2.className = 'stat-card';
-  stat2.textContent = 'دروس مكتملة: ' + lessonLog.length;
-  pointsView.appendChild(stat2);
-  var stat3 = document.createElement('div');
-  stat3.className = 'stat-card';
-  stat3.textContent = 'اختبارات مكتملة: ' + attempts;
-  pointsView.appendChild(stat3);
-
-  var badges = [
-    { name: 'أول درس', condition: 'أكمل درساً واحداً.', unlocked: lessonLog.length > 0, progress: 'الدروس المكتملة: ' + lessonLog.length },
-    { name: 'أول اختبار', condition: 'أنهِ أي اختبار.', unlocked: attempts > 0, progress: 'الاختبارات المكتملة: ' + attempts },
-    { name: '100 نقطة', condition: 'اجمع 100 نقطة.', unlocked: points >= 100, progress: 'نقاطك الحالية: ' + points },
-    { name: '5 اختبارات', condition: 'أنهِ 5 اختبارات.', unlocked: attempts >= 5, progress: 'الاختبارات المكتملة: ' + attempts + ' من 5' },
-    { name: 'أسبوع منظم', condition: 'أنشئ جدولاً دراسياً.', unlocked: hasSchedule, progress: hasSchedule ? 'أنشأت جدولك الدراسي.' : 'لم تنشئ جدولك بعد.' }
+  // Badge rules — the only badges Sanad awards. Locked/unlocked is derived
+  // from the student's real progress, never invented.
+  var RULES = [
+    { id: 'first-lesson', name: 'أول درس', condition: 'أكمل درسك الأول', test: function (d) { return d.lessons > 0; }, progress: function (d) { return 'الدروس المكتملة: ' + d.lessons; } },
+    { id: 'first-exam', name: 'أول اختبار', condition: 'أنهِ اختبارك الأول', test: function (d) { return d.exams > 0; }, progress: function (d) { return 'الاختبارات المكتملة: ' + d.exams; } },
+    { id: 'points-100', name: '100 نقطة', condition: 'اجمع 100 نقطة', test: function (d) { return d.points >= 100; }, progress: function (d) { return 'نقاطك الحالية: ' + d.points; } },
+    { id: 'exams-5', name: '5 اختبارات', condition: 'أنهِ 5 اختبارات', test: function (d) { return d.exams >= 5; }, progress: function (d) { return 'الاختبارات المكتملة: ' + d.exams + ' من 5'; } },
+    { id: 'lessons-10', name: '10 دروس', condition: 'أكمل 10 دروس', test: function (d) { return d.lessons >= 10; }, progress: function (d) { return 'الدروس المكتملة: ' + d.lessons + ' من 10'; } },
+    { id: 'organized-week', name: 'أسبوع منظم', condition: 'أنشئ جدولاً دراسياً', test: function (d) { return d.hasSchedule; }, progress: function (d) { return d.hasSchedule ? 'أنشأت جدولك الدراسي.' : 'لم تنشئ جدولك بعد.'; } }
   ];
 
-  var view = document.getElementById('badges-view');
-  badges.forEach(function (b) {
-    var card = document.createElement('div');
-    card.className = 'card badge-card' + (b.unlocked ? '' : ' locked');
-    var title = document.createElement('h3');
-    title.textContent = b.name;
-    var state = document.createElement('p');
-    state.className = 'badge-state';
-    var chip = document.createElement('span');
-    chip.className = 'badge';
-    chip.textContent = b.unlocked ? 'مكتسبة' : 'مقفلة';
-    state.appendChild(chip);
-    var cond = document.createElement('p');
-    cond.textContent = 'الشرط: ' + b.condition;
-    var prog = document.createElement('p');
-    prog.textContent = b.progress;
-    card.appendChild(title); card.appendChild(state); card.appendChild(cond); card.appendChild(prog);
-    view.appendChild(card);
+  function render(data) {
+    var points = data.points;
+    var lessonCount = data.lessons;
+    var attempts = data.exams;
+
+    var pointsView = document.getElementById('points-view');
+    pointsView.innerHTML = '';
+    var stat = document.createElement('div');
+    stat.className = 'stat-card';
+    stat.textContent = 'نقاطك: ' + points + ' نقطة';
+    pointsView.appendChild(stat);
+    var stat2 = document.createElement('div');
+    stat2.className = 'stat-card';
+    stat2.textContent = 'دروس مكتملة: ' + lessonCount;
+    pointsView.appendChild(stat2);
+    var stat3 = document.createElement('div');
+    stat3.className = 'stat-card';
+    stat3.textContent = 'اختبارات مكتملة: ' + attempts;
+    pointsView.appendChild(stat3);
+    if (data.bestPct !== null && data.bestPct !== undefined && !isNaN(data.bestPct)) {
+      var stat4 = document.createElement('div');
+      stat4.className = 'stat-card';
+      stat4.textContent = 'أفضل نتيجة اختبار: ' + Math.round(data.bestPct) + '%';
+      pointsView.appendChild(stat4);
+    }
+
+    // Earned badges, newest first, with award date (server data when
+    // logged in; local names without a stored date for guests).
+    var earnedView = document.getElementById('earned-view');
+    earnedView.innerHTML = '';
+    var earned = data.earned || [];
+    if (!earned.length) {
+      var p = document.createElement('p');
+      p.className = 'empty-state';
+      p.textContent = 'لم تحصل على أي شارة بعد — أكمل درساً أو اختباراً لتبدأ.';
+      earnedView.appendChild(p);
+    } else {
+      var sorted = earned.slice().sort(function (a, b) {
+        var ta = a && a.at ? new Date(a.at).getTime() : 0;
+        var tb = b && b.at ? new Date(b.at).getTime() : 0;
+        return tb - ta;
+      });
+      var ul = document.createElement('ul');
+      sorted.forEach(function (b) {
+        var li = document.createElement('li');
+        var name = (b && (b.badgeName || b.name)) || '';
+        var at = b && b.at ? b.at : null;
+        li.textContent = name + ' — ' + formatDate(at);
+        ul.appendChild(li);
+      });
+      earnedView.appendChild(ul);
+    }
+
+    var view = document.getElementById('badges-view');
+    view.innerHTML = '';
+    RULES.forEach(function (rule) {
+      var unlocked = rule.test(data);
+      var card = document.createElement('div');
+      card.className = 'card badge-card' + (unlocked ? '' : ' locked');
+      var title = document.createElement('h3');
+      title.textContent = rule.name;
+      var state = document.createElement('p');
+      state.className = 'badge-state';
+      var chip = document.createElement('span');
+      chip.className = 'badge';
+      chip.textContent = unlocked ? 'مكتسبة' : 'مقفلة';
+      state.appendChild(chip);
+      var cond = document.createElement('p');
+      cond.textContent = 'الشرط: ' + rule.condition;
+      var prog = document.createElement('p');
+      prog.textContent = rule.progress(data);
+      card.appendChild(title); card.appendChild(state); card.appendChild(cond); card.appendChild(prog);
+      view.appendChild(card);
+    });
+  }
+
+  loadStoreData().then(function (storeData) {
+    if (storeData) {
+      render(storeData);
+      return;
+    }
+    // Guest / store unavailable: same local keys the page always used.
+    var lessonLog = readJSON('sanad_lesson_log', []);
+    var localBadges = [];
+    try {
+      if (window.SANAD && typeof window.SANAD.getBadges === 'function') { localBadges = window.SANAD.getBadges() || []; }
+      else { localBadges = readJSON('sanad_badges', []); }
+    } catch (e) { localBadges = readJSON('sanad_badges', []); }
+    var points = 0;
+    try {
+      if (window.SANAD && typeof window.SANAD.getPoints === 'function') { points = window.SANAD.getPoints() || 0; }
+      else { points = readJSON('sanad_points', 0) || 0; }
+    } catch (e) { points = readJSON('sanad_points', 0) || 0; }
+    var sched = readJSON('sanad_schedule', null);
+    render({
+      loggedIn: false,
+      points: points,
+      lessons: Array.isArray(lessonLog) ? lessonLog.length : 0,
+      exams: totalExamAttempts(),
+      bestPct: null,
+      hasSchedule: !!(sched && sched.subjects && sched.subjects.length),
+      earned: (Array.isArray(localBadges) ? localBadges : []).map(function (b) {
+        return typeof b === 'string' ? { badgeName: b, at: null } : { badgeName: b.badgeName || b.name || '', at: b.at || null };
+      })
+    });
   });
 })();
 </script>

@@ -29,6 +29,41 @@
 </header>
 
 <main class="container">
+  <!-- الواجهة الأولى: «أي صف أنت؟» — تظهر عند أول زيارة فقط (بلا صف محفوظ) -->
+  <section id="onboarding" hidden>
+    <h1 class="section-title" style="font-size:26px">أي صف أنت؟</h1>
+    <p>اختار صفك مرة وحدة، وسند يعرض لك مواد صفك فقط — كتبك ومحاضراتك وامتحاناتك ومدرسينك.</p>
+    <h2 class="section-title" style="font-size:18px">اختر المرحلة</h2>
+    <div id="onb-stages" style="margin:12px 0;"></div>
+    <div id="onb-grades-wrap" hidden>
+      <h2 class="section-title" style="font-size:18px">اختر الصف</h2>
+      <div id="onb-grades" style="margin:12px 0;"></div>
+    </div>
+    <p style="margin-top:16px">
+      <button type="button" class="btn btn-gold" id="onb-confirm" disabled>تأكيد — هذا صفي</button>
+      <button type="button" class="btn btn-outline" id="onb-cancel" hidden>إلغاء</button>
+    </p>
+    <p><a href="#" id="onb-browse-all">تصفح كل المراحل بدون اختيار صف</a></p>
+  </section>
+
+  <!-- صفحة صفي: تعرض محتوى الصف المختار فقط (بأعداد حقيقية من البيانات) -->
+  <section id="my-grade-home" hidden>
+    <p style="margin:0 0 4px"><span class="badge teal">صفي</span></p>
+    <h1 class="section-title" id="mg-title" style="font-size:26px"></h1>
+    <p id="mg-meta"></p>
+    <div class="grid" id="mg-cards"></div>
+    <p style="margin-top:16px">
+      <button type="button" class="btn btn-outline" id="mg-change">تغيير الصف</button>
+      <a class="btn btn-outline" href="profile.html">لوحة الطالب</a>
+      <button type="button" class="btn btn-outline" id="mg-browse-all">تصفح كل المراحل</button>
+    </p>
+  </section>
+
+  <!-- الصفحة العامة: كل المراحل (تُخفى عند عرض صفحة الصف) -->
+  <div id="generic-home">
+  <div id="back-to-grade-bar" hidden style="margin-bottom:12px">
+    <button type="button" class="btn btn-outline" id="back-to-grade-btn">العودة إلى صفي</button>
+  </div>
   <section class="hero">
     <h1 class="hero-title">أهلاً بك في سند</h1>
     <p class="hero-sub">منصة تعليمية عراقية مجانية — دروس وامتحانات وزارية من الابتدائية إلى الجامعة.</p>
@@ -46,6 +81,7 @@
     <h2 class="section-title">أكمل من حيث توقفت</h2>
     <div class="card" id="continue-card"></div>
   </section>
+  </div>
 </main>
 
 <footer class="site-footer">
@@ -119,6 +155,183 @@
       '<a class="btn btn-teal" href="' + esc(href) + '">متابعة المشاهدة</a>';
     sec.hidden = false;
   })();
+})();
+</script>
+<script>
+/* ===== الواجهة الأولى «أي صف أنت؟» + صفحة صفي =====
+   - بلا صف محفوظ: يظهر المنتقي أولاً، والصفحة العامة مخفية.
+   - مع صف محفوظ: تظهر صفحة الصف فقط (أعداد حقيقية من data.js).
+   - «تصفح كل المراحل» يعرض الصفحة العامة دون مسح الصف المحفوظ
+     (علامة جلسة فقط)، وزر «العودة إلى صفي» يعيد صفحة الصف.
+   - الدخول للتصفح اختياري تماماً — الحساب مطلوب فقط للبيانات
+     الشخصية (التقدم/النتائج/المحفوظات) كما في المرحلة 2. */
+(function () {
+  var gp = (window.SANAD && window.SANAD.gradePref) || null;
+  var data = window.SANAD_DATA || { stages: [], books: [], lessons: [], exams: [] };
+  var content = window.SANAD_CONTENT || { malazim: [] };
+  var K_BROWSE_ALL = 'sanad_browse_all';
+  var pickedStage = null, pickedGrade = null, pickerTouched = false;
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function show(el, on) { if (el) el.hidden = !on; }
+  function browseAll() {
+    try { return window.sessionStorage.getItem(K_BROWSE_ALL) === '1'; } catch (e) { return false; }
+  }
+  function setBrowseAll(v) {
+    try { if (v) window.sessionStorage.setItem(K_BROWSE_ALL, '1'); else window.sessionStorage.removeItem(K_BROWSE_ALL); } catch (e) {}
+  }
+  function savedPref() { return gp ? gp.get() : null; }
+
+  /* ===== أعداد حقيقية للصف من البيانات ===== */
+  function countsFor(gradeId, gradeName) {
+    var books = (data.books || []).filter(function (b) { return b && b.grade === gradeName; }).length;
+    var malazim = (content.malazim || []).filter(function (m) { return m && m.gradeId === gradeId; }).length;
+    var lessons = (data.lessons || []).filter(function (l) { return l && l.grade === gradeName; }).length;
+    var exams = (data.exams || []).filter(function (e) { return e && e.grade === gradeName; }).length;
+    var teachers = {};
+    (data.lessons || []).forEach(function (l) { if (l && l.grade === gradeName && l.teacher) teachers[l.teacher] = true; });
+    return { books: books, malazim: malazim, lessons: lessons, exams: exams, teachers: Object.keys(teachers).length };
+  }
+
+  function renderMyGrade(pref) {
+    $('mg-title').textContent = pref.gradeName;
+    $('mg-meta').textContent = pref.stageName + ' — هذه صفحة صفك: كتبك ومحاضراتك وامتحاناتك ومدرسينك فقط.';
+    $('back-to-grade-btn').textContent = 'العودة إلى صفي: ' + pref.gradeName;
+    var c = countsFor(pref.grade, pref.gradeName);
+    var gradeUrl = 'grade.html?stage=' + encodeURIComponent(pref.stage) + '&grade=' + encodeURIComponent(pref.grade);
+    var cards = [
+      { title: 'الكتب والملازم', n: c.books + c.malazim, href: gradeUrl + '&tab=books', empty: 'لا توجد كتب أو ملازم بعد لهذا الصف' },
+      { title: 'المحاضرات', n: c.lessons, href: gradeUrl + '&tab=lectures', empty: 'لا توجد محاضرات بعد لهذا الصف' },
+      { title: 'الامتحانات الوزارية', n: c.exams, href: 'exams.html', empty: 'لا توجد امتحانات بعد لهذا الصف' },
+      { title: 'المدرسون', n: c.teachers, href: 'lessons.html', empty: 'لا يوجد مدرسون بعد لهذا الصف' },
+      { title: 'جدولي الأسبوعي', n: null, href: 'schedule.html', desc: 'نظّم دروسك ومهامك لهذا الأسبوع' }
+    ];
+    var html = '';
+    cards.forEach(function (card) {
+      html += '<article class="card"><h3>' + esc(card.title) + '</h3>';
+      if (card.n !== null && card.n !== undefined) {
+        html += '<p style="font-size:28px;font-weight:800;color:var(--navy)">' + card.n + '</p>';
+        if (card.n === 0) html += '<p>' + esc(card.empty) + '</p>';
+      } else if (card.desc) {
+        html += '<p>' + esc(card.desc) + '</p>';
+      }
+      html += '<a class="btn btn-outline" href="' + esc(card.href) + '">عرض</a></article>';
+    });
+    $('mg-cards').innerHTML = html;
+  }
+
+  /* ===== المنتقي: مرحلة ثم صف ثم تأكيد ===== */
+  function renderStageChips() {
+    var wrap = $('onb-stages');
+    wrap.innerHTML = '';
+    (data.stages || []).filter(function (s) { return s.id !== 'uni'; }).forEach(function (s) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (pickedStage === s.id ? ' active' : '');
+      b.textContent = s.name;
+      b.addEventListener('click', function () {
+        pickerTouched = true;
+        pickedStage = s.id; pickedGrade = null;
+        renderStageChips(); renderGradeChips();
+        $('onb-confirm').disabled = true;
+      });
+      wrap.appendChild(b);
+    });
+  }
+  function renderGradeChips() {
+    var wrap = $('onb-grades-wrap');
+    var grid = $('onb-grades');
+    grid.innerHTML = '';
+    if (!pickedStage) { wrap.hidden = true; return; }
+    var stage = null;
+    (data.stages || []).forEach(function (s) { if (s.id === pickedStage) stage = s; });
+    if (!stage) { wrap.hidden = true; return; }
+    wrap.hidden = false;
+    (stage.grades || []).forEach(function (g) {
+      var gid = (typeof g === 'string') ? g : (g.id || g.name);
+      var gname = (typeof g === 'string') ? g : (g.name || g.id);
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (pickedGrade === gid ? ' active' : '');
+      b.textContent = gname;
+      b.addEventListener('click', function () {
+        pickerTouched = true;
+        pickedGrade = gid;
+        renderGradeChips();
+        $('onb-confirm').disabled = false;
+      });
+      grid.appendChild(b);
+    });
+  }
+
+  /* ===== أوضاع العرض ===== */
+  function showMode(mode) {
+    show($('onboarding'), mode === 'picker');
+    show($('my-grade-home'), mode === 'grade');
+    show($('generic-home'), mode === 'generic');
+    show($('back-to-grade-bar'), mode === 'generic' && !!savedPref());
+    show($('onb-cancel'), mode === 'picker' && !!savedPref());
+    if (mode === 'grade') {
+      var pref = savedPref();
+      if (pref) renderMyGrade(pref);
+    }
+  }
+  function decide() {
+    var pref = savedPref();
+    if (!pref) { showMode('picker'); return; }
+    if (browseAll()) { showMode('generic'); return; }
+    showMode('grade');
+  }
+
+  /* ===== الربط ===== */
+  $('onb-confirm').addEventListener('click', function () {
+    if (!pickedStage || !pickedGrade || !gp) return;
+    var saved = gp.set(pickedStage, pickedGrade);
+    if (!saved) return;
+    pickerTouched = false;
+    setBrowseAll(false);
+    decide();
+  });
+  $('onb-cancel').addEventListener('click', function () { decide(); });
+  $('onb-browse-all').addEventListener('click', function (e) {
+    e.preventDefault();
+    setBrowseAll(true);
+    showMode('generic');
+  });
+  $('mg-change').addEventListener('click', function () {
+    var pref = savedPref();
+    if (pref) { pickedStage = pref.stage; pickedGrade = pref.grade; }
+    renderStageChips(); renderGradeChips();
+    $('onb-confirm').disabled = !pickedGrade;
+    setBrowseAll(false);
+    showMode('picker');
+  });
+  $('mg-browse-all').addEventListener('click', function () {
+    setBrowseAll(true);
+    showMode('generic');
+  });
+  $('back-to-grade-btn').addEventListener('click', function () {
+    setBrowseAll(false);
+    showMode('grade');
+  });
+
+  renderStageChips();
+  renderGradeChips();
+  decide();
+
+  /* مزامنة الصف من الملف الشخصي (للمسجّلين فقط) — إن كان بلا صف محفوظ
+     وجاء الصف من الحساب، نعيد تقييم العرض، إلا إن كان الطالب يختار
+     صفه الآن بيده فلا نقاطعه. */
+  if (gp && typeof gp.syncFromProfile === 'function') {
+    gp.syncFromProfile().then(function (synced) {
+      if (synced && !pickerTouched) decide();
+    }, function () { /* تجاهل */ });
+  }
 })();
 </script>
 </body>
