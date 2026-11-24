@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>سند SANAD — منصة تعليمية عراقية مجانية</title>
-<meta name="description" content="سند — منصة تعليمية عراقية مجانية: دروس وملخصات وامتحانات وزارية لجميع المراحل من الابتدائية إلى الجامعة.">
+<meta name="description" content="سند — منصة تعليمية عراقية مجانية: دورات منظمة فصل فصل، محاضرات داخل الموقع، كتب وامتحانات وزارية لجميع المراحل من الابتدائية إلى الجامعة.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -19,11 +19,12 @@
     </a>
     <nav class="main-nav">
       <a class="nav-link" href="index.html">الرئيسية</a>
-      <a class="nav-link" href="stages.html">المراحل</a>
+      <a class="nav-link" href="courses.html">الدورات</a>
+      <a class="nav-link" href="lessons.html">الأساتذة</a>
       <a class="nav-link" href="library.html">المكتبة</a>
       <a class="nav-link" href="exams.html">الامتحانات</a>
-      <a class="nav-link" href="lessons.html">الدروس</a>
       <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
     </nav>
   </div>
 </header>
@@ -40,7 +41,7 @@
       <div id="onb-grades" style="margin:12px 0;"></div>
     </div>
     <p style="margin-top:16px">
-      <button type="button" class="btn btn-gold" id="onb-confirm" disabled>تأكيد — هذا صفي</button>
+      <button type="button" class="btn btn-blue" id="onb-confirm" disabled>تأكيد — هذا صفي</button>
       <button type="button" class="btn btn-outline" id="onb-cancel" hidden>إلغاء</button>
     </p>
     <p><a href="#" id="onb-browse-all">تصفح كل المراحل بدون اختيار صف</a></p>
@@ -52,7 +53,10 @@
     <h1 class="section-title" id="mg-title" style="font-size:26px"></h1>
     <p id="mg-meta"></p>
     <div class="grid" id="mg-cards"></div>
+    <h2 class="section-title" style="font-size:20px">دورات صفي</h2>
+    <div class="grid" id="mg-courses"></div>
     <p style="margin-top:16px">
+      <a class="btn btn-blue" id="mg-all-courses" href="courses.html">عرض كل دورات الصف</a>
       <button type="button" class="btn btn-outline" id="mg-change">تغيير الصف</button>
       <a class="btn btn-outline" href="profile.html">لوحة الطالب</a>
       <button type="button" class="btn btn-outline" id="mg-browse-all">تصفح كل المراحل</button>
@@ -64,34 +68,100 @@
   <div id="back-to-grade-bar" hidden style="margin-bottom:12px">
     <button type="button" class="btn btn-outline" id="back-to-grade-btn">العودة إلى صفي</button>
   </div>
+
   <section class="hero">
-    <h1 class="hero-title">أهلاً بك في سند</h1>
-    <p class="hero-sub">منصة تعليمية عراقية مجانية — دروس وامتحانات وزارية من الابتدائية إلى الجامعة.</p>
+    <span class="hero-badge">منظومة تعليمية عراقية مجانية</span>
+    <h1 class="hero-title">مستقبل <span class="u">التعليم</span> يبدأ من سند</h1>
+    <p class="hero-sub">دورات منظمة فصل فصل، محاضرات تشتغل داخل الموقع، كتب وامتحانات وزارية — من الابتدائية إلى الجامعة، مجاناً بالكامل.</p>
     <form class="search-box" action="search.html" method="get">
       <input class="form-input" type="search" name="q" placeholder="ابحث عن مادة أو اختبار أو جامعة أو منحة..." aria-label="بحث">
-      <button class="btn btn-gold" type="submit">بحث</button>
+      <button class="btn btn-blue" type="submit">بحث سريع</button>
     </form>
-    <a class="btn btn-gold" href="stages.html">ابدأ رحلتك التعليمية</a>
+    <div class="hero-actions">
+      <a class="btn btn-blue" href="courses.html">استكشف جميع الدورات</a>
+      <a class="btn btn-white-outline" href="#how-sanad-works">كيف تعمل المنصة؟</a>
+    </div>
+    <p class="hero-note">مجاني بالكامل — بلا اشتراك، وبلا حساب للتصفح</p>
   </section>
 
-  <h2 class="section-title">اختر مرحلتك الدراسية</h2>
+  <h2 class="section-title">سند <span class="u">بالأرقام</span></h2>
+  <div class="stats-strip" id="home-stats"></div>
+
+  <h2 class="section-title">الخريطة <span class="u">التعليمية</span></h2>
+  <p class="section-sub">اختار مرحلتك وابدأ — كل مرحلة توصلك لصفوفها وموادها.</p>
   <div class="grid" id="home-stages"></div>
 
+  <h2 class="section-title">الأقسام — اختر <span class="u">قسمك</span> وابدأ</h2>
+  <div class="grid" id="home-subjects"></div>
+
+  <h2 class="section-title">تعلّم على يد كبار <span class="u">الأساتذة</span></h2>
+  <p class="section-sub">مدرسون حقيقيون بمحاضراتهم المنشورة — اضغط على اسم المدرس لتشوف كورساته.</p>
+  <div class="grid" id="home-teachers"></div>
+
+  <h2 class="section-title">الدورات <span class="u">الأكثر</span> محاضرات</h2>
+  <div class="grid" id="home-popular"></div>
+  <p style="margin-top:16px;text-align:center"><a class="btn btn-more" href="courses.html">شاهد المزيد من الدورات</a></p>
+
+  <section id="how-sanad-works">
+    <h2 class="section-title">كيف تعمل <span class="u">سند؟</span></h2>
+    <div class="journey-steps">
+      <article class="card journey-step"><span class="journey-num">1</span><h3>اكتشف</h3><p>اختار صفك ومادتك، وشوف الكورسات المتوفرة بمعلميها الحقيقيين.</p></article>
+      <article class="card journey-step"><span class="journey-num">2</span><h3>تعلّم</h3><p>شاهد المحاضرات فصل فصل داخل الموقع، وكل فصل بيه أسئلة وزارية حقيقية.</p></article>
+      <article class="card journey-step"><span class="journey-num">3</span><h3>أنجز</h3><p>أكمل الدروس، تابع تقدمك، واجمع النقاط والشارات من لوحة الطالب.</p></article>
+    </div>
+  </section>
+
   <section id="continue-section" hidden>
-    <h2 class="section-title">أكمل من حيث توقفت</h2>
+    <h2 class="section-title">أكمل من حيث <span class="u">توقفت</span></h2>
     <div class="card" id="continue-card"></div>
   </section>
+
+  <h2 class="section-title">الأسئلة <span class="u">الشائعة</span></h2>
+  <div id="home-faq">
+    <div class="card faq-item" style="margin-bottom:12px">
+      <button type="button" class="faq-question back-btn" style="font-size:17px;color:var(--text)">سند مجاني صدك؟</button>
+      <div class="faq-answer"><p>إيه، مجاني بالكامل — كل الدورات والكتب والامتحانات بلا اشتراك وبلا دفع.</p></div>
+    </div>
+    <div class="card faq-item" style="margin-bottom:12px">
+      <button type="button" class="faq-question back-btn" style="font-size:17px;color:var(--text)">أحتاج أسوي حساب حتى أشوف الدروس؟</button>
+      <div class="faq-answer"><p>لا، التصفح مفتوح بلا حساب. الحساب تحتاجه بس إذا تريد تحفظ تقدمك ونتائجك وكتبك.</p></div>
+    </div>
+    <div class="card faq-item" style="margin-bottom:12px">
+      <button type="button" class="faq-question back-btn" style="font-size:17px;color:var(--text)">الدروس تنفتح داخل الموقع لو تطلعني ليوتيوب؟</button>
+      <div class="faq-answer"><p>داخل الموقع — تضغط على الدرس ويشتغل هنا، ما نطلعك برا.</p></div>
+    </div>
+    <div class="card faq-item" style="margin-bottom:12px">
+      <button type="button" class="faq-question back-btn" style="font-size:17px;color:var(--text)">شلون أختار صفي؟</button>
+      <div class="faq-answer"><p>أول مرة تدخل تختار مرحلتك وصفك، وبعدها سند يعرض لك مواد صفك بس، وتكدر تغيّر الصف بأي وقت من زر «تغيير الصف».</p></div>
+    </div>
+    <div class="card faq-item" style="margin-bottom:12px">
+      <button type="button" class="faq-question back-btn" style="font-size:17px;color:var(--text)">الامتحانات الوزارية حقيقية؟</button>
+      <div class="faq-answer"><p>إيه، أسئلة وزارية حقيقية من امتحانات سابقة مع الحلول النموذجية، ومرتبطة بفصول الكتاب داخل كل كورس.</p></div>
+    </div>
+  </div>
   </div>
 </main>
 
-<footer class="site-footer">
+<footer class="footer-mirmaz">
   <div class="footer-inner">
+    <div class="footer-cards">
+      <div class="footer-card">
+        <h3>تعلّم من موبايلك مباشرة</h3>
+        <p>سند يشتغل من المتصفح مباشرة — بلا تحميل وبلا حساب. افتح الدورات وابدأ الدرس الأول الآن.</p>
+        <a class="btn btn-blue" href="courses.html">ابدأ من هنا</a>
+      </div>
+      <div class="footer-card">
+        <h3>عندك سؤال أو اقتراح؟</h3>
+        <p>راسلنا — ملاحظاتك هي اللي تطوّر سند: محتوى ناقص، رابط ما يشتغل، أو فكرة جديدة.</p>
+        <a class="btn btn-dark" href="contact.html">تواصل معنا</a>
+      </div>
+    </div>
     <nav class="footer-links">
       <a href="index.html">الرئيسية</a>
-      <a href="stages.html">المراحل</a>
+      <a href="courses.html">الدورات</a>
+      <a href="lessons.html">الأساتذة</a>
       <a href="library.html">المكتبة</a>
       <a href="exams.html">الامتحانات</a>
-      <a href="lessons.html">الدروس</a>
       <a href="teacher.html">المعلم الذكي</a>
       <a href="revisions.html">المراجعات المركزة</a>
       <a href="schedule.html">الجدول</a>
@@ -118,21 +188,99 @@
 <script src="app.js"></script>
 <script>
 (function () {
-  var wrap = document.getElementById('home-stages');
-  var data = window.SANAD_DATA || { stages: [] };
-  var descs = {
-    primary: 'الصفوف من الأول إلى السادس الابتدائي',
-    middle: 'الصفوف الأول والثاني والثالث المتوسط',
-    prep: 'الصفوف الرابع والخامس والسادس الإعدادي',
-    uni: 'دليل الجامعات العراقية الحكومية والأهلية'
-  };
-  data.stages.forEach(function (stage) {
-    var card = document.createElement('article');
-    card.className = 'card stage-card';
-    var note = stage.note ? '<p>' + stage.note + '</p>' : '';
-    card.innerHTML = '<h3>' + stage.name + '</h3><p>' + (descs[stage.id] || '') + '</p>' + note +
-      '<a class="btn btn-outline" href="stages.html#' + stage.id + '">عرض الصفوف</a>';
-    wrap.appendChild(card);
+  var data = window.SANAD_DATA || { stages: [], books: [], lessons: [], exams: [] };
+  var courses = (window.SANAD && window.SANAD.courses) || null;
+  var allCourses = courses ? courses.buildCourses() : [];
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  /* ===== شريط الأرقام — أعداد حقيقية من البيانات فقط ===== */
+  (function () {
+    var teachers = {};
+    (data.lessons || []).forEach(function (l) { if (l && l.teacher) teachers[l.teacher] = true; });
+    var stats = [
+      { n: allCourses.length, label: 'كورساً' },
+      { n: (data.lessons || []).length, label: 'محاضرة' },
+      { n: (data.books || []).length, label: 'كتاباً وملزمة' },
+      { n: Object.keys(teachers).length, label: 'مدرساً وقناة' },
+      { n: (data.exams || []).length, label: 'امتحاناً وزارياً' }
+    ];
+    document.getElementById('home-stats').innerHTML = stats.map(function (s) {
+      return '<div class="stat-box"><div class="stat-num">' + s.n + '</div><div class="stat-label">' + s.label + '</div></div>';
+    }).join('');
+  })();
+
+  /* ===== الخريطة التعليمية: 4 مراحل بمحتوى + الجامعات + الذكاء الاصطناعي، والدورات الاحترافية قريباً ===== */
+  (function () {
+    var wrap = document.getElementById('home-stages');
+    var descs = {
+      primary: 'الصفوف من الأول إلى السادس الابتدائي',
+      middle: 'الصفوف الأول والثاني والثالث المتوسط',
+      prep: 'الصفوف الرابع والخامس والسادس الإعدادي',
+      uni: 'دليل الجامعات العراقية الحكومية والأهلية'
+    };
+    (data.stages || []).forEach(function (stage) {
+      var card = document.createElement('article');
+      card.className = 'card stage-card';
+      var href = stage.id === 'uni' ? 'universities.html' : 'stages.html#' + stage.id;
+      var note = stage.note ? '<p>' + esc(stage.note) + '</p>' : '';
+      card.innerHTML = '<h3>' + esc(stage.name) + '</h3><p>' + esc(descs[stage.id] || '') + '</p>' + note +
+        '<a class="btn btn-outline" href="' + href + '">عرض الصفوف</a>';
+      wrap.appendChild(card);
+    });
+    var aiCard = document.createElement('article');
+    aiCard.className = 'card stage-card';
+    aiCard.innerHTML = '<h3>الذكاء الاصطناعي</h3><p>المعلم الذكي يشرح لك المنهج العراقي ويصحح إجاباتك.</p>' +
+      '<a class="btn btn-outline" href="teacher.html">اسأل المعلم الذكي</a>';
+    wrap.appendChild(aiCard);
+    var soonCard = document.createElement('article');
+    soonCard.className = 'card stage-card';
+    soonCard.innerHTML = '<h3>دورات احترافية</h3><p>دورات مهنية ومهارات عملية — قريباً.</p>' +
+      '<span class="badge">قريباً</span>';
+    wrap.appendChild(soonCard);
+  })();
+
+  /* ===== الأقسام: المواد حسب عدد الكورسات ===== */
+  (function () {
+    var counts = {};
+    allCourses.forEach(function (c) { counts[c.subject] = (counts[c.subject] || 0) + 1; });
+    var subs = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; }).slice(0, 8);
+    document.getElementById('home-subjects').innerHTML = subs.map(function (s) {
+      return '<article class="card stage-card"><h3>' + esc(s) + '</h3><p>' + counts[s] + ' كورساً</p>' +
+        '<a class="btn btn-outline" href="courses.html?subject=' + encodeURIComponent(s) + '">عرض الكورسات</a></article>';
+    }).join('');
+  })();
+
+  /* ===== الأساتذة: الأكثر محاضرات (12) — القناة الرسمية معلّمة ===== */
+  (function () {
+    var counts = {};
+    (data.lessons || []).forEach(function (l) { if (l && l.teacher) counts[l.teacher] = (counts[l.teacher] || 0) + 1; });
+    var top = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; }).slice(0, 12);
+    var channels = courses ? courses.CHANNEL_NAMES : [];
+    document.getElementById('home-teachers').innerHTML = top.map(function (t) {
+      var isCh = channels.indexOf(t) !== -1;
+      var coursesOf = allCourses.filter(function (c) { return c.teacher === t; }).length;
+      return '<article class="card teacher-card"><div class="teacher-avatar">' + esc(t.trim().charAt(0)) + '</div>' +
+        '<h3>' + esc(t) + '</h3><p>' + counts[t] + ' محاضرة · ' + coursesOf + ' كورساً' + (isCh ? ' · قناة رسمية' : '') + '</p>' +
+        '<a class="btn btn-outline" href="courses.html?teacher=' + encodeURIComponent(t) + '">عرض كورساته</a></article>';
+    }).join('');
+  })();
+
+  /* ===== الدورات الأكثر محاضرات (6) ===== */
+  (function () {
+    var top = allCourses.slice(0, 6);
+    document.getElementById('home-popular').innerHTML = top.map(function (c) {
+      return courses.courseCardHtml(c);
+    }).join('');
+  })();
+
+  /* ===== الأسئلة الشائعة: فتح/إغلاق ===== */
+  document.querySelectorAll('#home-faq .faq-item').forEach(function (item) {
+    var q = item.querySelector('.faq-question');
+    if (q) q.addEventListener('click', function () { item.classList.toggle('open'); });
   });
 
   /* «أكمل من حيث توقفت»: آخر محاضرة شُغّلت (يُحفظ من app.js عند التشغيل) */
@@ -143,11 +291,6 @@
     var sec = document.getElementById('continue-section');
     var card = document.getElementById('continue-card');
     if (!sec || !card) return;
-    function esc(s) {
-      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-      });
-    }
     var meta = [last.subject, last.grade].filter(function (x) { return x; }).join(' · ');
     var href = last.href || 'lessons.html';
     card.innerHTML = '<span class="badge teal">محاضرة</span><h3>' + esc(last.title) + '</h3>' +
@@ -167,6 +310,7 @@
      الشخصية (التقدم/النتائج/المحفوظات) كما في المرحلة 2. */
 (function () {
   var gp = (window.SANAD && window.SANAD.gradePref) || null;
+  var courses = (window.SANAD && window.SANAD.courses) || null;
   var data = window.SANAD_DATA || { stages: [], books: [], lessons: [], exams: [] };
   var content = window.SANAD_CONTENT || { malazim: [] };
   var K_BROWSE_ALL = 'sanad_browse_all';
@@ -223,6 +367,16 @@
       html += '<a class="btn btn-outline" href="' + esc(card.href) + '">عرض</a></article>';
     });
     $('mg-cards').innerHTML = html;
+    /* دورات الصف: الأكثر محاضرات (6) */
+    var mgCourses = $('mg-courses');
+    var allLink = $('mg-all-courses');
+    if (mgCourses && courses) {
+      var list = courses.buildCourses().filter(function (x) { return x.gradeId === pref.grade; }).slice(0, 6);
+      mgCourses.innerHTML = list.length
+        ? list.map(function (x) { return courses.courseCardHtml(x); }).join('')
+        : '<p class="empty-state">لا توجد كورسات بعد لهذا الصف.</p>';
+    }
+    if (allLink) allLink.href = 'courses.html?grade=' + encodeURIComponent(pref.grade);
   }
 
   /* ===== المنتقي: مرحلة ثم صف ثم تأكيد ===== */

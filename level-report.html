@@ -234,7 +234,7 @@
     var sched = data.sched;
 
     // Exam averages per subject (percent), from real attempts only.
-    var perSubject = {}; // subject -> {sum, count}
+    var perSubject = {}; // subject -> {sum, count, best}
     var totalAttempts = 0;
     attemptsList.forEach(function (a) {
       var examId = (a && a.examId) || '';
@@ -243,9 +243,10 @@
       var total = (a && (a.total !== undefined ? a.total : a.totalQuestions)) || null;
       if (score === null || total === null || total === 0) { return; }
       var pct = (score / total) * 100;
-      if (!perSubject[subject]) { perSubject[subject] = { sum: 0, count: 0 }; }
+      if (!perSubject[subject]) { perSubject[subject] = { sum: 0, count: 0, best: 0 }; }
       perSubject[subject].sum += pct;
       perSubject[subject].count += 1;
+      if (pct > perSubject[subject].best) { perSubject[subject].best = pct; }
       totalAttempts++;
     });
 
@@ -301,8 +302,9 @@
       var ul = document.createElement('ul');
       avgNames.forEach(function (s) {
         var avg = Math.round(perSubject[s].sum / perSubject[s].count);
+        var best = Math.round(perSubject[s].best);
         var li = document.createElement('li');
-        li.textContent = s + ': متوسط ' + avg + '% من ' + perSubject[s].count + ' محاولة';
+        li.textContent = s + ': متوسط ' + avg + '% من ' + perSubject[s].count + ' محاولة (أفضل محاولة ' + best + '%)';
         ul.appendChild(li);
       });
       avgEl.appendChild(ul);
@@ -350,17 +352,31 @@
     avgNames.forEach(function (s) {
       var count = perSubject[s].count;
       var avg = Math.round(perSubject[s].sum / count);
+      var best = Math.round(perSubject[s].best);
       if (count < 2) { insufficient.push(s + ' (' + count + ' محاولة)'); return; }
-      if (avg >= 70) { mastered.push(s + ' — متوسط ' + avg + '%'); }
-      else { review.push(s + ' — متوسط ' + avg + '%'); }
+      if (avg >= 70) { mastered.push({ s: s, avg: avg, count: count, best: best }); }
+      else { review.push({ s: s, avg: avg, count: count, best: best }); }
     });
+
+    // رابط مناقشة مادة ضعيفة مع المعلم الذكي: يملأ الصف والمادة والسؤال
+    // مسبقاً في teacher.html. أسماء المواد في data.js أطول من قائمة
+    // المعلم، فنحوّلها إلى الاسم المختصر الذي يعرفه المعلم.
+    function teacherLink(item) {
+      var shortNames = { 'اللغة العربية': 'العربية', 'اللغة الإنكليزية': 'الإنكليزية', 'التربية الإسلامية': 'الإسلامية' };
+      var short = shortNames[item.s] || item.s;
+      var grade = (profile && profile.grade) || '';
+      var topic = 'أنا ضعيف في مادة ' + item.s + '، متوسطي ' + item.avg + '% من ' + item.count + ' محاولة — اشرح لي أهم المواضيع اللي لازم أراجعها أولاً';
+      var qs = 'subject=' + encodeURIComponent(short) + '&mode=ask&topic=' + encodeURIComponent(topic);
+      if (grade) { qs = 'grade=' + encodeURIComponent(grade) + '&' + qs; }
+      return 'teacher.html?' + qs;
+    }
 
     var masteredEl = document.getElementById('mastered-list');
     if (!mastered.length) {
       emptyInto(masteredEl, 'لا توجد محاولات كافية بعد — تحتاج كل مادة إلى محاولتين على الأقل لتحديد مستواك فيها.');
     } else {
       var ul3 = document.createElement('ul');
-      mastered.forEach(function (t) { var li = document.createElement('li'); li.textContent = t; ul3.appendChild(li); });
+      mastered.forEach(function (it) { var li = document.createElement('li'); li.textContent = it.s + ' — متوسط ' + it.avg + '% (أفضل محاولة ' + it.best + '%)'; ul3.appendChild(li); });
       masteredEl.appendChild(ul3);
     }
 
@@ -369,10 +385,18 @@
       emptyInto(reviewEl, 'لا توجد محاولات كافية بعد — تحتاج كل مادة إلى محاولتين على الأقل لتحديد مستواك فيها.');
     } else {
       var ul4 = document.createElement('ul');
-      review.forEach(function (t) { var li = document.createElement('li'); li.textContent = t; ul4.appendChild(li); });
+      review.forEach(function (it) {
+        var li = document.createElement('li');
+        li.textContent = it.s + ' — متوسط ' + it.avg + '% (أفضل محاولة ' + it.best + '%) — ';
+        var a = document.createElement('a');
+        a.href = teacherLink(it);
+        a.textContent = 'ناقشها مع المعلم الذكي';
+        li.appendChild(a);
+        ul4.appendChild(li);
+      });
       reviewEl.appendChild(ul4);
       var hint = document.createElement('p');
-      hint.textContent = 'راجع هذه المواد من صفحة الدروس، ثم أعد الاختبار لقياس تقدمك.';
+      hint.textContent = 'راجع هذه المواد من صفحة الدروس، ثم أعد الاختبار لقياس تقدمك — أو اضغط «ناقشها مع المعلم الذكي» ليشرح لك أهم ما تراجعه أولاً.';
       reviewEl.appendChild(hint);
     }
     if (insufficient.length) {

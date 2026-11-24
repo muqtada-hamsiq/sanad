@@ -9,7 +9,15 @@
   --sky-dark: #0284C7;
   --sky-tint: #E8F4FD;
   --sky-border: #BFE3F5;
-  --bg: #F7F9FC;
+  /* Marmaz-style: أزرق ساطع للأزرار، أسود للحبة المختارة، برتقالي لـ«شاهد المزيد» */
+  --blue: #0095F6;
+  --blue-dark: #0077CC;
+  --orange: #FF7A59;
+  --blue-pill-bg: #E3F2FD;
+  --blue-pill: #0277BD;
+  --green-pill-bg: #E8F5E9;
+  --green-pill: #2E7D32;
+  --bg: #FFFFFF;
   --card: #FFFFFF;
   --text: #0F1E33;
   --muted: #5A6B7C;
@@ -28,6 +36,10 @@ html[data-theme="dark"] {
   --shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
   --sky-tint: #12294A;
   --sky-border: #1E4A73;
+  --blue-pill-bg: #12294A;
+  --blue-pill: #7DD3FC;
+  --green-pill-bg: #12351F;
+  --green-pill: #86EFAC;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; }
@@ -42,14 +54,15 @@ a { color: var(--sky-dark); text-decoration: none; }
 a:hover { text-decoration: underline; }
 img { max-width: 100%; display: block; }
 
-/* ===== Header ===== */
+/* ===== Header — Marmaz-style: أبيض، نص داكن، رابط نشط حبة زرقاء ===== */
 .site-header {
-  background: var(--navy);
-  color: #fff;
+  background: #fff;
+  color: var(--text);
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 10px rgba(10, 26, 58, 0.06);
 }
 .site-header .header-inner {
   max-width: 1100px;
@@ -60,12 +73,12 @@ img { max-width: 100%; display: block; }
   gap: 14px;
   flex-wrap: wrap;
 }
-.logo { display: flex; align-items: center; gap: 10px; color: #fff; }
+.logo { display: flex; align-items: center; gap: 10px; color: var(--navy); }
 .logo:hover { text-decoration: none; }
 .logo-img { height: 44px; width: 44px; object-fit: cover; border-radius: 8px; }
 .logo-text { display: flex; flex-direction: column; line-height: 1.2; }
-.logo-name { font-size: 24px; font-weight: 800; color: #fff; }
-.logo-latin { font-size: 11px; letter-spacing: 4px; color: var(--sky); font-weight: 700; }
+.logo-name { font-size: 24px; font-weight: 800; color: var(--navy); }
+.logo-latin { font-size: 11px; letter-spacing: 4px; color: var(--sky-dark); font-weight: 700; }
 .main-nav {
   display: flex;
   flex-wrap: wrap;
@@ -73,20 +86,20 @@ img { max-width: 100%; display: block; }
   margin-inline-start: auto;
 }
 .nav-link {
-  color: #D7E3EE;
+  color: #334155;
   font-size: 14px;
   font-weight: 600;
   padding: 7px 10px;
-  border-radius: 8px;
+  border-radius: 999px;
   white-space: nowrap;
 }
-.nav-link:hover { color: #fff; background: rgba(255, 255, 255, 0.1); text-decoration: none; }
-.nav-link.active { color: var(--navy); background: var(--sky); }
+.nav-link:hover { color: var(--navy); background: #F1F5F9; text-decoration: none; }
+.nav-link.active { color: #fff; background: var(--blue); }
 /* زر تبديل الوضع الداكن/الفاتح — يُحقن من app.js في كل صفحة */
 .theme-toggle {
   background: transparent;
-  border: 1.5px solid rgba(255, 255, 255, 0.45);
-  color: #fff;
+  border: 1.5px solid #CBD5E1;
+  color: var(--navy);
   font-family: inherit;
   font-size: 13px;
   font-weight: 700;
@@ -95,19 +108,19 @@ img { max-width: 100%; display: block; }
   cursor: pointer;
   white-space: nowrap;
 }
-.theme-toggle:hover { background: rgba(255, 255, 255, 0.12); }
+.theme-toggle:hover { background: #F1F5F9; }
 
 /* ===== Layout ===== */
 .container { max-width: 1100px; margin: 0 auto; padding: 20px 16px 48px; }
+/* ===== عناوين الأقسام — Marmaz-style: ضخمة سوداء، الكلمة المفتاحية تحتها خط أزرق مموّج ===== */
 .section-title {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 800;
-  color: var(--navy);
-  margin: 32px 0 14px;
-  padding-bottom: 8px;
-  border-bottom: 3px solid var(--sky);
-  display: inline-block;
+  color: var(--text);
+  margin: 36px 0 16px;
 }
+.section-title .u { text-decoration: underline wavy var(--blue) 3px; text-underline-offset: 8px; }
+.section-sub { color: var(--muted); font-size: 16px; margin: -6px 0 18px; }
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -129,14 +142,28 @@ img { max-width: 100%; display: block; }
 .hero {
   background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 60%, var(--sky) 130%);
   color: #fff;
-  border-radius: var(--radius);
-  padding: 36px 24px;
+  border-radius: 24px;
+  padding: 40px 24px;
   text-align: center;
   margin-bottom: 8px;
 }
-.hero-title { font-size: 30px; font-weight: 800; margin-bottom: 10px; }
+.hero-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 16px;
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+.hero-title { font-size: 36px; font-weight: 800; margin-bottom: 10px; line-height: 1.4; }
+.hero-title .u { text-decoration: underline wavy var(--sky) 3px; text-underline-offset: 10px; }
 .hero-sub { font-size: 17px; color: #D7E3EE; max-width: 640px; margin: 0 auto 20px; }
 .hero .search-box { max-width: 520px; margin: 0 auto 18px; }
+.hero-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+.hero-note { font-size: 14px; color: #BAE6FD; margin-top: 14px; }
 
 /* ===== Buttons ===== */
 /* btn-gold: الاسم محفوظ لتوافق الصفحات القديمة، ولونه الآن سماوي حسب الهوية الجديدة */
@@ -154,6 +181,11 @@ img { max-width: 100%; display: block; }
 .btn:hover { text-decoration: none; opacity: 0.92; }
 .btn-gold { background: var(--sky); color: var(--navy); }
 .btn-teal { background: var(--sky-dark); color: #fff; }
+.btn-blue { background: var(--blue); color: #fff; }
+.btn-dark { background: #111827; color: #fff; }
+.btn-more { background: var(--orange); color: #fff; }
+.btn-white-outline { background: transparent; border-color: #fff; color: #fff; }
+.btn-white-outline:hover { background: rgba(255, 255, 255, 0.14); }
 .btn-outline { background: transparent; border-color: var(--sky-dark); color: var(--sky-dark); }
 .btn-outline:hover { background: var(--sky-dark); color: #fff; }
 
@@ -462,3 +494,168 @@ html[data-theme="dark"] .progress-bar { background: #22385A; }
   .reader-viewer iframe { height: 68vh; min-height: 420px; }
 }
 /* ===== قارئ PDF داخل الموقع (reader.html) — نهاية ===== */
+
+/* ===== Marmaz-style: بطاقات الدورات والحبوب والفلاتر (reshape 2026-11-24) ===== */
+.course-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+}
+.course-cover {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 55%, var(--sky-dark) 130%);
+  color: #fff;
+  padding: 18px;
+  min-height: 128px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.course-avatar {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border: 2px solid rgba(255, 255, 255, 0.65);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 800; color: #fff;
+}
+.course-title { color: #fff; font-size: 19px; font-weight: 800; line-height: 1.45; margin: 0; }
+.course-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.course-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill-teacher, .pill-subject, .pill-grade {
+  display: inline-block; font-size: 13px; font-weight: 700;
+  padding: 3px 12px; border-radius: 999px;
+}
+.pill-teacher { background: var(--blue-pill-bg); color: var(--blue-pill); }
+.pill-subject { background: var(--green-pill-bg); color: var(--green-pill); }
+.pill-grade { background: var(--sky-tint); color: var(--sky-dark); }
+.course-meta { color: var(--muted); font-size: 14px; margin: 0; }
+.course-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; }
+.price-free { color: var(--blue); font-weight: 800; font-size: 19px; }
+
+/* شريط الإحصائيات */
+.stats-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.stat-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 8px; text-align: center; box-shadow: var(--shadow); }
+.stat-box .stat-num { font-size: 32px; font-weight: 800; color: var(--navy); line-height: 1.2; }
+.stat-box .stat-label { color: var(--muted); font-size: 14px; }
+
+/* فلاتر الدورات: حبوب متتالية، المختارة سوداء (Marmaz) */
+.filter-group { margin: 14px 0 4px; }
+.filter-group-label { font-weight: 800; color: var(--navy); font-size: 15px; margin-bottom: 6px; }
+.filter-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 10px; }
+.filter-pill {
+  font-family: inherit; font-size: 14px; font-weight: 700;
+  padding: 8px 18px; border-radius: 999px;
+  border: 1.5px solid var(--border); background: var(--card); color: var(--text);
+  cursor: pointer;
+}
+.filter-pill:hover { border-color: var(--blue); color: var(--blue); }
+.filter-pill.active { background: #111827; border-color: #111827; color: #fff; }
+
+/* بطاقات الأساتذة في الرئيسية */
+.teacher-avatar {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--navy), var(--sky-dark));
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 800; margin-bottom: 10px;
+}
+.teacher-card { text-align: center; }
+.teacher-card .teacher-avatar { margin-inline: auto; }
+.teacher-card h3 { font-size: 18px; }
+
+/* خطوات الرحلة (اكتشف / شارك / أنجز) */
+.journey-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+.journey-step { text-align: center; padding: 24px 16px; }
+.journey-num {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--blue); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 800; margin: 0 auto 12px;
+}
+
+/* صفحة الكورس: رأس المدرس، الفصول، التقدم، الاختبار */
+.course-head { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.course-head .teacher-avatar { width: 76px; height: 76px; font-size: 34px; margin-bottom: 0; flex-shrink: 0; }
+.course-head h1 { font-size: 26px; font-weight: 800; color: var(--text); line-height: 1.4; margin-bottom: 6px; }
+.chapter-block { margin-bottom: 22px; }
+.chapter-head {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  border-bottom: 2px solid var(--border); padding-bottom: 8px; margin-bottom: 12px;
+}
+.chapter-head h3 { font-size: 19px; font-weight: 800; color: var(--text); margin: 0; }
+.chapter-head .chapter-page { color: var(--muted); font-size: 13px; }
+.chapter-empty { color: var(--muted); font-size: 14px; padding: 6px 0 10px; }
+.course-lesson-row {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 8px;
+}
+.course-lesson-row .lesson-num {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  background: var(--sky-tint); color: var(--sky-dark);
+  display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px;
+}
+.course-lesson-row .lesson-name { font-weight: 700; color: var(--text); flex: 1 1 200px; }
+.course-lesson-row .lesson-dur { color: var(--muted); font-size: 13px; }
+.course-progress { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.course-progress .progress-bar { flex: 1 1 200px; }
+.course-progress .progress-text { font-weight: 800; color: var(--navy); white-space: nowrap; }
+.deleted-badge { background: #FEE2E2; color: #991B1B; }
+.quiz-box { border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; background: var(--card); margin-top: 10px; }
+.quiz-box h4 { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+.quiz-score { font-weight: 800; color: var(--sky-dark); font-size: 14px; margin-bottom: 12px; }
+.quiz-q { border-top: 1px solid var(--border); padding: 12px 0; }
+.quiz-q p { font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.quiz-src { color: var(--muted); font-size: 12px; margin-top: 6px; }
+.quiz-explain { background: var(--sky-tint); border-radius: 8px; padding: 8px 12px; font-size: 14px; margin-top: 8px; color: var(--text); }
+.quiz-opt {
+  display: block; width: 100%; text-align: right; margin: 6px 0; padding: 10px 14px;
+  border: 1.5px solid var(--border); border-radius: 12px; background: var(--card);
+  color: var(--text); cursor: pointer; font-size: 15px; font-family: inherit;
+}
+.quiz-opt:hover { border-color: var(--blue); }
+.quiz-opt.correct { border-color: #22C55E; background: #DCFCE7; color: #166534; font-weight: 700; }
+.quiz-opt.wrong { border-color: #EF4444; background: #FEE2E2; color: #991B1B; }
+.quiz-opt:disabled { cursor: default; opacity: 0.85; }
+.quiz-answer { background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 10px 14px; margin-top: 8px; font-size: 15px; color: var(--text); }
+
+/* تذييل Marmaz-style: بطاقتان زرقاوان فاتحتان + روابط + شريط سفلي */
+.footer-mirmaz { background: #fff; border-top: 1px solid var(--border); margin-top: 48px; }
+.footer-mirmaz .footer-inner { max-width: 1100px; margin: 0 auto; padding: 32px 16px 20px; }
+.footer-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.footer-card { background: var(--sky-tint); border-radius: 20px; padding: 24px; }
+.footer-card h3 { font-size: 20px; font-weight: 800; color: var(--navy); margin-bottom: 6px; }
+.footer-card p { color: var(--muted); font-size: 15px; margin-bottom: 14px; }
+.footer-mirmaz .footer-links a { color: #334155; }
+.footer-mirmaz .footer-links a:hover { color: var(--blue); }
+.footer-mirmaz .footer-note { color: var(--muted); border-top: 1px solid var(--border); }
+.footer-mirmaz .footer-note .footer-tagline { color: var(--sky-dark); }
+
+/* تجاوزات الوضع الداكن للمكونات الجديدة */
+html[data-theme="dark"] .site-header { background: #0B1830; border-bottom-color: #22385A; }
+html[data-theme="dark"] .logo-name { color: #EAF2FA; }
+html[data-theme="dark"] .nav-link { color: #CBD5E1; }
+html[data-theme="dark"] .nav-link:hover { background: #12294A; color: #fff; }
+html[data-theme="dark"] .theme-toggle { border-color: #33507A; color: #EAF2FA; }
+html[data-theme="dark"] .theme-toggle:hover { background: #12294A; }
+html[data-theme="dark"] .stat-box .stat-num,
+html[data-theme="dark"] .course-progress .progress-text,
+html[data-theme="dark"] .filter-group-label,
+html[data-theme="dark"] .footer-card h3 { color: #EAF2FA; }
+html[data-theme="dark"] .filter-pill.active { background: #EAF2FA; border-color: #EAF2FA; color: #0B1830; }
+html[data-theme="dark"] .quiz-opt.correct { background: #14532D; color: #DCFCE7; }
+html[data-theme="dark"] .quiz-opt.wrong { background: #450A0A; color: #FECACA; }
+html[data-theme="dark"] .quiz-answer { background: #12351F; border-color: #166534; }
+html[data-theme="dark"] .deleted-badge { background: #450A0A; color: #FECACA; }
+html[data-theme="dark"] .footer-mirmaz { background: #081226; border-top-color: #22385A; }
+html[data-theme="dark"] .footer-mirmaz .footer-links a { color: #CBD5E1; }
+
+@media (max-width: 640px) {
+  .hero-title { font-size: 27px; }
+  .section-title { font-size: 24px; }
+  .course-cover { min-height: 112px; }
+  .course-head h1 { font-size: 21px; }
+}

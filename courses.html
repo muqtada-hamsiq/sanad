@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الدورات — سند SANAD</title>
+<meta name="description" content="دورات سند المنظمة: كل كورس مادة في صف لمدرس واحد — محاضرات داخل الموقع، فصول مرتبة، وأسئلة وزارية حقيقية. مجاناً بالكامل.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند SANAD" height="44">
+      <span class="logo-text"><span class="logo-name">سند</span><span class="logo-latin">SANAD</span></span>
+    </a>
+    <nav class="main-nav">
+      <a class="nav-link" href="index.html">الرئيسية</a>
+      <a class="nav-link" href="courses.html">الدورات</a>
+      <a class="nav-link" href="lessons.html">الأساتذة</a>
+      <a class="nav-link" href="library.html">المكتبة</a>
+      <a class="nav-link" href="exams.html">الامتحانات</a>
+      <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <h1 class="section-title">جميع <span class="u">الدورات</span></h1>
+  <p class="section-sub">الكورس = مادة في صف لمدرس واحد — محاضراته مرتبة فصل فصل، وكلها مجانية.</p>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="filter-group">
+      <div class="filter-group-label">الدراسة</div>
+      <div class="filter-row" id="f-stage"></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-group-label">الصف</div>
+      <div class="filter-row" id="f-grade"></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-group-label">المادة الدراسية</div>
+      <div class="filter-row" id="f-subject"></div>
+    </div>
+    <div class="filter-group" id="f-teacher-wrap" hidden>
+      <div class="filter-group-label">المدرس</div>
+      <div class="filter-row" id="f-teacher"></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-group-label">بحث داخل الدورات</div>
+      <input class="form-input" type="search" id="f-search" placeholder="ابحث باسم المدرس أو المادة أو الصف..." aria-label="بحث داخل الدورات">
+    </div>
+  </div>
+
+  <p id="courses-count" class="rev-count"></p>
+  <div class="grid" id="courses-grid"></div>
+  <div id="courses-empty" class="empty-state" hidden>لا توجد كورسات مطابقة لهذا الفلتر بعد — جرّب توسيع البحث أو اختر صفاً آخر.</div>
+
+  <h2 class="section-title">الدورات <span class="u">الأكثر</span> رواجاً</h2>
+  <p class="section-sub">الأكثر محاضرات على المنصة.</p>
+  <div class="grid" id="popular-grid"></div>
+
+  <section>
+    <h2 class="section-title">رحلتك في <span class="u">سند</span></h2>
+    <div class="journey-steps">
+      <article class="card journey-step"><span class="journey-num">1</span><h3>اكتشف</h3><p>اختار صفك ومادتك، وشوف الكورسات المتوفرة بمعلميها الحقيقيين.</p></article>
+      <article class="card journey-step"><span class="journey-num">2</span><h3>تعلّم</h3><p>شاهد المحاضرات فصل فصل داخل الموقع، وكل فصل بيه أسئلة وزارية حقيقية.</p></article>
+      <article class="card journey-step"><span class="journey-num">3</span><h3>أنجز</h3><p>أكمل الدروس، تابع تقدمك، واجمع النقاط والشارات من لوحة الطالب.</p></article>
+    </div>
+  </section>
+</main>
+
+<footer class="footer-mirmaz">
+  <div class="footer-inner">
+    <div class="footer-cards">
+      <div class="footer-card">
+        <h3>تعلّم من موبايلك مباشرة</h3>
+        <p>سند يشتغل من المتصفح مباشرة — بلا تحميل وبلا حساب. افتح الدورات وابدأ الدرس الأول الآن.</p>
+        <a class="btn btn-blue" href="courses.html">ابدأ من هنا</a>
+      </div>
+      <div class="footer-card">
+        <h3>عندك سؤال أو اقتراح؟</h3>
+        <p>راسلنا — ملاحظاتك هي اللي تطوّر سند: محتوى ناقص، رابط ما يشتغل، أو فكرة جديدة.</p>
+        <a class="btn btn-dark" href="contact.html">تواصل معنا</a>
+      </div>
+    </div>
+    <nav class="footer-links">
+      <a href="index.html">الرئيسية</a>
+      <a href="courses.html">الدورات</a>
+      <a href="lessons.html">الأساتذة</a>
+      <a href="library.html">المكتبة</a>
+      <a href="exams.html">الامتحانات</a>
+      <a href="teacher.html">المعلم الذكي</a>
+      <a href="revisions.html">المراجعات المركزة</a>
+      <a href="schedule.html">الجدول</a>
+      <a href="universities.html">الجامعات</a>
+      <a href="scholarships.html">المنح</a>
+      <a href="profile.html">ملفي</a>
+      <a href="search.html">بحث</a>
+      <a href="about.html">من نحن</a>
+      <a href="contact.html">تواصل معنا</a>
+      <a href="privacy.html">سياسة الخصوصية</a>
+      <a href="terms.html">شروط الاستخدام</a>
+      <a href="copyright.html">حقوق النشر</a>
+      <a href="faq.html">الأسئلة الشائعة</a>
+      <a href="report.html">الإبلاغ عن محتوى</a>
+      <a href="sitemap.html">خريطة المنصة</a>
+    </nav>
+    <p class="footer-note"><span class="footer-tagline">سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</span> · جميع الحقوق محفوظة © <span data-year>2026</span></p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  var data = window.SANAD_DATA || { stages: [], lessons: [] };
+  var C = (window.SANAD && window.SANAD.courses) || null;
+  if (!C) return;
+  var all = C.buildCourses();
+  var state = { stage: '', grade: '', subject: '', teacher: '', q: '' };
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function pillBtn(label, value, active, onClick) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'filter-pill' + (active ? ' active' : '');
+    b.textContent = label;
+    b.setAttribute('aria-pressed', active ? 'true' : 'false');
+    b.addEventListener('click', onClick);
+    return b;
+  }
+  function gradesForStage(stageId) {
+    var out = [];
+    (data.stages || []).forEach(function (st) {
+      if (stageId && st.id !== stageId) return;
+      (st.grades || []).forEach(function (g) {
+        var gid = (typeof g === 'string') ? g : g.id;
+        var gname = (typeof g === 'string') ? g : (g.name || g.id);
+        out.push({ id: gid, name: gname, stageId: st.id });
+      });
+    });
+    return out;
+  }
+  function subjectsForGrade(gradeId) {
+    var set = {};
+    all.forEach(function (c) {
+      if (gradeId && c.gradeId !== gradeId && c.grade !== gradeId) return;
+      set[c.subject] = true;
+    });
+    return Object.keys(set).sort();
+  }
+  function renderFilters() {
+    /* الدراسة */
+    var fs = $('f-stage');
+    fs.innerHTML = '';
+    fs.appendChild(pillBtn('الكل', '', state.stage === '', function () { state.stage = ''; state.grade = ''; state.subject = ''; renderAll(); }));
+    (data.stages || []).filter(function (s) { return s.id !== 'uni'; }).forEach(function (s) {
+      fs.appendChild(pillBtn(s.name, s.id, state.stage === s.id, function () {
+        state.stage = s.id; state.grade = ''; state.subject = ''; renderAll();
+      }));
+    });
+    /* الصف */
+    var fg = $('f-grade');
+    fg.innerHTML = '';
+    fg.appendChild(pillBtn('الكل', '', state.grade === '', function () { state.grade = ''; state.subject = ''; renderAll(); }));
+    gradesForStage(state.stage).forEach(function (g) {
+      fg.appendChild(pillBtn(g.name, g.id, state.grade === g.id, function () {
+        state.grade = g.id; state.subject = ''; renderAll();
+      }));
+    });
+    /* المادة */
+    var fj = $('f-subject');
+    fj.innerHTML = '';
+    fj.appendChild(pillBtn('الكل', '', state.subject === '', function () { state.subject = ''; renderAll(); }));
+    subjectsForGrade(state.grade).forEach(function (s) {
+      fj.appendChild(pillBtn(s, s, state.subject === s, function () { state.subject = s; renderAll(); }));
+    });
+    /* المدرس */
+    var tw = $('f-teacher-wrap');
+    var ft = $('f-teacher');
+    ft.innerHTML = '';
+    if (state.teacher) {
+      tw.hidden = false;
+      var chip = document.createElement('span');
+      chip.className = 'pill-teacher';
+      chip.style.fontSize = '15px';
+      chip.style.padding = '8px 16px';
+      chip.textContent = state.teacher;
+      ft.appendChild(chip);
+      var clear = document.createElement('button');
+      clear.type = 'button';
+      clear.className = 'btn btn-outline';
+      clear.style.padding = '6px 16px';
+      clear.textContent = 'إلغاء فلتر المدرس';
+      clear.addEventListener('click', function () { state.teacher = ''; renderAll(); });
+      ft.appendChild(clear);
+    } else {
+      tw.hidden = true;
+    }
+  }
+  function filtered() {
+    var q = state.q.trim();
+    return all.filter(function (c) {
+      if (state.stage && c.stageId !== state.stage) return false;
+      if (state.grade && c.gradeId !== state.grade && c.grade !== state.grade) return false;
+      if (state.subject && c.subject !== state.subject) return false;
+      if (state.teacher && c.teacher !== state.teacher) return false;
+      if (q) {
+        var hay = [c.teacher, c.subject, c.grade, c.stageName].join(' ');
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+  }
+  function renderResults() {
+    var list = filtered();
+    $('courses-count').textContent = 'عرض ' + list.length + ' كورساً من أصل ' + all.length + ' كورساً';
+    $('courses-grid').innerHTML = list.map(function (c) { return C.courseCardHtml(c); }).join('');
+    $('courses-empty').hidden = list.length > 0;
+  }
+  function renderAll() { renderFilters(); renderResults(); }
+
+  /* الأكثر رواجاً: الأكثر محاضرات (6) */
+  $('popular-grid').innerHTML = all.slice(0, 6).map(function (c) { return C.courseCardHtml(c); }).join('');
+
+  /* روابط عميقة: ?stage=&grade=&subject=&teacher= */
+  try {
+    var p = new URLSearchParams(window.location.search);
+    var stage = p.get('stage') || '';
+    var grade = p.get('grade') || '';
+    var subject = p.get('subject') || '';
+    var teacher = p.get('teacher') || '';
+    if (stage) state.stage = stage;
+    if (grade) {
+      var known = gradesForStage(state.stage).some(function (g) { return g.id === grade || g.name === grade; });
+      if (known) state.grade = grade;
+    }
+    if (subject && subjectsForGrade(state.grade).indexOf(subject) !== -1) state.subject = subject;
+    if (teacher) state.teacher = teacher;
+  } catch (e) {}
+
+  $('f-search').addEventListener('input', function (e) { state.q = e.target.value || ''; renderResults(); });
+  renderAll();
+})();
+</script>
+</body>
+</html>

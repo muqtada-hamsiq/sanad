@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الكورس — سند SANAD</title>
+<meta name="description" content="صفحة الكورس في سند: محاضرات مرتبة فصل فصل، تشغيل داخل الموقع، وأسئلة وزارية حقيقية بعد كل فصل.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند SANAD" height="44">
+      <span class="logo-text"><span class="logo-name">سند</span><span class="logo-latin">SANAD</span></span>
+    </a>
+    <nav class="main-nav">
+      <a class="nav-link" href="index.html">الرئيسية</a>
+      <a class="nav-link" href="courses.html">الدورات</a>
+      <a class="nav-link" href="lessons.html">الأساتذة</a>
+      <a class="nav-link" href="library.html">المكتبة</a>
+      <a class="nav-link" href="exams.html">الامتحانات</a>
+      <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <p style="margin-bottom:12px"><a href="courses.html">← كل الدورات</a></p>
+
+  <div id="course-empty" class="empty-state" hidden>
+    <p>هذا الكورس غير موجود — يمكن أن الرابط قديم أو أن المدرس/المادة/الصف غير متطابقين.</p>
+    <p style="margin-top:10px"><a class="btn btn-blue" href="courses.html">تصفح كل الدورات</a></p>
+  </div>
+
+  <div id="course-root" hidden>
+    <section class="card" style="margin-bottom:20px">
+      <div class="course-head">
+        <div class="teacher-avatar" id="ch-avatar">؟</div>
+        <div style="flex:1;min-width:220px">
+          <h1 id="ch-title"></h1>
+          <div class="course-pills" id="ch-pills"></div>
+          <p class="course-meta" id="ch-meta" style="margin-top:8px"></p>
+          <p class="course-meta" id="ch-book"></p>
+        </div>
+      </div>
+      <div id="book-variant" hidden style="margin-top:12px">
+        <span class="filter-group-label">الفرع: </span>
+        <button type="button" class="filter-pill" id="bv-sci">علمي</button>
+        <button type="button" class="filter-pill" id="bv-adabi">أدبي</button>
+      </div>
+      <div class="course-progress" style="margin-top:16px">
+        <div class="progress-bar"><span id="progress-fill" style="width:0%"></span></div>
+        <span class="progress-text" id="progress-text">0%</span>
+        <button type="button" class="btn btn-blue" id="continue-btn">أكمل من حيث توقفت</button>
+      </div>
+    </section>
+
+    <section id="player-section" class="card" style="margin-bottom:20px">
+      <h2 class="section-title" style="font-size:20px;margin-top:0" id="player-title">الدرس الحالي</h2>
+      <div id="player-box"></div>
+      <p class="course-meta" id="player-meta"></p>
+    </section>
+
+    <h2 class="section-title">فصول <span class="u">الكورس</span></h2>
+    <div id="chapters-list"></div>
+
+    <div id="general-block" hidden>
+      <h2 class="section-title">محاضرات <span class="u">عامة</span></h2>
+      <p class="section-sub">محاضرات بلا فصل محدد في الكتاب.</p>
+      <div id="general-list"></div>
+    </div>
+
+    <h2 class="section-title">أدوات <span class="u">الكورس</span></h2>
+    <div class="grid" id="course-tools"></div>
+
+    <h2 class="section-title">كورسات أخرى لنفس <span class="u">المدرس</span></h2>
+    <div class="grid" id="same-teacher"></div>
+  </div>
+</main>
+
+<footer class="footer-mirmaz">
+  <div class="footer-inner">
+    <div class="footer-cards">
+      <div class="footer-card">
+        <h3>تعلّم من موبايلك مباشرة</h3>
+        <p>سند يشتغل من المتصفح مباشرة — بلا تحميل وبلا حساب. افتح الدورات وابدأ الدرس الأول الآن.</p>
+        <a class="btn btn-blue" href="courses.html">ابدأ من هنا</a>
+      </div>
+      <div class="footer-card">
+        <h3>عندك سؤال أو اقتراح؟</h3>
+        <p>راسلنا — ملاحظاتك هي اللي تطوّر سند: محتوى ناقص، رابط ما يشتغل، أو فكرة جديدة.</p>
+        <a class="btn btn-dark" href="contact.html">تواصل معنا</a>
+      </div>
+    </div>
+    <nav class="footer-links">
+      <a href="index.html">الرئيسية</a>
+      <a href="courses.html">الدورات</a>
+      <a href="lessons.html">الأساتذة</a>
+      <a href="library.html">المكتبة</a>
+      <a href="exams.html">الامتحانات</a>
+      <a href="teacher.html">المعلم الذكي</a>
+      <a href="revisions.html">المراجعات المركزة</a>
+      <a href="schedule.html">الجدول</a>
+      <a href="universities.html">الجامعات</a>
+      <a href="scholarships.html">المنح</a>
+      <a href="profile.html">ملفي</a>
+      <a href="search.html">بحث</a>
+      <a href="about.html">من نحن</a>
+      <a href="contact.html">تواصل معنا</a>
+      <a href="privacy.html">سياسة الخصوصية</a>
+      <a href="terms.html">شروط الاستخدام</a>
+      <a href="copyright.html">حقوق النشر</a>
+      <a href="faq.html">الأسئلة الشائعة</a>
+      <a href="report.html">الإبلاغ عن محتوى</a>
+      <a href="sitemap.html">خريطة المنصة</a>
+    </nav>
+    <p class="footer-note"><span class="footer-tagline">سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</span> · جميع الحقوق محفوظة © <span data-year>2026</span></p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="chapters.js"></script>
+<script src="quiz-map.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  var data = window.SANAD_DATA || { stages: [], books: [], lessons: [], exams: [] };
+  var C = (window.SANAD && window.SANAD.courses) || null;
+  if (!C) return;
+  var params = C.parseCourseParams();
+  var course = C.findCourse(params.grade, params.subject, params.teacher);
+  if (!course) { document.getElementById('course-empty').hidden = false; return; }
+  document.getElementById('course-root').hidden = false;
+  document.title = course.subject + ' — ' + course.grade + ' — ' + course.teacher + ' — سند SANAD';
+
+  var bookVariant = params.book === 'adabi' ? 'adabi' : '';
+  var grouped = C.groupCourseLessons(course, bookVariant);
+  var quizByChapter = C.courseQuizQuestions(course);
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  /* ===== إكمال الدروس: نفس مخزن lessons.html (سجل محلي + متجر الحساب) ===== */
+  function getStore() {
+    try { return (window.SANAD && window.SANAD.store) || null; } catch (e) { return null; }
+  }
+  function toastMsg(msg) {
+    try { if (window.SANAD && typeof window.SANAD.toast === 'function') window.SANAD.toast(msg); } catch (e) {}
+  }
+  function lessonKey(l) {
+    if (!l) return '';
+    if (l.youtubeId) return l.youtubeId;
+    if (l.playlistId) return 'pl:' + l.playlistId;
+    if (l.id) return 'lesson:' + l.id;
+    return '';
+  }
+  function legacyLog() {
+    try {
+      var raw = window.localStorage.getItem('sanad_lesson_log');
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+  function legacyCompletedKeys() {
+    var keys = [];
+    legacyLog().forEach(function (x) {
+      if (typeof x === 'string') { if (x) keys.push(x); }
+      else if (x && x.key) keys.push(x.key);
+    });
+    return keys;
+  }
+  function legacyMarkCompleted(key, meta) {
+    try {
+      var log = legacyLog();
+      if (log.some(function (x) { return (x && x.key) === key || x === key; })) return true;
+      var m = meta || {};
+      log.push({ key: key, title: m.title || '', grade: m.grade || '', subject: m.subject || '', at: new Date().toISOString() });
+      window.localStorage.setItem('sanad_lesson_log', JSON.stringify(log));
+      return true;
+    } catch (e) { return false; }
+  }
+  function legacyUnmarkCompleted(key) {
+    try {
+      var log = legacyLog().filter(function (x) { return x && x.key !== key && x !== key; });
+      window.localStorage.setItem('sanad_lesson_log', JSON.stringify(log));
+      return true;
+    } catch (e) { return false; }
+  }
+  function completedKeysFromList(list) {
+    var keys = [];
+    if (!Array.isArray(list)) return keys;
+    list.forEach(function (x) {
+      if (typeof x === 'string') { if (x) keys.push(x); }
+      else if (x && x.key) keys.push(x.key);
+    });
+    return keys;
+  }
+  async function fetchCompletedKeys() {
+    var s = getStore();
+    if (s && typeof s.getCompletedLessons === 'function') {
+      try {
+        var done = s.getCompletedLessons();
+        if (done && typeof done.then === 'function') done = await done;
+        return completedKeysFromList(done);
+      } catch (e) {}
+    }
+    return legacyCompletedKeys();
+  }
+  function setDoneState(btn, badge, done) {
+    if (btn) {
+      btn.textContent = done ? 'أكملت الدرس ✓' : 'إكمال الدرس';
+      btn.setAttribute('aria-pressed', done ? 'true' : 'false');
+      btn.setAttribute('data-done', done ? '1' : '0');
+    }
+    if (badge) badge.style.display = done ? '' : 'none';
+  }
+  function refreshDoneButtons() {
+    fetchCompletedKeys().then(function (keys) {
+      document.querySelectorAll('[data-done-key]').forEach(function (btn) {
+        try {
+          var card = btn.closest ? btn.closest('.course-lesson-row') : null;
+          var badge = card ? card.querySelector('[data-done-badge]') : null;
+          setDoneState(btn, badge, keys.indexOf(btn.getAttribute('data-done-key')) !== -1);
+        } catch (e) {}
+      });
+      updateProgress(keys);
+    });
+  }
+  function updateProgress(keys) {
+    var total = course.lessons.length;
+    var done = 0;
+    course.lessons.forEach(function (l) {
+      var k = lessonKey(l);
+      if (k && keys.indexOf(k) !== -1) done++;
+    });
+    var pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    $('progress-fill').style.width = pct + '%';
+    $('progress-text').textContent = 'أكملت ' + done + ' من ' + total + ' درساً (' + pct + '%)';
+  }
+  function markComplete(btn, badge, key, meta) {
+    var store = getStore();
+    var isDone = btn.getAttribute('data-done') === '1';
+    function done(ok, nowDone) {
+      if (ok) {
+        setDoneState(btn, badge, nowDone);
+        toastMsg(nowDone ? 'أحسنت! أكملت الدرس ✓' : 'ألغيت إكمال الدرس');
+        refreshDoneButtons();
+      } else toastMsg('تعذّر الحفظ — تحقق من اتصالك');
+    }
+    try {
+      if (isDone) {
+        if (store && typeof store.uncompleteLesson === 'function') {
+          var r = store.uncompleteLesson(key);
+          if (r && typeof r.then === 'function') r.then(function (ok) { done(ok !== false, false); }, function () { done(false, false); });
+          else done(true, false);
+        } else { done(legacyUnmarkCompleted(key), false); }
+      } else if (store && typeof store.completeLesson === 'function') {
+        var r2 = store.completeLesson(key, meta);
+        if (r2 && typeof r2.then === 'function') r2.then(function (ok) { done(ok !== false, true); }, function () { done(false, true); });
+        else done(true, true);
+      } else { done(legacyMarkCompleted(key, meta), true); }
+    } catch (e) { done(false, isDone); }
+  }
+  (function () {
+    var s = getStore();
+    if (s && s.ready && typeof s.ready.then === 'function') {
+      s.ready.then(function () { refreshDoneButtons(); }, function () { refreshDoneButtons(); });
+    }
+  })();
+
+  /* ===== رأس الكورس ===== */
+  $('ch-avatar').textContent = (course.teacher || '?').trim().charAt(0) || '?';
+  $('ch-title').textContent = course.subject + ' — ' + course.grade;
+  $('ch-pills').innerHTML =
+    '<span class="pill-teacher">' + esc(course.teacher) + (course.isChannel ? ' (قناة رسمية)' : '') + '</span>' +
+    '<span class="pill-subject">' + esc(course.subject) + '</span>' +
+    '<span class="pill-grade">' + esc(course.grade) + '</span>' +
+    '<span class="pill-grade">' + esc(course.stageName) + '</span>';
+  $('ch-meta').textContent = course.totalLessons + ' محاضرة · ' + course.chapterCount + ' فصلاً' +
+    (course.isChannel ? ' · محاضرات من القناة الرسمية' : '');
+  if (grouped.book) {
+    $('ch-book').textContent = 'الكتاب: ' + grouped.book.book + (grouped.book.edition ? ' — ' + grouped.book.edition : '');
+  }
+  /* تبديل العلمي/الأدبي لرياضيات السادس الإعدادي */
+  if (course.gradeId === 'r6' && course.subject === 'الرياضيات') {
+    var maps = window.SANAD_CHAPTERS && window.SANAD_CHAPTERS.r6;
+    if (maps && maps['الرياضيات'] && maps['الرياضيات (أدبي)']) {
+      $('book-variant').hidden = false;
+      $('bv-sci').classList.toggle('active', bookVariant !== 'adabi');
+      $('bv-adabi').classList.toggle('active', bookVariant === 'adabi');
+      $('bv-sci').addEventListener('click', function () {
+        window.location.search = '?grade=' + encodeURIComponent(params.grade) + '&subject=' + encodeURIComponent(params.subject) + '&teacher=' + encodeURIComponent(params.teacher);
+      });
+      $('bv-adabi').addEventListener('click', function () {
+        window.location.search = '?grade=' + encodeURIComponent(params.grade) + '&subject=' + encodeURIComponent(params.subject) + '&teacher=' + encodeURIComponent(params.teacher) + '&book=adabi';
+      });
+    }
+  }
+
+  /* ===== المشغّل داخل الموقع ===== */
+  var flatLessons = [];
+  grouped.groups.forEach(function (g) { g.lessons.forEach(function (l) { flatLessons.push(l); }); });
+  grouped.general.forEach(function (l) { flatLessons.push(l); });
+  var selectedIdx = 0;
+  function selectLesson(idx, scroll) {
+    if (idx < 0 || idx >= flatLessons.length) return;
+    selectedIdx = idx;
+    var l = flatLessons[idx];
+    $('player-title').textContent = l.title || 'الدرس';
+    var box = $('player-box');
+    box.innerHTML = (window.SANAD && window.SANAD.lectureThumbHtml) ? window.SANAD.lectureThumbHtml(l, l.title) : '';
+    var tb = box.querySelector('.lecture-thumb');
+    if (tb && window.SANAD && window.SANAD.playLectureInPlace) {
+      tb.addEventListener('click', function () { window.SANAD.playLectureInPlace(tb); });
+    }
+    var meta = [l.teacher, l.subject, l.grade].filter(function (x) { return x; }).join(' · ');
+    $('player-meta').textContent = meta + (l.duration ? ' · مدة الدرس: ' + l.duration : '');
+    if (scroll && $('player-section').scrollIntoView) $('player-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  $('continue-btn').addEventListener('click', function () {
+    fetchCompletedKeys().then(function (keys) {
+      var next = -1;
+      for (var i = 0; i < flatLessons.length; i++) {
+        var k = lessonKey(flatLessons[i]);
+        if (k && keys.indexOf(k) === -1) { next = i; break; }
+      }
+      if (next === -1) { toastMsg('أكملت كل دروس هذا الكورس — أحسنت!'); return; }
+      selectLesson(next, true);
+    });
+  });
+
+  /* ===== صفوف الدروس ===== */
+  function lessonRow(l, idx) {
+    var key = lessonKey(l);
+    var meta = { title: l.title || 'درس', grade: l.grade || '', subject: l.subject || '', youtubeId: l.youtubeId || '', playlistId: l.playlistId || '' };
+    var row = document.createElement('div');
+    row.className = 'course-lesson-row';
+    var doneNow = legacyCompletedKeys().indexOf(key) !== -1;
+    row.innerHTML =
+      '<span class="lesson-num">' + (idx + 1) + '</span>' +
+      '<span class="lesson-name">' + esc(l.title || 'درس') + '</span>' +
+      (l.duration ? '<span class="lesson-dur">' + esc(l.duration) + '</span>' : '') +
+      '<span class="badge" data-done-badge style="display:' + (doneNow ? '' : 'none') + '">أكملت الدرس ✓</span>' +
+      '<button type="button" class="btn btn-outline" data-play style="padding:6px 14px">تشغيل</button>' +
+      (key ? '<button type="button" class="btn btn-outline" data-done-key="' + esc(key) + '" data-done="' + (doneNow ? '1' : '0') + '" aria-pressed="' + (doneNow ? 'true' : 'false') + '" style="padding:6px 14px">' + (doneNow ? 'أكملت الدرس ✓' : 'إكمال الدرس') + '</button>' : '');
+    var playBtn = row.querySelector('[data-play]');
+    if (playBtn) playBtn.addEventListener('click', function () { selectLesson(flatLessons.indexOf(l), true); });
+    var doneBtn = row.querySelector('[data-done-key]');
+    if (doneBtn) {
+      var badge = row.querySelector('[data-done-badge]');
+      doneBtn.addEventListener('click', function () { markComplete(doneBtn, badge, key, meta); });
+    }
+    return row;
+  }
+
+  /* ===== اختبار الفصل: أسئلة وزارية حقيقية فقط ===== */
+  function quizBox(chapterNum) {
+    var qs = quizByChapter[String(chapterNum)] || [];
+    var box = document.createElement('div');
+    box.className = 'quiz-box';
+    if (!qs.length) {
+      box.innerHTML = '<h4>أسئلة وزارية من هذا الفصل</h4><p class="course-meta">لا توجد أسئلة وزارية بعد لهذا الفصل.</p>';
+      return box;
+    }
+    var mcqTotal = qs.filter(function (x) { return Array.isArray(x.q.options) && x.q.options.length; }).length;
+    box.innerHTML = '<h4>أسئلة وزارية من هذا الفصل (' + qs.length + ' سؤالاً)</h4>' +
+      '<p class="quiz-score" data-score>أجبت بشكل صحيح عن 0 من ' + mcqTotal + ' (اختيار من متعدد)</p>';
+    var score = 0, answered = 0;
+    var scoreEl = box.querySelector('[data-score]');
+    qs.forEach(function (item) {
+      var q = item.q;
+      var wrap = document.createElement('div');
+      wrap.className = 'quiz-q';
+      var title = document.createElement('p');
+      title.textContent = q.q || 'سؤال';
+      wrap.appendChild(title);
+      if (Array.isArray(q.options) && q.options.length) {
+        q.options.forEach(function (opt, oi) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'quiz-opt';
+          b.textContent = opt;
+          b.addEventListener('click', function () {
+            if (b.disabled) return;
+            wrap.querySelectorAll('.quiz-opt').forEach(function (x) { x.disabled = true; });
+            var correct = oi === q.answer;
+            if (correct) { b.classList.add('correct'); score++; }
+            else {
+              b.classList.add('wrong');
+              var right = wrap.querySelectorAll('.quiz-opt')[q.answer];
+              if (right) right.classList.add('correct');
+            }
+            answered++;
+            if (scoreEl) scoreEl.textContent = 'أجبت بشكل صحيح عن ' + score + ' من ' + mcqTotal + ' (اختيار من متعدد)';
+            if (q.explanation) {
+              var ex = document.createElement('div');
+              ex.className = 'quiz-explain';
+              ex.textContent = q.explanation;
+              wrap.appendChild(ex);
+            }
+            var src = document.createElement('p');
+            src.className = 'quiz-src';
+            src.textContent = 'من الامتحان الوزاري — ' + item.examTitle;
+            wrap.appendChild(src);
+          });
+          wrap.appendChild(b);
+        });
+      } else {
+        var show = document.createElement('button');
+        show.type = 'button';
+        show.className = 'btn btn-outline';
+        show.style.padding = '6px 14px';
+        show.textContent = 'أظهر الإجابة النموذجية';
+        show.addEventListener('click', function () {
+          var ans = document.createElement('div');
+          ans.className = 'quiz-answer';
+          ans.textContent = q.answer || '';
+          if (q.explanation) ans.textContent += ' — ' + q.explanation;
+          wrap.appendChild(ans);
+          var src = document.createElement('p');
+          src.className = 'quiz-src';
+          src.textContent = 'من الامتحان الوزاري — ' + item.examTitle;
+          wrap.appendChild(src);
+          show.disabled = true;
+        });
+        wrap.appendChild(show);
+      }
+      box.appendChild(wrap);
+    });
+    return box;
+  }
+
+  /* ===== رسم الفصول ===== */
+  var list = $('chapters-list');
+  if (!grouped.groups.length && !grouped.general.length) {
+    list.innerHTML = '<p class="empty-state">لا توجد محاضرات بعد في هذا الكورس.</p>';
+  }
+  grouped.groups.forEach(function (g) {
+    var block = document.createElement('section');
+    block.className = 'chapter-block';
+    var head = document.createElement('div');
+    head.className = 'chapter-head';
+    var kindLabel = g.kind === 'unit' ? 'الوحدة' : 'الفصل';
+    var heading;
+    if (g.canonical) {
+      var generic = /^الفصل\s/.test(g.title) || /^الوحدة\s/.test(g.title);
+      heading = kindLabel + ' ' + g.n + ((!generic && g.title) ? ': ' + g.title : '');
+    } else {
+      heading = g.title;
+    }
+    head.innerHTML = '<h3>' + esc(heading) + '</h3>' +
+      (g.page ? '<span class="chapter-page">صفحة ' + g.page + ' من الكتاب</span>' : '') +
+      (g.deleted ? '<span class="badge deleted-badge">' + esc(g.note || 'محذوف من الامتحان') + '</span>' : '');
+    block.appendChild(head);
+    if (!g.lessons.length) {
+      var empty = document.createElement('p');
+      empty.className = 'chapter-empty';
+      empty.textContent = 'لا توجد محاضرات بعد لهذا الفصل — الكتاب موجود في المكتبة.';
+      block.appendChild(empty);
+      var libLink = document.createElement('p');
+      libLink.innerHTML = '<a class="btn btn-outline" style="padding:6px 14px" href="grade.html?stage=' + encodeURIComponent(course.stageId) + '&grade=' + encodeURIComponent(course.gradeId) + '&tab=books">عرض كتب الصف</a>';
+      block.appendChild(libLink);
+    } else {
+      g.lessons.forEach(function (l, i) { block.appendChild(lessonRow(l, i)); });
+    }
+    block.appendChild(quizBox(g.n));
+    list.appendChild(block);
+  });
+
+  /* ===== المحاضرات العامة ===== */
+  if (grouped.general.length) {
+    $('general-block').hidden = false;
+    var gl = $('general-list');
+    grouped.general.forEach(function (l, i) { gl.appendChild(lessonRow(l, i)); });
+  }
+
+  /* ===== أدوات الكورس ===== */
+  (function () {
+    var tools = [];
+    var book = null;
+    (data.books || []).forEach(function (b) {
+      if (b && b.grade === course.grade && b.subject === course.subject && !book) book = b;
+    });
+    var gradeUrl = 'grade.html?stage=' + encodeURIComponent(course.stageId) + '&grade=' + encodeURIComponent(course.gradeId);
+    /* data.books يحمل viewUrl/downloadUrl؛ SANAD_CONTENT.books يحمل pdf/url — نقبل كل الصيغ */
+    var bookPdf = book ? (book.viewUrl || book.downloadUrl || book.pdf || book.url || '') : '';
+    if (book && bookPdf) {
+      tools.push({ title: 'كتاب ' + course.subject, desc: 'اقرأ الكتاب داخل الموقع وحمّله PDF', href: 'reader.html?pdf=' + encodeURIComponent(bookPdf) });
+    } else {
+      tools.push({ title: 'كتب ' + course.subject, desc: 'كتب وملازم الصف في المكتبة', href: gradeUrl + '&tab=books' });
+    }
+    tools.push({ title: 'الامتحانات الوزارية', desc: 'امتحانات ' + course.subject + ' السابقة مع الحلول', href: 'exams.html' });
+    tools.push({ title: 'المراجعة المركزة', desc: 'مراجعة الكتاب كاملاً في محاضرة واحدة أو محاضرة لكل فصل', href: 'revisions.html?grade=' + encodeURIComponent(course.grade) + '&subject=' + encodeURIComponent(course.subject) });
+    tools.push({ title: 'المعلم الذكي', desc: 'اسأل عن أي درس في هذا الكورس باللهجة العراقية', href: 'teacher.html?grade=' + encodeURIComponent(course.grade) + '&subject=' + encodeURIComponent(course.subject) });
+    $('course-tools').innerHTML = tools.map(function (t) {
+      return '<article class="card"><h3>' + esc(t.title) + '</h3><p>' + esc(t.desc) + '</p>' +
+        '<a class="btn btn-outline" href="' + esc(t.href) + '">فتح</a></article>';
+    }).join('');
+  })();
+
+  /* ===== كورسات أخرى لنفس المدرس ===== */
+  (function () {
+    var others = C.buildCourses().filter(function (c) {
+      return c.teacher === course.teacher && !(c.gradeId === course.gradeId && c.subject === course.subject);
+    }).slice(0, 6);
+    $('same-teacher').innerHTML = others.length
+      ? others.map(function (c) { return C.courseCardHtml(c); }).join('')
+      : '<p class="empty-state">لا توجد كورسات أخرى لهذا المدرس بعد.</p>';
+  })();
+
+  /* الدرس الافتراضي في المشغّل: أول درس غير مكتمل، وإلا الأول */
+  (function () {
+    var keys = legacyCompletedKeys();
+    var next = 0;
+    for (var i = 0; i < flatLessons.length; i++) {
+      var k = lessonKey(flatLessons[i]);
+      if (k && keys.indexOf(k) === -1) { next = i; break; }
+    }
+    selectLesson(next, false);
+  })();
+  refreshDoneButtons();
+})();
+</script>
+</body>
+</html>

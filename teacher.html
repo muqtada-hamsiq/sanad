@@ -90,9 +90,22 @@
 
     <div id="starter-chips" class="chips" aria-label="أسئلة مقترحة"></div>
 
+    <div class="mode-bar" role="group" aria-label="وضع المعلم الذكي">
+      <button id="mode-ask" class="btn mode-btn mode-active" type="button" data-mode="ask">اسأل</button>
+      <button id="mode-test" class="btn mode-btn" type="button" data-mode="generate-test">ولّد لي اختبار</button>
+      <button id="mode-correct" class="btn mode-btn" type="button" data-mode="correct">صحّح إجاباتي</button>
+    </div>
+    <p id="mode-hint" class="chat-selection">وضع السؤال: اكتب سؤالك وسيشرحه المعلم خطوة بخطوة.</p>
+
     <div class="composer">
+      <button id="photo-btn" class="btn btn-outline" type="button" title="صوّر سؤالك">صوّر سؤالك</button>
+      <input id="photo-input" type="file" accept="image/*" capture="environment" hidden>
       <textarea id="chat-input" class="form-input" rows="2" maxlength="2000" placeholder="اكتب سؤالك هنا… مثال: اشرح لي حل المعادلة س + 4 = 9" aria-label="سؤالك للمعلم الذكي"></textarea>
       <button id="send-btn" class="btn btn-gold" type="button">إرسال</button>
+    </div>
+    <div id="photo-preview" class="photo-preview" style="display:none">
+      <img id="photo-thumb" alt="صورة السؤال" style="max-width:120px;max-height:120px;border-radius:8px">
+      <button id="photo-remove" class="btn btn-outline" type="button">إزالة الصورة</button>
     </div>
     <div class="char-count"><span id="char-count">0</span>/2000 حرف — انتظر 3 ثوانٍ بين كل سؤال واللي بعده</div>
   </section>
@@ -101,9 +114,10 @@
     <h2 class="section-title">شلون يساعدك المعلم الذكي؟</h2>
     <ul>
       <li>توجيه سؤالك كتابةً والحصول على شرح مبسّط خطوة بخطوة باللهجة العراقية.</li>
+      <li>تصوير سؤالك من الكتاب بزر «صوّر سؤالك» — المعلم يقرأ الصورة ويجيب عنها.</li>
       <li>شرح أي موضوع أو درس من المنهج العراقي 2027 — طبعات 1447هـ / 2025م حسب الكتاب الرسمي، مع ذكر الفصل والموضوع.</li>
       <li>أمثلة مشابهة للتدريب على الموضوع نفسه.</li>
-      <li>اختبار قصير حول الموضوع اللي تدرسه — اطلبه منه بالمحادثة.</li>
+      <li>وضع «ولّد لي اختبار»: يولّد لك 5 أسئلة وزارية الأسلوب من الفصل اللي تختاره، بلا أجوبة — جاوب عليها ثم بدّل إلى وضع «صحّح إجاباتي» ليصححها لك سؤالاً سؤالاً مع الدرجات.</li>
     </ul>
     <p>تقدر أيضاً تستخدم <a href="lessons.html">الدروس والشروحات</a> و<a href="exams.html">الامتحانات الإلكترونية</a> المتوفرة الآن مجاناً.</p>
   </section>
@@ -145,7 +159,7 @@
 (function () {
   'use strict';
 
-  var SUBJECTS = ['الرياضيات', 'الفيزياء', 'الكيمياء', 'الأحياء', 'العربية', 'الإنكليزية', 'الإسلامية', 'الاجتماعيات', 'عام'];
+  var SUBJECTS = ['الرياضيات', 'الرياضيات (أدبي)', 'الفيزياء', 'الكيمياء', 'الأحياء', 'العلوم', 'العربية', 'الإنكليزية', 'الإسلامية', 'الاجتماعيات', 'الحاسوب', 'الاقتصاد', 'التاريخ', 'الجغرافية', 'عام'];
 
   var STARTERS = {
     'الرياضيات': [
@@ -168,6 +182,11 @@
       'اشرح لي عملية التركيب الضوئي',
       'شنو الفرق بين الخلية النباتية والحيوانية؟'
     ],
+    'العلوم': [
+      'شنو أجزاء النبات؟',
+      'اشرح لي دورة الماء ببساطة',
+      'شنو الفرق بين المادة الصلبة والسائلة؟'
+    ],
     'العربية': [
       'شنو همزة الوصل والقطع؟',
       'اشرح لي اسم الفاعل واسم المفعول',
@@ -187,6 +206,31 @@
       'شنو أسباب الانتداب البريطاني على العراق؟',
       'اشرح لي خريطة العراق باختصار',
       'شنو أهمية نهري دجلة والفرات؟'
+    ],
+    'الحاسوب': [
+      'شنو الفرق بين وحدات الإدخال والإخراج؟',
+      'اشرح لي نظام التشغيل ببساطة',
+      'شنو الذاكرة وأنواعها؟'
+    ],
+    'الاقتصاد': [
+      'شنو المشكلة الاقتصادية؟',
+      'اشرح لي قانون الطلب ببساطة',
+      'شنو الفرق بين الدخل القومي والاستهلاك؟'
+    ],
+    'التاريخ': [
+      'شنو أهم نتائج الحكم العثماني في العراق؟',
+      'اشرح لي ثورة العشرين باختصار',
+      'شنو أسباب الحرب العالمية الأولى؟'
+    ],
+    'الجغرافية': [
+      'شنو العوامل المؤثرة في توزيع السكان؟',
+      'اشرح لي جغرافية المدن باختصار',
+      'شنو أهمية الزراعة في العراق؟'
+    ],
+    'الرياضيات (أدبي)': [
+      'اشرح لي مبرهنة ذات الحدين',
+      'شنو الغاية (النهاية) ببساطة؟',
+      'شلون أشتق الدالة س تربيع؟'
     ],
     'عام': [
       'شلون أنظم وقتي للدراسة؟',
@@ -221,6 +265,104 @@
   var lastSendAt = 0;
   var lastQuestion = '';
   var busy = false;
+
+  // وضع المعلم: ask (سؤال) أو generate-test (توليد اختبار) أو correct (تصحيح).
+  var teacherMode = 'ask';
+  var modeHintEl = document.getElementById('mode-hint');
+  var modeBtns = document.querySelectorAll('.mode-btn');
+  var MODE_HINTS = {
+    'ask': 'وضع السؤال: اكتب سؤالك وسيشرحه المعلم خطوة بخطوة.',
+    'generate-test': 'وضع الاختبار: اكتب الموضوع أو الفصل (مثال: الفصل الأول — خواص المادة) وسيولّد لك المعلم 5 أسئلة بلا أجوبة.',
+    'correct': 'وضع التصحيح: الصق إجاباتك على أسئلة الاختبار (من الرسالة السابقة) وسيصححها المعلم سؤالاً سؤالاً مع الدرجات.'
+  };
+  var MODE_PLACEHOLDERS = {
+    'ask': 'اكتب سؤالك هنا… مثال: اشرح لي حل المعادلة س + 4 = 9',
+    'generate-test': 'اكتب الموضوع اللي تريد اختبار فيه… مثال: الفصل الأول — خواص المادة',
+    'correct': 'الصق إجاباتك هنا… مثال: 1) 5  2) 8  3) …'
+  };
+  function setMode(m) {
+    teacherMode = m;
+    modeBtns.forEach(function (b) {
+      if (b.getAttribute('data-mode') === m) { b.classList.add('mode-active'); }
+      else { b.classList.remove('mode-active'); }
+    });
+    modeHintEl.textContent = MODE_HINTS[m] || '';
+    inputEl.placeholder = MODE_PLACEHOLDERS[m] || '';
+  }
+  modeBtns.forEach(function (b) {
+    b.addEventListener('click', function () { setMode(b.getAttribute('data-mode')); inputEl.focus(); });
+  });
+
+  // صورة السؤال: تُضغط في المتصفح (حد أقصى 1280px، JPEG 0.8) وتُرسل
+  // base64 إلى الدالة لتقرأها Gemini؛ لا تُرفع الصورة إلى أي مكان قبل الإرسال.
+  var photoBtn = document.getElementById('photo-btn');
+  var photoInput = document.getElementById('photo-input');
+  var photoPreviewEl = document.getElementById('photo-preview');
+  var photoThumbEl = document.getElementById('photo-thumb');
+  var photoRemoveBtn = document.getElementById('photo-remove');
+  var photoData = null; // { data: base64, mime: 'image/jpeg', blob: Blob }
+  var MAX_PHOTO_BASE64 = 1500000;
+
+  function clearPhoto() {
+    photoData = null;
+    photoInput.value = '';
+    photoPreviewEl.style.display = 'none';
+    photoThumbEl.removeAttribute('src');
+  }
+  photoBtn.addEventListener('click', function () { photoInput.click(); });
+  photoRemoveBtn.addEventListener('click', clearPhoto);
+  photoInput.addEventListener('change', function () {
+    var file = photoInput.files && photoInput.files[0];
+    if (!file) return;
+    if (file.type.indexOf('image/') !== 0) { toast('اختر صورة فقط'); photoInput.value = ''; return; }
+    var reader = new FileReader();
+    reader.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var maxSide = 1280;
+        var w = img.naturalWidth, h = img.naturalHeight;
+        var scale = Math.min(1, maxSide / Math.max(w, h));
+        var canvas = document.createElement('canvas');
+        canvas.width = Math.round(w * scale);
+        canvas.height = Math.round(h * scale);
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(function (blob) {
+          if (!blob) { toast('تعذّر تجهيز الصورة — حاول مرة ثانية'); return; }
+          var r2 = new FileReader();
+          r2.onload = function () {
+            var dataUrl = String(r2.result || '');
+            var b64 = dataUrl.split(',')[1] || '';
+            if (b64.length > MAX_PHOTO_BASE64) { toast('الصورة كبيرة جداً — صوّرها من أقرب'); photoInput.value = ''; return; }
+            photoData = { data: b64, mime: 'image/jpeg', blob: blob };
+            photoThumbEl.src = dataUrl;
+            photoPreviewEl.style.display = '';
+            toast('تم تجهيز الصورة — اكتب سؤالك إن أردت ثم اضغط إرسال');
+          };
+          r2.readAsDataURL(blob);
+        }, 'image/jpeg', 0.8);
+      };
+      img.onerror = function () { toast('تعذّر قراءة الصورة — حاول مرة ثانية'); };
+      img.src = String(reader.result || '');
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // نسخة احتياطية في دلو teacher-uploads للمسجّلين فقط، بعد وصول الجواب،
+  // وبصمت عند الفشل — لا تمنع الإجابة أبداً، ولا تعمل للضيوف إطلاقاً.
+  function archivePhotoBestEffort(blob) {
+    try {
+      if (!blob) return;
+      var client = (window.SANAD && window.SANAD.supabase) || null;
+      if (!client || !client.auth || !client.storage) return;
+      client.auth.getUser().then(function (res) {
+        var user = res && res.data && res.data.user;
+        if (!user || !user.id) return;
+        var path = user.id + '/' + Date.now() + '.jpg';
+        return client.storage.from('teacher-uploads').upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+      }).catch(function () { /* تجاهل بصمت — الأرشفة اختيارية */ });
+    } catch (e) { /* تجاهل بصمت */ }
+  }
 
   function toast(msg) {
     if (window.SANAD && window.SANAD.toast) { window.SANAD.toast(msg); return; }
@@ -299,10 +441,21 @@
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
-  function addUserMessage(text) {
+  function addUserMessage(text, photoUrl) {
     var el = document.createElement('div');
     el.className = 'msg msg-user';
-    el.textContent = text;
+    if (photoUrl) {
+      var im = document.createElement('img');
+      im.src = photoUrl;
+      im.alt = 'صورة السؤال';
+      im.style.cssText = 'max-width:180px;max-height:180px;border-radius:8px;display:block;margin-bottom:6px';
+      el.appendChild(im);
+    }
+    if (text) {
+      var span = document.createElement('span');
+      span.textContent = text;
+      el.appendChild(span);
+    }
     messagesEl.appendChild(el);
     scrollToBottom();
   }
@@ -338,7 +491,7 @@
   }
 
   function addWelcome() {
-    addAssistantMessage('هلا بيك! أنا المعلم الذكي من منصة سند. اسألني عن أي درس من المنهج العراقي 2027 — طبعات 1447هـ / 2025م وأشرحه لك خطوة بخطوة باللهجة العراقية. اختر صفك ومادتك من الأعلى وابدأ.');
+    addAssistantMessage('هلا بيك! أنا المعلم الذكي من منصة سند. اسألني عن أي درس من المنهج العراقي 2027 — طبعات 1447هـ / 2025م وأشرحه لك خطوة بخطوة باللهجة العراقية. اختر صفك ومادتك من الأعلى وابدأ. تقدر أيضاً تصوّر سؤالك بزر «صوّر سؤالك»، أو تولّد اختباراً من زر «ولّد لي اختبار»، وبعد ما تجاوب بدّل إلى «صحّح إجاباتي» لأصحح لك.');
   }
 
   function showError(msg) {
@@ -361,14 +514,16 @@
     throw new Error('المعلم الذكي ما رجّع جواب — حاول مرة ثانية.');
   }
 
-  function callTeacher(question, past) {
+  function callTeacher(question, past, image) {
     var body = {
       question: question,
       subject: subjectSel.value,
       grade: gradeSel.value,
       dialect: dialectSel.value,
+      mode: teacherMode,
       history: past
     };
+    if (image) { body.image = { data: image.data, mime: image.mime }; }
     var client = (window.SANAD && window.SANAD.supabase) || null;
     if (client && client.functions && client.functions.invoke) {
       return client.functions.invoke('smart-teacher', { body: body }).then(function (res) {
@@ -399,19 +554,26 @@
 
   function send() {
     var q = inputEl.value.trim();
+    var hasPhoto = !!photoData;
     if (busy) return;
-    if (!q) { toast('اكتب سؤالك أولاً'); inputEl.focus(); return; }
+    if (!q && !hasPhoto) { toast('اكتب سؤالك أولاً أو صوّر سؤالك'); inputEl.focus(); return; }
     if (q.length > MAX_LEN) { showError('سؤالك طويل جداً — الحد الأقصى 2000 حرف.'); return; }
+    if (hasPhoto && teacherMode !== 'ask') { toast('الصورة تعمل في وضع السؤال فقط — بدّل إلى «اسأل» أولاً'); return; }
     var now = Date.now();
     if (now - lastSendAt < COOLDOWN_MS) { toast('انتظر 3 ثوانٍ قبل السؤال التالي'); return; }
     lastSendAt = now;
-    lastQuestion = q;
+    // سؤال بلا نص مع صورة: يقرأ المعلم السؤال من الصورة.
+    var sentText = q || 'اقرأ السؤال من الصورة وأجب عنه خطوة بخطوة';
+    var sentPhoto = hasPhoto ? { data: photoData.data, mime: photoData.mime, blob: photoData.blob } : null;
+    var sentPhotoUrl = hasPhoto ? photoThumbEl.src : null;
+    lastQuestion = sentText;
     hideError();
-    addUserMessage(q);
-    history.push({ role: 'user', text: q });
+    addUserMessage(q || 'صورة سؤال', sentPhotoUrl);
+    history.push({ role: 'user', text: sentText });
     var past = history.slice(0, history.length - 1).slice(-HISTORY_LIMIT);
     inputEl.value = '';
     updateCount();
+    clearPhoto();
     busy = true;
     sendBtn.disabled = true;
     typingEl.classList.add('show');
@@ -422,12 +584,13 @@
       showError('يبدو أنك غير متصل بالإنترنت — تحقق من اتصالك وحاول مرة ثانية.');
       return;
     }
-    callTeacher(q, past).then(function (answer) {
+    callTeacher(sentText, past, sentPhoto).then(function (answer) {
       busy = false;
       sendBtn.disabled = false;
       typingEl.classList.remove('show');
       addAssistantMessage(answer);
       history.push({ role: 'assistant', text: answer });
+      if (sentPhoto) { archivePhotoBestEffort(sentPhoto.blob); }
     }).catch(function (err) {
       busy = false;
       sendBtn.disabled = false;
@@ -448,6 +611,7 @@
     history = [];
     hideError();
     inputEl.value = '';
+    clearPhoto();
     updateCount();
     addWelcome();
     inputEl.focus();
@@ -465,6 +629,25 @@
   buildSubjectOptions();
   updateSelection();
   updateCount();
+  // روابط عميقة: من تقرير المستوى (?grade=&subject=&mode=&topic=)
+  // تملأ الصف والمادة والوضع والسؤال مسبقاً — بلا إرسال تلقائي.
+  try {
+    var params = new URLSearchParams(window.location.search || '');
+    var pGrade = params.get('grade');
+    var pSubject = params.get('subject');
+    var pMode = params.get('mode');
+    var pTopic = params.get('topic');
+    var gradeSet = false;
+    if (pGrade) {
+      for (var gi = 0; gi < gradeSel.options.length; gi++) {
+        if (gradeSel.options[gi].value === pGrade) { gradeSel.value = pGrade; gradeSet = true; break; }
+      }
+    }
+    if (pSubject && SUBJECTS.indexOf(pSubject) !== -1) { subjectSel.value = pSubject; }
+    if (gradeSet || pSubject) { updateSelection(); }
+    if (pMode && MODE_HINTS[pMode]) { setMode(pMode); }
+    if (pTopic) { inputEl.value = pTopic; updateCount(); }
+  } catch (e) { /* تجاهل — الصفحة تعمل بدونه */ }
   addWelcome();
 })();
 </script>

@@ -1070,18 +1070,220 @@
   SANAD.openLecturePlayer = openLecturePlayer;
   SANAD.closeLecturePlayer = closeLecturePlayer;
 
+  /* ===== نموذج الدورات (Marmaz-style): كورس = مادة في صف لمدرس واحد =====
+     مشتق من المحاضرات في data.js فقط؛ لا بيانات وهمية. الفصول من
+     window.SANAD_CHAPTERS (chapters.js) والأسئلة من window.SANAD_QUIZ_MAP. */
+  var CHANNEL_NAMES = ['التلفزيون التربوي العراقي', 'منصة نيوتن', 'منصة سند', 'المدرسة الإلكترونية', 'وزارة التربية العراقية', 'مدرسة العراق', 'المنصة التعليمية العراقية'];
+  var CH_WORD = { 'الأول': 1, 'الثاني': 2, 'الثالث': 3, 'الرابع': 4, 'الخامس': 5, 'السادس': 6, 'السابع': 7, 'الثامن': 8, 'التاسع': 9, 'العاشر': 10 };
+  var CH_WORD_FEM = { 'الأولى': 1, 'الثانية': 2, 'الثالثة': 3, 'الرابعة': 4, 'الخامسة': 5, 'السادسة': 6, 'السابعة': 7, 'الثامنة': 8, 'التاسعة': 9, 'العاشرة': 10 };
+  var CH_WORD_BY_NUM = ['', 'الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر'];
+  var CH_WORD_FEM_BY_NUM = ['', 'الأولى', 'الثانية', 'الثالثة', 'الرابعة', 'الخامسة', 'السادسة', 'السابعة', 'الثامنة', 'التاسعة', 'العاشرة'];
+  function chWordToNum(s) {
+    if (s == null) return null;
+    s = String(s).trim();
+    if (CH_WORD[s]) return CH_WORD[s];
+    if (CH_WORD_FEM[s]) return CH_WORD_FEM[s];
+    var digits = s.replace(/[٠-٩]/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'.indexOf(d); });
+    if (/^[0-9]+$/.test(digits)) return parseInt(digits, 10);
+    return null;
+  }
+  /* فصل المحاضرة: من حقل chapter الصريح أولاً، ثم من العنوان. null = محاضرة عامة. */
+  function chapterOfLesson(l) {
+    if (!l) return null;
+    var src = ((l.chapter || '') + ' ' + (l.title || '')).replace(/\s+/g, ' ');
+    var m = src.match(/الفصل\s*(الأول|الثاني|الثالث|الرابع|الخامس|السادس|السابع|الثامن|التاسع|العاشر|[0-9٠-٩]+)/);
+    if (m) { var n = chWordToNum(m[1]); if (n) return { num: n, kind: 'ch', label: 'الفصل ' + (CH_WORD_BY_NUM[n] || n) }; }
+    var u = src.match(/يونت\s*([0-9٠-٩]+)/i);
+    if (u) { var un = chWordToNum(u[1]); if (un) return { num: un, kind: 'unit', label: 'يونت ' + un }; }
+    var w = src.match(/الوحدة\s*(الأولى|الثانية|الثالثة|الرابعة|الخامسة|السادسة|السابعة|الثامنة|التاسعة|العاشرة|[0-9٠-٩]+)/);
+    if (w) { var wn = chWordToNum(w[1]); if (wn) return { num: wn, kind: 'unit', label: 'الوحدة ' + (CH_WORD_FEM_BY_NUM[wn] || wn) }; }
+    return null;
+  }
+  var _coursesCache = null;
+  function buildCourses() {
+    if (_coursesCache) return _coursesCache;
+    var data = window.SANAD_DATA || { lessons: [], stages: [] };
+    var stageByGrade = {};
+    (data.stages || []).forEach(function (st) {
+      (st.grades || []).forEach(function (g) {
+        var gid = (typeof g === 'string') ? g : g.id;
+        var gname = (typeof g === 'string') ? g : (g.name || g.id);
+        stageByGrade[gname] = { stageId: st.id, stageName: st.name, gradeId: gid, gradeName: gname };
+      });
+    });
+    var map = {};
+    (data.lessons || []).forEach(function (l) {
+      if (!l || !l.grade || !l.subject || !l.teacher) return;
+      var key = [l.grade, l.subject, l.teacher].join('');
+      if (!map[key]) {
+        var info = stageByGrade[l.grade] || { stageId: '', stageName: '', gradeId: l.grade, gradeName: l.grade };
+        map[key] = { grade: l.grade, gradeId: info.gradeId, stageId: info.stageId, stageName: info.stageName, subject: l.subject, teacher: l.teacher, lessons: [] };
+      }
+      map[key].lessons.push(l);
+    });
+    var list = Object.keys(map).map(function (k) { return map[k]; });
+    list.forEach(function (c) {
+      c.isChannel = CHANNEL_NAMES.indexOf(c.teacher) !== -1;
+      c.lessons.sort(function (a, b) {
+        var ca = chapterOfLesson(a), cb = chapterOfLesson(b);
+        var na = ca ? ca.num : 999, nb = cb ? cb.num : 999;
+        if (na !== nb) return na - nb;
+        return String(a.title || '').localeCompare(String(b.title || ''), 'ar');
+      });
+      var chSet = {};
+      c.lessons.forEach(function (l) { var ch = chapterOfLesson(l); if (ch) chSet[ch.kind + ':' + ch.num] = true; });
+      c.chapterCount = Object.keys(chSet).length;
+      c.totalLessons = c.lessons.length;
+    });
+    list.sort(function (a, b) { return b.totalLessons - a.totalLessons || String(a.teacher).localeCompare(String(b.teacher), 'ar'); });
+    _coursesCache = list;
+    return list;
+  }
+  function canonicalChapters(course, bookVariant) {
+    if (!course) return null;
+    var map = window.SANAD_CHAPTERS || {};
+    var byGrade = map[course.gradeId] || {};
+    if (course.gradeId === 'r6' && course.subject === 'الرياضيات' && bookVariant === 'adabi' && byGrade['الرياضيات (أدبي)']) {
+      return byGrade['الرياضيات (أدبي)'];
+    }
+    return byGrade[course.subject] || null;
+  }
+  function groupCourseLessons(course, bookVariant) {
+    var groups = {};
+    var general = [];
+    (course.lessons || []).forEach(function (l) {
+      var ch = chapterOfLesson(l);
+      if (!ch) { general.push(l); return; }
+      var k = ch.kind + ':' + ch.num;
+      if (!groups[k]) groups[k] = { chapter: ch, lessons: [] };
+      groups[k].lessons.push(l);
+    });
+    var canon = canonicalChapters(course, bookVariant);
+    var ordered = [];
+    if (canon) {
+      var kind = canon.kind === 'الوحدة' ? 'unit' : 'ch';
+      canon.chapters.forEach(function (cc) {
+        var k = kind + ':' + cc.n;
+        var g = groups[k];
+        ordered.push({
+          n: cc.n, kind: kind, title: cc.title, page: (cc.page == null ? null : cc.page),
+          deleted: !!cc.deleted, note: cc.note || null, lessons: g ? g.lessons : [], canonical: true
+        });
+        if (g) delete groups[k];
+      });
+    }
+    var rest = Object.keys(groups).map(function (k) { return groups[k]; });
+    rest.sort(function (a, b) { return a.chapter.num - b.chapter.num; });
+    rest.forEach(function (g) {
+      ordered.push({ n: g.chapter.num, kind: g.chapter.kind, title: g.chapter.label, page: null, deleted: false, note: null, lessons: g.lessons, canonical: false });
+    });
+    return { groups: ordered, general: general, book: canon };
+  }
+  function courseUrl(course) {
+    return 'course.html?grade=' + encodeURIComponent(course.gradeId) + '&subject=' + encodeURIComponent(course.subject) + '&teacher=' + encodeURIComponent(course.teacher);
+  }
+  function parseCourseParams() {
+    var q = { grade: '', subject: '', teacher: '', book: '' };
+    try {
+      var p = new URLSearchParams(window.location.search);
+      ['grade', 'subject', 'teacher', 'book'].forEach(function (k) { q[k] = p.get(k) || ''; });
+    } catch (e) {}
+    return q;
+  }
+  function findCourse(gradeId, subject, teacher) {
+    var list = buildCourses();
+    for (var i = 0; i < list.length; i++) {
+      var c = list[i];
+      if (c.gradeId === gradeId && c.subject === subject && c.teacher === teacher) return c;
+    }
+    return null;
+  }
+  /* أسئلة الامتحانات الوزارية لهذا الكورس، مجمّعة حسب الفصل (من SANAD_QUIZ_MAP). */
+  function courseQuizQuestions(course) {
+    var data = window.SANAD_DATA || { exams: [] };
+    var qmap = window.SANAD_QUIZ_MAP || {};
+    var out = {};
+    (data.exams || []).forEach(function (e) {
+      if (!e || e.grade !== course.grade || e.subject !== course.subject) return;
+      var m = qmap[e.id] || {};
+      (e.questions || []).forEach(function (q, i) {
+        var ch = m[String(i)];
+        if (!ch) return;
+        (out[ch] = out[ch] || []).push({ examId: e.id, examTitle: e.title || e.id, qIndex: i, q: q });
+      });
+    });
+    return out;
+  }
+  /* بطاقة كورس واحدة (مشتركة بين الرئيسية وصفحة الدورات وصفحة الكورس). */
+  function escCourseHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function courseCardHtml(c) {
+    var initial = (c.teacher || '?').trim().charAt(0) || '?';
+    var teacherLabel = c.isChannel ? escCourseHtml(c.teacher) + ' (قناة رسمية)' : escCourseHtml(c.teacher);
+    return '<article class="course-card">' +
+      '<div class="course-cover"><span class="course-avatar">' + escCourseHtml(initial) + '</span>' +
+      '<h3 class="course-title">' + escCourseHtml(c.subject) + ' — ' + escCourseHtml(c.grade) + '</h3></div>' +
+      '<div class="course-body">' +
+      '<div class="course-pills"><span class="pill-teacher">' + teacherLabel + '</span>' +
+      '<span class="pill-subject">' + escCourseHtml(c.subject) + '</span>' +
+      '<span class="pill-grade">' + escCourseHtml(c.grade) + '</span></div>' +
+      '<p class="course-meta">' + c.totalLessons + ' محاضرة · ' + c.chapterCount + ' فصلاً' + (c.isChannel ? ' · قناة رسمية' : '') + '</p>' +
+      '<div class="course-foot"><span class="price-free">مجاني</span>' +
+      '<a class="btn btn-blue" href="' + escCourseHtml(courseUrl(c)) + '">ابدأ الكورس</a></div>' +
+      '</div></article>';
+  }
+  SANAD.courses = {
+    buildCourses: buildCourses,
+    chapterOfLesson: chapterOfLesson,
+    canonicalChapters: canonicalChapters,
+    groupCourseLessons: groupCourseLessons,
+    courseUrl: courseUrl,
+    parseCourseParams: parseCourseParams,
+    findCourse: findCourse,
+    courseQuizQuestions: courseQuizQuestions,
+    courseCardHtml: courseCardHtml,
+    CHANNEL_NAMES: CHANNEL_NAMES
+  };
+
   /* ===== الوضع الداكن/الفاتح + شريط التنقل السفلي للجوال =====
      يُحقنان من هنا ليعملا في كل صفحة دون تحرير 29 ملفاً.
      السمة محفوظة في localStorage بالمفتاح sanad_theme ('light'/'dark'، الافتراضي 'light'). */
   var K_THEME = 'sanad_theme';
   var BOTTOM_NAV = [
     { href: 'index.html', label: 'الرئيسية', file: 'index.html' },
-    { href: 'stages.html', label: 'المراحل', file: 'stages.html' },
-    { href: 'lessons.html', label: 'الدروس', file: 'lessons.html' },
+    { href: 'courses.html', label: 'الدورات', file: 'courses.html' },
+    { href: 'lessons.html', label: 'الأساتذة', file: 'lessons.html' },
     { href: 'exams.html', label: 'الامتحانات', file: 'exams.html' },
     { href: 'teacher.html', label: 'المعلم الذكي', file: 'teacher.html' },
     { href: 'profile.html', label: 'ملفي', file: 'profile.html' }
   ];
+  /* الشريط العلوي الموحّد: الدورات هي المدخل الرئيسي (الرئيسية / الدورات /
+     الأساتذة / المكتبة / الامتحانات / المعلم الذكي / ملفي). */
+  var MAIN_NAV = [
+    { href: 'index.html', label: 'الرئيسية', file: 'index.html' },
+    { href: 'courses.html', label: 'الدورات', file: 'courses.html' },
+    { href: 'lessons.html', label: 'الأساتذة', file: 'lessons.html' },
+    { href: 'library.html', label: 'المكتبة', file: 'library.html' },
+    { href: 'exams.html', label: 'الامتحانات', file: 'exams.html' },
+    { href: 'teacher.html', label: 'المعلم الذكي', file: 'teacher.html' },
+    { href: 'profile.html', label: 'ملفي', file: 'profile.html' }
+  ];
+  function initMainNav() {
+    var nav = document.querySelector('.main-nav');
+    if (!nav) return;
+    var file = currentFileName();
+    nav.innerHTML = '';
+    MAIN_NAV.forEach(function (item) {
+      var a = document.createElement('a');
+      a.className = 'nav-link' + (item.file === file ? ' active' : '');
+      a.href = item.href;
+      a.textContent = item.label;
+      nav.appendChild(a);
+    });
+  }
   function currentFileName() {
     var file = (window.location.pathname.split('/').pop() || 'index.html').split('?')[0].split('#')[0];
     return file || 'index.html';
@@ -1134,6 +1336,7 @@
   /* ===== تهيئة الصفحة ===== */
   document.addEventListener('DOMContentLoaded', function () {
     initTheme();
+    initMainNav();
     initBottomNav();
     // تمييز الرابط النشط حسب اسم الملف الحالي
     var file = currentFileName();
