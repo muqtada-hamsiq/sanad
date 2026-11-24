@@ -57,6 +57,12 @@
 </section>
 
 <section class="card">
+<h2 class="section-title">الإعلانات والتنبيهات</h2>
+<p>إعلانات إدارة سند — تظهر هنا فقط أثناء تصفح الموقع (لا رسائل نصية ولا إشعارات هاتف).</p>
+<div id="announcements"></div>
+</section>
+
+<section class="card">
 <h2 class="section-title">المواد المفضلة</h2>
 <div id="fav-subjects"></div>
 </section>
@@ -378,6 +384,50 @@
   /* ===== العرض ===== */
   var ADMIN_ROLES = ['مدير عام', 'مشرف محتوى', 'مدرس', 'مراجع'];
 
+  /* الإعلانات (المرحلة 4): تُقرأ من جدول announcements في Supabase.
+     تُعرض إعلانات «الجميع» و«الطلاب»؛ إعلانات «المدرسون فقط» تظهر
+     للمدرسين فقط. لا إشعارات خارج الموقع — الإعلان يظهر أثناء
+     التصفح فقط. إن لم يكن الجدول مطبقاً بعد، تظهر حالة صادقة. */
+  async function renderAnnouncements(el, role) {
+    el.innerHTML = '';
+    var supa = (window.SANAD && window.SANAD.supabase) || null;
+    if (!supa) {
+      el.appendChild(textEl('p', 'تعذّر تحميل الإعلانات — تحقق من اتصالك بالإنترنت.', 'empty-state'));
+      return;
+    }
+    var res;
+    try {
+      res = await supa.from('announcements').select('title,body,audience,created_at').order('created_at', { ascending: false }).limit(20);
+    } catch (e) {
+      el.appendChild(textEl('p', 'تعذّر تحميل الإعلانات — تحقق من اتصالك بالإنترنت.', 'empty-state'));
+      return;
+    }
+    if (res.error) {
+      el.appendChild(textEl('p', 'تعذّر تحميل الإعلانات — تحقق من اتصالك بالإنترنت.', 'empty-state'));
+      return;
+    }
+    var rows = (res.data || []).filter(function (a) {
+      if (a.audience === 'teachers') { return role === 'مدرس' || role === 'مدير عام'; }
+      return true;
+    });
+    if (!rows.length) {
+      el.appendChild(textEl('p', 'لا توجد إعلانات جديدة.', 'empty-state'));
+      return;
+    }
+    rows.forEach(function (a) {
+      var card = document.createElement('div');
+      card.className = 'card';
+      var t = document.createElement('p');
+      var strong = document.createElement('strong');
+      strong.textContent = a.title || '';
+      t.appendChild(strong);
+      card.appendChild(t);
+      card.appendChild(textEl('p', a.body || ''));
+      if (a.created_at) { card.appendChild(textEl('p', new Date(a.created_at).toLocaleDateString('ar-IQ'))); }
+      el.appendChild(card);
+    });
+  }
+
   function renderStudyInfo(el, user, profile) {
     el.innerHTML = '';
     var meta = (user && user.user_metadata) || {};
@@ -402,6 +452,14 @@
       a.textContent = 'لوحة الإدارة';
       rp.appendChild(a);
       el.appendChild(rp);
+    }
+    if (role === 'مدرس') {
+      var tp = document.createElement('p');
+      var ta = document.createElement('a');
+      ta.href = 'teacher-dashboard.html';
+      ta.textContent = 'لوحة المدرس';
+      tp.appendChild(ta);
+      el.appendChild(tp);
     }
     if (!stage || !grade) {
       el.appendChild(textEl('p', 'أكمل بيانات مرحلتك وصفك من صفحة التسجيل', 'empty-state'));
@@ -635,6 +693,7 @@
     var gradeId = (foundGrade && foundGrade.id) || '';
 
     renderStudyInfo(document.getElementById('study-info'), user, profile);
+    await renderAnnouncements(document.getElementById('announcements'), profile && profile.role);
     renderSubjects(document.getElementById('fav-subjects'), foundGrade, gradeName);
     await renderSavedBooks(document.getElementById('saved-books'));
 

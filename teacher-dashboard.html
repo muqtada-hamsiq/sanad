@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة المدرس | سند SANAD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند SANAD" height="44">
+      <span class="logo-text"><span class="logo-name">سند</span><span class="logo-latin">SANAD</span></span>
+    </a>
+    <nav class="main-nav" aria-label="التنقل الرئيسي">
+      <a class="nav-link" href="index.html">الرئيسية</a>
+      <a class="nav-link" href="stages.html">المراحل</a>
+      <a class="nav-link" href="library.html">المكتبة</a>
+      <a class="nav-link" href="exams.html">الامتحانات</a>
+      <a class="nav-link" href="lessons.html">الدروس</a>
+      <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="schedule.html">الجدول</a>
+      <a class="nav-link" href="universities.html">الجامعات</a>
+      <a class="nav-link" href="scholarships.html">المنح</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
+      <a class="nav-link" href="search.html">بحث</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <div class="alert alert-warn"><strong>لوحة المدرس — منفصلة عن واجهة الطلاب.</strong> هذه الصفحة مخصصة للمدرسين المسجّلين في منصة سند فقط.</div>
+
+  <!-- بوابة الدخول: تتطلب حساب سند مسجلاً بدور «مدرس» (أو المدير العام) -->
+  <section class="card" id="teacherGate">
+    <h1 class="section-title">لوحة المدرس — تسجيل الدخول مطلوب</h1>
+    <p>هذه الصفحة مخصصة للمدرسين المسجّلين في منصة سند، وتتطلب تسجيل الدخول بحساب سند بدور «مدرس».</p>
+    <p id="teacherDenied" class="alert alert-warn" hidden>تعذّر التحقق من صلاحياتك — تم رفض الوصول إلى لوحة المدرس. هذه اللوحة للمدرسين فقط؛ إن كنت مدرساً ولم يظهر لك الدور، راجع الإدارة من صفحة «تواصل معنا».</p>
+    <p><a class="btn btn-gold" href="login.html">تسجيل الدخول</a></p>
+  </section>
+
+  <div id="teacherDashboard" hidden>
+    <section class="hero">
+      <h1>لوحة المدرس</h1>
+      <p id="sessionInfo"></p>
+    </section>
+
+    <section class="card" id="teacherOverview">
+      <h2 class="section-title">نظرة عامة</h2>
+      <div class="stats-strip" id="teacherStats"></div>
+      <p class="alert alert-info" id="teacherNameNote"></p>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">كورساتي</h2>
+      <p>الكورسات مشتقة تلقائياً من محاضراتك المسجّلة في سند. تظهر هنا عندما يطابق «اسم العرض» في حسابك اسم المدرس في المنصة — إن لم تظهر كورساتك، تأكد من اسم العرض في ملفك (صفحة «ملفي»).</p>
+      <div class="grid" id="myCourses"></div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">طلب تصحيح أو إضافة درس</h2>
+      <p>أرسل طلباً للإدارة: تصحيح معلومة في درس، أو إضافة درس أو محاضرة جديدة. يُراجَع الطلب من الإدارة قبل أي نشر، وتظهر حالته في قائمة طلباتك أدناه.</p>
+      <form id="requestForm">
+        <label for="reqType">نوع الطلب</label>
+        <select id="reqType" required>
+          <option value="تصحيح معلومة">تصحيح معلومة</option>
+          <option value="إضافة درس">إضافة درس</option>
+          <option value="إضافة محاضرة">إضافة محاضرة</option>
+          <option value="أخرى">أخرى</option>
+        </select>
+        <label for="reqGrade">الصف</label>
+        <select id="reqGrade" required></select>
+        <label for="reqSubject">المادة</label>
+        <select id="reqSubject" required></select>
+        <label for="reqUrl">رابط المحاضرة (اختياري — إن كان الطلب إضافة محاضرة)</label>
+        <input id="reqUrl" type="url" placeholder="https://www.youtube.com/watch?v=...">
+        <label for="reqDetails">تفاصيل الطلب</label>
+        <textarea id="reqDetails" rows="4" maxlength="2000" required placeholder="اشرح التصحيح المطلوب أو تفاصيل الدرس/المحاضرة..."></textarea>
+        <button class="btn btn-blue" type="submit">إرسال الطلب للإدارة</button>
+        <p id="requestMsg" class="alert alert-info" hidden></p>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">طلباتي السابقة</h2>
+      <div id="myRequests"></div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">كيف أصبح مدرساً في سند؟</h2>
+      <p>إن كنت مدرساً وتريد دور مدرس في سند: سجّل حساباً في المنصة أولاً، ثم راسل الإدارة من صفحة «تواصل معنا» باسمك الكامل والمادة التي تدرّسها، وسيحوّل المدير العام حسابك إلى دور «مدرس» بعد التحقق.</p>
+      <p><a class="btn btn-outline" href="contact.html">تواصل معنا</a> <a class="btn btn-outline" href="profile.html">ملفي</a></p>
+    </section>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <p>سند SANAD — منصة تعليمية عراقية مجانية</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+  var TEACHER_ROLES = ['مدرس', 'مدير عام'];
+  var currentUser = null;
+  var currentProfile = null;
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+  }
+  function $(id) { return document.getElementById(id); }
+  function getSupa() {
+    return (window.SANAD && window.SANAD.supabase) || null;
+  }
+  function normName(n) {
+    return String(n || '').replace(/^\s*(الأستاذ|الاستاذ|أستاذ|استاذ)\s+/, '').trim();
+  }
+  function statusChip(s) {
+    /* حالات الطلب تُعرض بشارة chip الموجودة في الواجهة (مثل بلاغات الإدارة) */
+    return '<span class="chip">' + esc(s || 'جديد') + '</span>';
+  }
+
+  async function fetchProfile(user) {
+    var supa = getSupa();
+    if (!supa) { return { error: 'no-supa' }; }
+    var res = await supa.from('profiles').select('role, display_name').eq('id', user.id).single();
+    if (res.error || !res.data) { return { error: res.error ? res.error.message : 'no-row' }; }
+    return { profile: res.data };
+  }
+
+  function myCourses() {
+    var C = (window.SANAD && window.SANAD.courses) || null;
+    if (!C || typeof C.buildCourses !== 'function') { return []; }
+    var all = C.buildCourses();
+    var name = normName(currentProfile && currentProfile.display_name);
+    if (!name) { return []; }
+    return all.filter(function (c) {
+      var t = normName(c.teacher);
+      return t === name || t.indexOf(name) !== -1 || name.indexOf(t) !== -1;
+    });
+  }
+
+  function fillSelects() {
+    var data = window.SANAD_DATA || { stages: [] };
+    var grades = [], subjects = {};
+    (data.stages || []).forEach(function (st) {
+      (st.grades || []).forEach(function (g) {
+        grades.push({ id: (typeof g === 'string') ? g : g.id, name: (typeof g === 'string') ? g : (g.name || g.id) });
+      });
+    });
+    /* المواد: لا يوجد مصفوفة subjects في المراحل — تُشتق من المحاضرات والكتب والملازم */
+    ['lessons', 'books', 'malazim'].forEach(function (key) {
+      (data[key] || []).forEach(function (it) { if (it && it.subject) { subjects[it.subject] = true; } });
+    });
+    $('reqGrade').innerHTML = grades.map(function (g) {
+      return '<option value="' + esc(g.id) + '">' + esc(g.name) + '</option>';
+    }).join('');
+    $('reqSubject').innerHTML = Object.keys(subjects).map(function (s) {
+      return '<option value="' + esc(s) + '">' + esc(s) + '</option>';
+    }).join('');
+  }
+
+  function renderCourses() {
+    var list = myCourses();
+    var totalLessons = list.reduce(function (sum, c) { return sum + (c.lessons ? c.lessons.length : 0); }, 0);
+    $('teacherStats').innerHTML =
+      '<div class="stat-card"><strong>' + list.length + '</strong><p>كورس</p></div>'
+      + '<div class="stat-card"><strong>' + totalLessons + '</strong><p>محاضرة</p></div>';
+    $('teacherNameNote').textContent = 'اسم العرض في حسابك: ' + (currentProfile && currentProfile.display_name ? currentProfile.display_name : 'غير مسجّل') + '.';
+    var C = (window.SANAD && window.SANAD.courses) || null;
+    if (!list.length) {
+      $('myCourses').innerHTML = '<p class="empty-state">لا توجد كورسات باسمك في سند بعد — إن كنت تدرّس في المنصة ولم تظهر كورساتك، تأكد من أن اسم العرض في حسابك يطابق اسم المدرس في المنصة.</p>';
+      return;
+    }
+    $('myCourses').innerHTML = list.map(function (c) {
+      return C.courseCardHtml(c);
+    }).join('');
+  }
+
+  async function loadMyRequests() {
+    var supa = getSupa();
+    if (!supa || !currentUser) {
+      $('myRequests').innerHTML = '<p class="empty-state">تعذّر تحميل الطلبات — تحقق من اتصالك بالإنترنت وحاول مجدداً.</p>';
+      return;
+    }
+    var res = await supa.from('teacher_requests').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+    if (res.error) {
+      $('myRequests').innerHTML = '<p class="empty-state">تعذّر تحميل الطلبات' + (res.error.message ? ' (' + esc(res.error.message) + ')' : '') + '. إن تكررت المشكلة فالجدول قد لا يكون مطبقاً بعد في قاعدة البيانات.</p>';
+      return;
+    }
+    var rows = res.data || [];
+    if (!rows.length) {
+      $('myRequests').innerHTML = '<p class="empty-state">لا توجد طلبات بعد — أرسل أول طلب من النموذج أعلاه.</p>';
+      return;
+    }
+    $('myRequests').innerHTML = rows.map(function (r) {
+      return '<article class="card"><p>' + statusChip(r.status) + ' <strong>' + esc(r.type) + '</strong> — ' + esc(r.subject) + ' (' + esc(r.grade) + ')</p>'
+        + '<p>' + esc(r.details) + '</p>'
+        + (r.lesson_url ? '<p>رابط المحاضرة: <a href="' + esc(r.lesson_url) + '" target="_blank" rel="noopener">' + esc(r.lesson_url) + '</a></p>' : '')
+        + (r.admin_note ? '<p>ملاحظة الإدارة: ' + esc(r.admin_note) + '</p>' : '')
+        + '<p>' + esc(new Date(r.created_at).toLocaleDateString('ar-IQ')) + '</p></article>';
+    }).join('');
+  }
+
+  async function init() {
+    fillSelects();
+    var user = null;
+    try {
+      if (window.SANAD && typeof window.SANAD.getSessionUser === 'function') {
+        user = await window.SANAD.getSessionUser();
+      }
+    } catch (e) { user = null; }
+    if (!user) {
+      $('teacherGate').hidden = false;
+      $('teacherDashboard').hidden = true;
+      return;
+    }
+    currentUser = user;
+    var r = await fetchProfile(user);
+    if (r.error || !r.profile || TEACHER_ROLES.indexOf(r.profile.role) === -1) {
+      /* فشل التحقق من الدور، أو الدور ليس «مدرس» — رفض الوصول، بلا دور افتراضي */
+      $('teacherDenied').hidden = false;
+      $('teacherDashboard').hidden = true;
+      return;
+    }
+    currentProfile = r.profile;
+    $('teacherGate').hidden = true;
+    $('teacherDashboard').hidden = false;
+    $('sessionInfo').textContent = 'مرحباً ' + (r.profile.display_name || user.email || '') + ' — الدور: ' + r.profile.role;
+    renderCourses();
+    await loadMyRequests();
+  }
+
+  $('requestForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var msg = $('requestMsg');
+    var supa = getSupa();
+    msg.hidden = false;
+    msg.className = 'alert alert-info';
+    if (!supa || !currentUser) {
+      msg.textContent = 'تعذّر الإرسال — تحقق من اتصالك بالإنترنت وحاول مجدداً.';
+      return;
+    }
+    var url = $('reqUrl').value.trim();
+    var res = await supa.from('teacher_requests').insert([{
+      user_id: currentUser.id,
+      teacher_name: (currentProfile && currentProfile.display_name) || currentUser.email || 'مدرس',
+      type: $('reqType').value,
+      subject: $('reqSubject').value,
+      grade: $('reqGrade').value,
+      details: $('reqDetails').value.trim(),
+      lesson_url: url || null
+    }]);
+    if (res.error) {
+      msg.className = 'alert alert-warn';
+      msg.textContent = 'تعذّر إرسال الطلب' + (res.error.message ? ' (' + res.error.message + ')' : '') + '. إن تكررت المشكلة فالجدول قد لا يكون مطبقاً بعد في قاعدة البيانات.';
+      return;
+    }
+    msg.className = 'alert alert-info';
+    msg.textContent = 'تم إرسال طلبك للإدارة بنجاح — ستظهر حالته هنا بعد المراجعة.';
+    $('requestForm').reset();
+    await loadMyRequests();
+  });
+
+  document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

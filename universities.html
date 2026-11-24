@@ -44,6 +44,17 @@
     <a href="https://mohesr.gov.iq" target="_blank" rel="noopener">mohesr.gov.iq</a>
   </div>
 
+  <section class="card" id="admission-guide">
+    <h2 class="section-title">دليل القبول المركزي — خطوات التقديم</h2>
+    <div id="admission-steps"></div>
+    <div id="admission-links"></div>
+  </section>
+
+  <section class="card" id="admission-minimums">
+    <h2 class="section-title">الحدود الدنيا المنشورة</h2>
+    <div id="admission-minimums-body"></div>
+  </section>
+
   <div class="filter-bar">
     <div class="tabs" id="type-chips">
       <button type="button" class="chip active" data-type="الكل">الكل</button>
@@ -98,6 +109,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="data.js"></script>
+<script src="admissions.js"></script>
 <script src="app.js"></script>
 <script>
 (function () {
@@ -152,6 +164,71 @@
     }).join('');
   }
 
+  /* ===== القبول المركزي: دليل الخطوات + الحدود الدنيا المنشورة =====
+     كل الأرقام من بيانات admissions.js الموثّقة رسمياً. إن لم تُحمّل
+     البيانات تظهر حالة صادقة بدلاً من أرقام مختلقة. روابط أدلة PDF
+     الرسمية تُبنى هنا برمجياً (لا روابط PDF ثابتة في الصفحة). */
+  function renderAdmission() {
+    var adm = window.SANAD_ADMISSION || null;
+    var stepsEl = document.getElementById('admission-steps');
+    var linksEl = document.getElementById('admission-links');
+    var bodyEl = document.getElementById('admission-minimums-body');
+    if (!adm) {
+      stepsEl.innerHTML = '<p class="empty-state">تعذّر تحميل دليل القبول — راجع الموقع الرسمي لوزارة التعليم العالي: mohesr.gov.iq</p>';
+      linksEl.innerHTML = '';
+      bodyEl.innerHTML = '<p class="empty-state">تعذّر تحميل الحدود الدنيا — راجع بوابة القبول المركزي الرسمية.</p>';
+      return;
+    }
+    var steps = (adm.guideSteps || []).map(function (s, i) {
+      return '<p><strong>' + (i + 1) + '. ' + esc(s.title) + '</strong><br>' + esc(s.text) + '</p>';
+    }).join('');
+    stepsEl.innerHTML = steps || '<p class="empty-state">لا توجد خطوات موثقة بعد.</p>';
+
+    var p = adm.portals || {};
+    var g = adm.guides || {};
+    var linkRows = [];
+    if (p.apply) { linkRows.push('<p><a class="btn btn-blue" href="' + esc(p.apply) + '" target="_blank" rel="noopener">بوابة القبول المركزي — التقديم</a></p>'); }
+    if (p.results) { linkRows.push('<p><a class="btn btn-outline" href="' + esc(p.results) + '" target="_blank" rel="noopener">بوابة الدراسات والتخطيط — النتائج</a></p>'); }
+    if (p.ministry) { linkRows.push('<p><a class="btn btn-outline" href="' + esc(p.ministry) + '" target="_blank" rel="noopener">الموقع الرسمي لوزارة التعليم العالي</a></p>'); }
+    if (g.studentGuide2025) { linkRows.push('<p><a href="' + esc(g.studentGuide2025.url) + '" target="_blank" rel="noopener">' + esc(g.studentGuide2025.label) + '</a></p>'); }
+    if (g.privateGuide2025) { linkRows.push('<p><a href="' + esc(g.privateGuide2025.url) + '" target="_blank" rel="noopener">' + esc(g.privateGuide2025.label) + '</a></p>'); }
+    if (g.privateDirectory2025) { linkRows.push('<p><a href="' + esc(g.privateDirectory2025.url) + '" target="_blank" rel="noopener">' + esc(g.privateDirectory2025.label) + '</a></p>'); }
+    if (p.privateApply) { linkRows.push('<p><a class="btn btn-outline" href="' + esc(p.privateApply) + '" target="_blank" rel="noopener">بوابة القبول في الجامعات والكليات الأهلية</a></p>'); }
+    linksEl.innerHTML = linkRows.join('');
+
+    var m26 = adm.medical2026 || {};
+    var m25 = adm.medical2025 || {};
+    var mins = adm.minimums2025 || [];
+    var html = '';
+    if (m26.general) {
+      html += '<h3>المجموعة الطبية — العام الدراسي ' + esc(m26.year || '') + ' (أحدث إعلان رسمي)</h3>'
+        + '<p>قُبل ' + esc(String(m26.admitted || '')) + ' طالباً في الجامعات الحكومية — أُعلن في ' + esc(m26.announced || '') + '.</p>'
+        + '<table class="table"><thead><tr><th>الكلية</th><th>القبول المركزي (حكومي صباحي)</th><th>المتميزون</th><th>الموازي</th><th>الأهلي</th></tr></thead><tbody>'
+        + '<tr><td>الطب العام</td><td>' + esc(String(m26.general.medicine)) + '</td><td>' + esc(String((m26.distinguished || {}).medicine)) + '</td><td>' + esc(String((m26.parallel || {}).medicine)) + '</td><td>' + esc(String((m26.private || {}).medicine)) + '</td></tr>'
+        + '<tr><td>طب الأسنان</td><td>' + esc(String(m26.general.dentistry)) + '</td><td>' + esc(String((m26.distinguished || {}).dentistry)) + '</td><td>' + esc(String((m26.parallel || {}).dentistry)) + '</td><td>' + esc(String((m26.private || {}).dentistry)) + '</td></tr>'
+        + '<tr><td>الصيدلة</td><td>' + esc(String(m26.general.pharmacy)) + '</td><td>' + esc(String((m26.distinguished || {}).pharmacy)) + '</td><td>' + esc(String((m26.parallel || {}).pharmacy)) + '</td><td>' + esc(String((m26.private || {}).pharmacy)) + '</td></tr>'
+        + '</tbody></table>'
+        + '<p class="alert alert-info">المصدر: ' + esc(m26.source || '') + '.</p>';
+    }
+    if (m25.general) {
+      html += '<h3>المجموعة الطبية — العام الدراسي ' + esc(m25.year || '') + '</h3>'
+        + '<p>قُبل ' + esc(String(m25.admitted || '')) + ' طالباً — أُعلن في ' + esc(m25.announced || '') + ': الطب العام ' + esc(String(m25.general.medicine)) + '، طب الأسنان ' + esc(String(m25.general.dentistry)) + '، الصيدلة ' + esc(String(m25.general.pharmacy)) + ' — والمتميزون: ' + esc(String((m25.distinguished || {}).medicine)) + ' / ' + esc(String((m25.distinguished || {}).dentistry)) + ' / ' + esc(String((m25.distinguished || {}).pharmacy)) + '.</p>';
+    }
+    if (mins.length) {
+      html += '<h3>حدود دنيا لكل جامعة — القناة العامة 2025/2026 (الطب والصيدلة)</h3>'
+        + '<table class="table"><thead><tr><th>الجامعة</th><th>الكلية</th><th>المجموع (من 700)</th><th>المعدل</th></tr></thead><tbody>'
+        + mins.map(function (r) {
+            return '<tr><td>' + esc(r.university) + '</td><td>' + esc(r.college) + '</td><td>' + esc(String(r.total)) + '</td><td>' + esc(String(r.avg)) + '</td></tr>';
+          }).join('')
+        + '</tbody></table>'
+        + '<p class="alert alert-info">المصدر: ' + esc(adm.minimums2025Source || '') + '. المعدل قد يتجاوز 100% بسبب درجات الإضافة المعتمدة في الوثيقة. هذه الأرقام للسنة الدراسية 2025/2026 فقط ولا تُلزم السنة التي بعدها.</p>'
+        + '<p>الحدود الدنيا لباقي الكليات منشورة في وثيقة الوزارة الكاملة — راجع بوابة القبول المركزي الرسمية.</p>';
+    } else {
+      html += '<p class="empty-state">لا توجد حدود دنيا لكل جامعة موثقة في سند بعد — راجع وثيقة الحدود الدنيا الرسمية على موقع الوزارة.</p>';
+    }
+    bodyEl.innerHTML = html;
+  }
+
   function fillCities() {
     var select = document.getElementById('city-filter');
     var cities = [];
@@ -168,6 +245,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    renderAdmission();
     fillCities();
     render();
     document.getElementById('type-chips').addEventListener('click', function (e) {

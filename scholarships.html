@@ -148,6 +148,8 @@
         + '<p><span class="badge">' + esc(s.country) + '</span> <span class="badge">' + esc(s.level) + '</span></p>'
         + '<p>الشروط: ' + esc(s.conditions) + '</p>'
         + '<p>آخر موعد: ' + esc(s.deadline) + '</p>'
+        + (s.window ? '<p>النافذة السنوية المعتادة: ' + esc(s.window) + '</p>' : '')
+        + (s.cycle ? '<p>حالة الدورة: ' + esc(s.cycle) + '</p>' : '')
         + '<p><a class="btn btn-outline" href="' + esc(s.url) + '" target="_blank" rel="noopener">الموقع الرسمي للجهة المانحة</a></p>'
         + '</article>';
     }).join('');

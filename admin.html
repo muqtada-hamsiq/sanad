@@ -62,6 +62,10 @@
       <h2 class="section-title">إحصائيات</h2>
       <p class="alert alert-info">تُحسب من البيانات المحلية حالياً — لا توجد أرقام زوار مختلقة.</p>
       <div class="grid" id="statsGrid"></div>
+      <h3>أرقام حية من قاعدة البيانات</h3>
+      <p class="alert alert-info">محتوى المنصة من data.js، وأرقام الطلاب من Supabase مباشرة. «—» تعني أن الجدول غير متاح أو لم يُطبَّق بعد.</p>
+      <div class="grid" id="liveStatsGrid"></div>
+      <p class="alert alert-warn" id="liveStatsNote" hidden>تعذّر تحميل بعض الأرقام الحية — تحقق من اتصالك بالإنترنت، أو تأكد أن جداول المرحلة 4 (supabase/phase4_expansion.sql) مطبقة في قاعدة البيانات.</p>
     </section>
 
     <!-- إدارة الحسابات -->
@@ -232,6 +236,13 @@
       <div id="contactMessagesList"></div>
     </section>
 
+    <!-- طلبات المدرسين (من جدول teacher_requests في Supabase — المرحلة 4) -->
+    <section class="card admin-section" data-roles="admin content" data-title="طلبات المدرسين">
+      <h2 class="section-title">طلبات المدرسين</h2>
+      <p class="alert alert-info">طلبات تصحيح أو إضافة دروس يرسلها المدرسون من لوحة المدرس — تُقرأ مباشرة من جدول teacher_requests. تغيير الحالة هنا يظهر للمدرس في لوحته.</p>
+      <div id="teacherRequestsList"></div>
+    </section>
+
     <!-- إدارة الإعلانات والرعايات -->
     <section class="card admin-section" data-roles="admin" data-title="الإعلانات والرعايات">
       <h2 class="section-title">إدارة الإعلانات والرعايات</h2>
@@ -244,6 +255,27 @@
         <button class="btn btn-teal" type="submit">إضافة رعاية</button>
       </form>
       <div id="adsList"></div>
+    </section>
+
+    <!-- إعلانات الطلاب (من جدول announcements في Supabase — المرحلة 4) -->
+    <section class="card admin-section" data-roles="admin" data-title="إعلانات الطلاب">
+      <h2 class="section-title">إعلانات الطلاب</h2>
+      <p class="alert alert-info">إعلانات تظهر في صفحة «ملفي» لكل الطلاب (أو للمدرسين حسب الجمهور). تُحفظ في جدول announcements.</p>
+      <form id="announcementForm" novalidate>
+        <label class="form-label" for="annTitle">العنوان</label>
+        <input class="form-input" type="text" id="annTitle" maxlength="150" required>
+        <label class="form-label" for="annBody">نص الإعلان</label>
+        <textarea class="form-input" id="annBody" rows="3" maxlength="2000" required></textarea>
+        <label class="form-label" for="annAudience">الجمهور</label>
+        <select class="form-input" id="annAudience">
+          <option value="all">الجميع</option>
+          <option value="students">الطلاب فقط</option>
+          <option value="teachers">المدرسون فقط</option>
+        </select>
+        <button class="btn btn-teal" type="submit">نشر الإعلان</button>
+        <p id="annMsg" class="alert alert-info" hidden></p>
+      </form>
+      <div id="announcementsList"></div>
     </section>
 
     <!-- إدارة المدرسين -->
@@ -632,6 +664,195 @@
     });
   }
 
+  /* ---------- الأرقام الحية (المرحلة 4) ---------- */
+  function renderLiveStats() {
+    var el = document.getElementById('liveStatsGrid');
+    if (!el) return;
+    var data = window.SANAD_DATA || {};
+    var courses = 0;
+    try { if (window.SANAD && window.SANAD.courses) { courses = window.SANAD.courses.buildCourses().length; } } catch (e) { courses = 0; }
+    var content = [
+      ['الكورسات', courses],
+      ['المحاضرات', (data.lessons || []).length],
+      ['الكتب', (data.books || []).filter(function (b) { return b.type === 'كتاب'; }).length],
+      ['الملازم', (data.books || []).filter(function (b) { return b.type === 'ملزمة'; }).length],
+      ['الامتحانات', (data.exams || []).length],
+      ['الجامعات', (data.universities || []).length],
+      ['المنح', (data.scholarships || []).length]
+    ];
+    var supa = getSupa();
+    if (!supa) {
+      el.innerHTML = content.map(function (c) {
+        return '<div class="stat-card"><strong>' + c[1] + '</strong><p>' + esc(c[0]) + '</p></div>';
+      }).join('');
+      document.getElementById('liveStatsNote').hidden = false;
+      return;
+    }
+    var tables = [
+      ['profiles', 'الحسابات'], ['exam_results', 'نتائج الامتحانات'],
+      ['completed_lessons', 'دروس مكتملة'], ['saved_books', 'كتب محفوظة'],
+      ['contact_messages', 'رسائل تواصل'], ['teacher_requests', 'طلبات المدرسين'],
+      ['announcements', 'الإعلانات']
+    ];
+    Promise.all(tables.map(function (t) {
+      return supa.from(t[0]).select('id', { count: 'exact', head: true }).then(function (res) {
+        return { label: t[1], count: res.error ? null : res.count };
+      }).catch(function () { return { label: t[1], count: null }; });
+    })).then(function (live) {
+      var failed = false;
+      var html = content.map(function (c) {
+        return '<div class="stat-card"><strong>' + c[1] + '</strong><p>' + esc(c[0]) + '</p></div>';
+      }).join('') + live.map(function (l) {
+        if (l.count === null) { failed = true; }
+        return '<div class="stat-card"><strong>' + (l.count === null ? '—' : l.count) + '</strong><p>' + esc(l.label) + '</p></div>';
+      }).join('');
+      el.innerHTML = html;
+      document.getElementById('liveStatsNote').hidden = !failed;
+    });
+  }
+
+  /* ---------- طلبات المدرسين (المرحلة 4) ---------- */
+  function renderTeacherRequests() {
+    var el = document.getElementById('teacherRequestsList');
+    if (!el) return;
+    var supa = getSupa();
+    if (!supa) {
+      el.innerHTML = '<p class="alert alert-warn">تعذّر الاتصال بقاعدة البيانات — تحقق من اتصالك بالإنترنت وحاول مجدداً.</p>';
+      return;
+    }
+    el.innerHTML = '<p class="empty-state">جارٍ تحميل الطلبات…</p>';
+    supa.from('teacher_requests').select('*').order('created_at', { ascending: false }).then(function (res) {
+      if (res.error) {
+        el.innerHTML = '<p class="alert alert-warn">تعذّر تحميل طلبات المدرسين — تأكد أن جدول teacher_requests مطبق في قاعدة البيانات (supabase/phase4_expansion.sql).</p>';
+        return;
+      }
+      var rows = res.data || [];
+      if (!rows.length) { el.innerHTML = '<p class="empty-state">لا توجد طلبات من المدرسين بعد.</p>'; return; }
+      el.innerHTML = rows.map(function (r) {
+        var status = r.status || 'جديد';
+        return '<div class="card"><p><strong>' + esc(r.teacher_name || '') + '</strong> · <span class="chip">' + esc(r.type || '') + '</span> <span class="chip">' + esc(status) + '</span></p>'
+          + '<p>' + esc(r.subject || '') + ' — ' + esc(r.grade || '') + '</p>'
+          + '<p>' + esc(r.details || '') + '</p>'
+          + (r.lesson_url ? '<p>رابط المحاضرة: <a href="' + esc(r.lesson_url) + '" target="_blank" rel="noopener">' + esc(r.lesson_url) + '</a></p>' : '')
+          + (r.admin_note ? '<p>ملاحظة الإدارة: ' + esc(r.admin_note) + '</p>' : '')
+          + '<p>' + esc(r.created_at || '') + '</p>'
+          + '<p><button type="button" class="btn btn-outline" data-req-status="قيد المراجعة" data-req-id="' + esc(r.id || '') + '">قيد المراجعة</button> '
+          + '<button type="button" class="btn btn-teal" data-req-status="تمت المعالجة" data-req-id="' + esc(r.id || '') + '">تمت المعالجة</button> '
+          + '<button type="button" class="btn btn-outline" data-req-status="مرفوض" data-req-id="' + esc(r.id || '') + '">مرفوض</button></p>'
+          + '</div>';
+      }).join('');
+      el.querySelectorAll('[data-req-status]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-req-id');
+          var status = btn.getAttribute('data-req-status');
+          btn.disabled = true;
+          supa.from('teacher_requests').update({ status: status }).eq('id', id).then(function (upd) {
+            if (upd.error) {
+              btn.disabled = false;
+              toast('تعذّر تحديث الحالة — تحقق من الاتصال وحاول مجدداً');
+              return;
+            }
+            logAction('تحديث حالة طلب مدرس إلى «' + status + '»');
+            toast('تم تحديث حالة الطلب إلى «' + status + '»');
+            renderTeacherRequests();
+          }).catch(function () {
+            btn.disabled = false;
+            toast('تعذّر تحديث الحالة — تحقق من الاتصال وحاول مجدداً');
+          });
+        });
+      });
+    }).catch(function () {
+      el.innerHTML = '<p class="alert alert-warn">تعذّر تحميل طلبات المدرسين — تحقق من الاتصال وحاول مجدداً.</p>';
+    });
+  }
+
+  /* ---------- إعلانات الطلاب (المرحلة 4) ---------- */
+  function renderAnnouncements() {
+    var el = document.getElementById('announcementsList');
+    if (!el) return;
+    var supa = getSupa();
+    if (!supa) {
+      el.innerHTML = '<p class="alert alert-warn">تعذّر الاتصال بقاعدة البيانات — تحقق من اتصالك بالإنترنت وحاول مجدداً.</p>';
+      return;
+    }
+    el.innerHTML = '<p class="empty-state">جارٍ تحميل الإعلانات…</p>';
+    supa.from('announcements').select('*').order('created_at', { ascending: false }).then(function (res) {
+      if (res.error) {
+        el.innerHTML = '<p class="alert alert-warn">تعذّر تحميل الإعلانات — تأكد أن جدول announcements مطبق في قاعدة البيانات (supabase/phase4_expansion.sql).</p>';
+        return;
+      }
+      var rows = res.data || [];
+      if (!rows.length) { el.innerHTML = '<p class="empty-state">لا توجد إعلانات بعد — اكتب أول إعلان من النموذج أعلاه.</p>'; return; }
+      var labels = { all: 'الجميع', students: 'الطلاب فقط', teachers: 'المدرسون فقط' };
+      el.innerHTML = rows.map(function (a) {
+        return '<div class="card"><p><strong>' + esc(a.title || '') + '</strong> <span class="chip">' + esc(labels[a.audience] || a.audience || 'الجميع') + '</span></p>'
+          + '<p>' + esc(a.body || '') + '</p>'
+          + '<p>' + esc(a.created_at || '') + '</p>'
+          + '<p><button type="button" class="btn btn-outline" data-del-ann="' + esc(a.id || '') + '">حذف الإعلان</button></p>'
+          + '</div>';
+      }).join('');
+      el.querySelectorAll('[data-del-ann]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (!window.confirm('هل تريد حذف هذا الإعلان نهائياً؟')) { return; }
+          var id = btn.getAttribute('data-del-ann');
+          btn.disabled = true;
+          supa.from('announcements').delete().eq('id', id).then(function (del) {
+            if (del.error) {
+              btn.disabled = false;
+              toast('تعذّر حذف الإعلان — تحقق من الاتصال وحاول مجدداً');
+              return;
+            }
+            logAction('حذف إعلان');
+            toast('تم حذف الإعلان');
+            renderAnnouncements();
+          }).catch(function () {
+            btn.disabled = false;
+            toast('تعذّر حذف الإعلان — تحقق من الاتصال وحاول مجدداً');
+          });
+        });
+      });
+    }).catch(function () {
+      el.innerHTML = '<p class="alert alert-warn">تعذّر تحميل الإعلانات — تحقق من الاتصال وحاول مجدداً.</p>';
+    });
+  }
+
+  bindForm('announcementForm', function (f) {
+    var msg = document.getElementById('annMsg');
+    var supa = getSupa();
+    msg.hidden = false;
+    msg.className = 'alert alert-info';
+    if (!supa) {
+      msg.textContent = 'تعذّر النشر — تحقق من اتصالك بالإنترنت وحاول مجدداً.';
+      return;
+    }
+    var title = document.getElementById('annTitle').value.trim();
+    var body = document.getElementById('annBody').value.trim();
+    var audience = document.getElementById('annAudience').value;
+    if (!title || !body) {
+      msg.className = 'alert alert-warn';
+      msg.textContent = 'اكتب عنوان الإعلان ونصه أولاً.';
+      return;
+    }
+    supa.from('announcements').insert([{
+      title: title, body: body, audience: audience,
+      created_by: (typeof currentUser !== 'undefined' && currentUser) ? currentUser.id : null
+    }]).then(function (res) {
+      if (res.error) {
+        msg.className = 'alert alert-warn';
+        msg.textContent = 'تعذّر نشر الإعلان — تأكد أن جدول announcements مطبق في قاعدة البيانات (supabase/phase4_expansion.sql).';
+        return;
+      }
+      msg.className = 'alert alert-info';
+      msg.textContent = 'تم نشر الإعلان — سيظهر في صفحة «ملفي» للطلاب.';
+      f.reset();
+      logAction('نشر إعلان للطلاب');
+      renderAnnouncements();
+    }).catch(function () {
+      msg.className = 'alert alert-warn';
+      msg.textContent = 'تعذّر نشر الإعلان — تحقق من الاتصال وحاول مجدداً.';
+    });
+  });
+
   /* ---------- السجل ---------- */
   function renderLog() {
     var log = read('sanad_admin_log', []).slice().reverse();
@@ -647,6 +868,7 @@
     renderStats(); renderStages(); renderBooks(); renderLessons();
     renderQuestions(); renderExams(); renderUnis(); renderScholars(); renderReports();
     renderAds(); renderTeachers(); renderLog(); renderContactMessages();
+    renderLiveStats(); renderTeacherRequests(); renderAnnouncements();
   }
 
   /* ---------- النماذج ---------- */

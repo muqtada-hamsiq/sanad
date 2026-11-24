@@ -90,13 +90,13 @@ window.SANAD_DATA = {
   ],
 
   scholarships: [
-    { name: 'منحة تشيفنينغ (Chevening)', country: 'بريطانيا', level: 'الدراسات العليا', url: 'https://www.chevening.org', deadline: 'يُعلن على الموقع الرسمي', conditions: 'راجع الموقع الرسمي للجهة المانحة' },
-    { name: 'منحة DAAD', country: 'ألمانيا', level: 'جميع المراحل', url: 'https://www.daad.de', deadline: 'يُعلن على الموقع الرسمي', conditions: 'راجع الموقع الرسمي للجهة المانحة' },
-    { name: 'المنح التركية (Türkiye Burslari)', country: 'تركيا', level: 'جميع المراحل', url: 'https://www.turkiyeburslari.gov.tr', deadline: 'يُعلن على الموقع الرسمي', conditions: 'راجع الموقع الرسمي للجهة المانحة' },
-    { name: 'منحة الحكومة اليابانية (MEXT)', country: 'اليابان', level: 'جميع المراحل', url: 'https://www.studyinjapan.go.jp', deadline: 'يُعلن على الموقع الرسمي', conditions: 'راجع الموقع الرسمي للجهة المانحة' },
-    { name: 'برنامج إيراسموس+ (Erasmus+)', country: 'أوروبا', level: 'جميع المراحل', url: 'https://erasmus-plus.ec.europa.eu', deadline: 'يُعلن على الموقع الرسمي', conditions: 'راجع الموقع الرسمي للجهة المانحة' },
-    { name: 'منحة الحكومة الهنغارية (Stipendium Hungaricum)', country: 'هنغاريا', level: 'جميع المراحل', url: 'https://stipendiumhungaricum.hu', deadline: 'يُعلن على الموقع الرسمي', conditions: 'راجع الموقع الرسمي للجهة المانحة' },
-    { name: 'منح وزارة التعليم العالي والبحث العلمي العراقية', country: 'العراق', level: 'جميع المراحل', url: 'https://mohesr.gov.iq', deadline: 'يُعلن على الموقع الرسمي', conditions: 'راجع الموقع الرسمي للوزارة' }
+    { name: 'منحة تشيفنينغ (Chevening)', country: 'بريطانيا', level: 'الدراسات العليا', url: 'https://www.chevening.org', deadline: 'يُعلن على الموقع الرسمي', conditions: 'راجع الموقع الرسمي للجهة المانحة', window: 'آب – تشرين الأول من كل سنة', cycle: 'أُغلقت دورة 2027/28 في 6 تشرين الأول 2026 — الدورة القادمة تفتح في آب 2027 عادةً' },
+    { name: 'منحة DAAD', country: 'ألمانيا', level: 'جميع المراحل', url: 'https://www.daad.de', deadline: 'يُعلن على الموقع الرسمي', conditions: 'راجع الموقع الرسمي للجهة المانحة', window: 'حسب البرنامج — معظم المواعيد بين آب وتشرين الثاني', cycle: 'المواعيد حسب كل برنامج — راجع موقع DAAD' },
+    { name: 'المنح التركية (Türkiye Burslari)', country: 'تركيا', level: 'جميع المراحل', url: 'https://www.turkiyeburslari.gov.tr', deadline: 'يُعلن على الموقع الرسمي', conditions: 'راجع الموقع الرسمي للجهة المانحة', window: '10 كانون الثاني – 20 شباط من كل سنة', cycle: 'تفتح الدورة القادمة 10 كانون الثاني 2027' },
+    { name: 'منحة الحكومة اليابانية (MEXT)', country: 'اليابان', level: 'جميع المراحل', url: 'https://www.studyinjapan.go.jp', deadline: 'يُعلن على الموقع الرسمي', conditions: 'راجع الموقع الرسمي للجهة المانحة', window: 'الربيع من كل سنة (عبر سفارة اليابان)', cycle: 'أُغلقت دورة 2027 في أيار 2026 — الدورة القادمة في ربيع 2027' },
+    { name: 'برنامج إيراسموس+ (Erasmus+)', country: 'أوروبا', level: 'جميع المراحل', url: 'https://erasmus-plus.ec.europa.eu', deadline: 'يُعلن على الموقع الرسمي', conditions: 'راجع الموقع الرسمي للجهة المانحة', window: 'حسب البرنامج — معظمها تشرين الأول إلى كانون الثاني', cycle: 'المواعيد حسب كل برنامج — راجع موقع إيراسموس+' },
+    { name: 'منحة الحكومة الهنغارية (Stipendium Hungaricum)', country: 'هنغاريا', level: 'جميع المراحل', url: 'https://stipendiumhungaricum.hu', deadline: 'يُعلن على الموقع الرسمي', conditions: 'راجع الموقع الرسمي للجهة المانحة', window: 'تشرين الثاني – منتصف كانون الثاني من كل سنة', cycle: 'تُغلق دورة 2027/28 منتصف كانون الثاني 2027 عادةً — تحقق من الموقع الرسمي' },
+    { name: 'منح وزارة التعليم العالي والبحث العلمي العراقية', country: 'العراق', level: 'جميع المراحل', url: 'https://mohesr.gov.iq', deadline: 'يُعلن على الموقع الرسمي', conditions: 'راجع الموقع الرسمي للوزارة', window: 'يُعلن على موقع الوزارة', cycle: 'يُعلن على موقع الوزارة' }
   ]
 };
 
