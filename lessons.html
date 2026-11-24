@@ -72,6 +72,7 @@
       <a href="exams.html">الامتحانات</a>
       <a href="lessons.html">الدروس</a>
       <a href="teacher.html">المعلم الذكي</a>
+      <a href="revisions.html">المراجعات المركزة</a>
       <a href="schedule.html">الجدول</a>
       <a href="universities.html">الجامعات</a>
       <a href="scholarships.html">المنح</a>
@@ -154,23 +155,17 @@
   function card(l) {
     var el = document.createElement('article');
     el.className = 'card';
+    /* تشغيل بالنقر داخل البطاقة — بلا تحويل إلى يوتيوب */
+    var thumb = (typeof window !== 'undefined' && window.SANAD && window.SANAD.lectureThumbHtml) ? window.SANAD.lectureThumbHtml(l, l.title) : '';
     var media = '';
-    if (l.youtubeId) {
-      media = '<div class="video-wrap"><iframe src="https://www.youtube-nocookie.com/embed/' + esc(l.youtubeId) + '" title="' + esc(l.title || 'درس') + '" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>' +
-        '<a class="btn btn-outline" href="https://www.youtube.com/watch?v=' + esc(l.youtubeId) + '" target="_blank" rel="noopener">فتح في يوتيوب</a>';
-    } else if (l.playlistId) {
-      media = '<div class="video-wrap"><iframe src="https://www.youtube-nocookie.com/embed/videoseries?list=' + esc(l.playlistId) + '" title="' + esc(l.title || 'درس') + '" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>' +
-        '<a class="btn btn-outline" href="https://www.youtube.com/playlist?list=' + esc(l.playlistId) + '" target="_blank" rel="noopener">عرض قائمة التشغيل</a>';
-    } else if (l.videoUrl) {
-      media = '<a class="btn btn-gold" href="' + esc(l.videoUrl) + '" target="_blank" rel="noopener">مشاهدة الفيديو</a>';
-    } else if (l.textUrl) {
+    if (l.textUrl) {
       media = '<a class="btn btn-gold" href="' + esc(l.textUrl) + '">قراءة الشرح المكتوب</a>';
     }
     var qs = '';
     if (Array.isArray(l.questions) && l.questions.length) {
       qs = '<h4>أسئلة بعد الدرس</h4><ol>' + l.questions.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ol>';
     }
-    el.innerHTML = '<h3>' + esc(l.title || 'درس') + '</h3>'
+    el.innerHTML = thumb + '<h3>' + esc(l.title || 'درس') + '</h3>'
       + '<p class="lesson-meta">المدرس: ' + esc(l.teacher || '') + '</p>'
       + '<p class="lesson-meta">' + esc(l.subject || '') + ' — ' + esc(l.grade || '') + '</p>'
       + (l.duration ? '<p class="lesson-meta">مدة الدرس: ' + esc(l.duration) + '</p>' : '')
@@ -179,6 +174,10 @@
       + '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' + media
       + '<button class="btn btn-outline" type="button" data-save="' + esc(l.id || '') + '">حفظ الدرس</button>'
       + '<a class="btn btn-outline" href="report.html">الإبلاغ عن رابط لا يعمل</a></div>';
+    var tb = el.querySelector('.lecture-thumb');
+    if (tb && window.SANAD && window.SANAD.playLectureInPlace) {
+      tb.addEventListener('click', function () { window.SANAD.playLectureInPlace(tb); });
+    }
     var sb = el.querySelector('[data-save]');
     if (sb) sb.addEventListener('click', function () { saveLesson(l.id, l.title || 'الدرس'); });
     return el;

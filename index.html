@@ -24,11 +24,6 @@
       <a class="nav-link" href="exams.html">الامتحانات</a>
       <a class="nav-link" href="lessons.html">الدروس</a>
       <a class="nav-link" href="teacher.html">المعلم الذكي</a>
-      <a class="nav-link" href="schedule.html">الجدول</a>
-      <a class="nav-link" href="universities.html">الجامعات</a>
-      <a class="nav-link" href="scholarships.html">المنح</a>
-      <a class="nav-link" href="profile.html">ملفي</a>
-      <a class="nav-link" href="search.html">بحث</a>
     </nav>
   </div>
 </header>
@@ -36,7 +31,7 @@
 <main class="container">
   <section class="hero">
     <h1 class="hero-title">أهلاً بك في سند</h1>
-    <p class="hero-sub">منصة تعليمية عراقية مجانية — دروس وملخصات وامتحانات وزارية لجميع المراحل، من الابتدائية إلى الجامعة، والتعليم الأساسي فيها مجاني بالكامل.</p>
+    <p class="hero-sub">منصة تعليمية عراقية مجانية — دروس وامتحانات وزارية من الابتدائية إلى الجامعة.</p>
     <form class="search-box" action="search.html" method="get">
       <input class="form-input" type="search" name="q" placeholder="ابحث عن مادة أو اختبار أو جامعة أو منحة..." aria-label="بحث">
       <button class="btn btn-gold" type="submit">بحث</button>
@@ -47,8 +42,13 @@
   <h2 class="section-title">اختر مرحلتك الدراسية</h2>
   <div class="grid" id="home-stages"></div>
 
-  <h2 class="section-title">المواد الأكثر استخداماً</h2>
-  <div class="alert alert-info">لا توجد بيانات استخدام بعد — ستظهر هنا المواد الأكثر استخداماً بعد إضافة المحتوى وبدء استخدام الطلاب للمنصة.</div>
+  <h2 class="section-title">المراجعات المركزة</h2>
+  <div class="card">
+    <span class="badge">مراجعة مركزة</span>
+    <h3>المراجعة المركزة — الكتاب كامل بمحاضرة أو كل فصل بمحاضرة</h3>
+    <p>مراجعات مركزة موثقة من قنوات المدرسين الرسمية، مرتبة حسب المدرس والصف والمادة — تشاهدها داخل الموقع مباشرة.</p>
+    <a class="btn btn-gold" href="revisions.html">عرض المراجعات المركزة</a>
+  </div>
 
   <h2 class="section-title">أحدث الكتب والملخصات</h2>
   <div class="grid" id="home-books"></div>
@@ -71,14 +71,11 @@
 
   <h2 class="section-title">قسم المعلم الذكي</h2>
   <div class="card">
-    <span class="badge">تطلق قريباً</span>
+    <span class="badge">متاح الآن</span>
     <h3>المعلم الذكي</h3>
-    <p>معلم ذكي يساعدك على فهم الدروس وحل التمارين ومراجعة الامتحانات — قريباً على منصة سند.</p>
-    <a class="btn btn-outline" href="teacher.html">تعرف على المعلم الذكي</a>
+    <p>اسأل المعلم الذكي عن أي درس في المنهج العراقي — يشرح لك الدرس، يحل معك التمارين، ويراجع معك قبل الامتحان.</p>
+    <a class="btn btn-outline" href="teacher.html">ابدأ المحادثة</a>
   </div>
-
-  <h2 class="section-title">إحصائيات المنصة</h2>
-  <div class="alert alert-info">إحصائيات المنصة تظهر هنا بعد إضافة المحتوى.</div>
 </main>
 
 <footer class="site-footer">
@@ -90,6 +87,7 @@
       <a href="exams.html">الامتحانات</a>
       <a href="lessons.html">الدروس</a>
       <a href="teacher.html">المعلم الذكي</a>
+      <a href="revisions.html">المراجعات المركزة</a>
       <a href="schedule.html">الجدول</a>
       <a href="universities.html">الجامعات</a>
       <a href="scholarships.html">المنح</a>
@@ -157,10 +155,17 @@
     lectures.forEach(function (l) {
       var card = document.createElement('article');
       card.className = 'card';
-      var link = l.youtubeId ? 'https://www.youtube.com/watch?v=' + l.youtubeId : (l.playlistId ? 'https://www.youtube.com/playlist?list=' + l.playlistId : 'lessons.html');
+      /* تشغيل المحاضرة داخل الموقع (نافذة منبثقة) — بلا تحويل إلى يوتيوب */
+      var src = (window.SANAD && window.SANAD.lectureEmbedSrc) ? window.SANAD.lectureEmbedSrc(l) : '';
       card.innerHTML = '<span class="badge teal">محاضرة</span><h3>' + l.title + '</h3>' +
         '<p>المدرس: ' + l.teacher + ' · ' + l.subject + ' · ' + l.grade + '</p>' +
-        '<a class="btn btn-teal" href="' + link + '" target="_blank" rel="noopener">مشاهدة المحاضرة</a>';
+        (src ? '<button type="button" class="btn btn-teal" data-play-lecture>مشاهدة المحاضرة</button>' : '<a class="btn btn-teal" href="lessons.html">عرض الدروس</a>');
+      var playBtn = card.querySelector('[data-play-lecture]');
+      if (playBtn) {
+        playBtn.addEventListener('click', function () {
+          if (window.SANAD && window.SANAD.openLecturePlayer) window.SANAD.openLecturePlayer(l.title, src);
+        });
+      }
       lessonsWrap.appendChild(card);
     });
   } else {

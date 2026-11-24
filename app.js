@@ -183,6 +183,89 @@
 
   window.SANAD = SANAD;
 
+  /* ===== مشغّل المحاضرات داخل الموقع =====
+     المحاضرات تُشغَّل داخل سند فقط — لا تحويل إلى يوتيوب.
+     الفيديو نفسه يُبثّ من قناة المدرس الرسمية عبر مشغّل يوتيوب المضمّن
+     (youtube-nocookie)، والتشغيل يبدأ بالنقر فقط فلا تُحمَّل المشغّلات مسبقاً. */
+  function lectureEmbedSrc(l) {
+    if (!l) return '';
+    if (l.youtubeId) return 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(l.youtubeId);
+    if (l.playlistId) return 'https://www.youtube-nocookie.com/embed/videoseries?list=' + encodeURIComponent(l.playlistId);
+    return '';
+  }
+  function escAttr(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  /* صورة مصغّرة قابلة للنقر: صورة يوتيوب للفيديو المنفرد،
+     ولوحة ملوّنة لقائمة التشغيل (بلا جلب صورة). */
+  function lectureThumbHtml(l, title) {
+    var src = lectureEmbedSrc(l);
+    if (!src) return '';
+    var inner;
+    if (l.youtubeId) {
+      inner = '<img src="https://i.ytimg.com/vi/' + encodeURIComponent(l.youtubeId) + '/hqdefault.jpg" alt="" loading="lazy">' +
+        '<span class="lecture-play" aria-hidden="true"><i></i></span>';
+    } else {
+      inner = '<span class="lecture-playlist-label">قائمة تشغيل</span>' +
+        '<span class="lecture-play" aria-hidden="true"><i></i></span>';
+    }
+    return '<button type="button" class="lecture-thumb" data-embed="' + escAttr(src) + '" data-title="' + escAttr(title || 'محاضرة') + '" aria-label="تشغيل: ' + escAttr(title || 'محاضرة') + '">' + inner + '</button>';
+  }
+  /* تشغيل بالنقر داخل البطاقة: يستبدل الصورة المصغّرة بالمشغّل ويشغّل تلقائياً */
+  function playLectureInPlace(btn) {
+    if (!btn) return;
+    var src = btn.getAttribute('data-embed') || '';
+    if (!src) return;
+    var wrap = document.createElement('div');
+    wrap.className = 'video-wrap';
+    var sep = src.indexOf('?') === -1 ? '?' : '&';
+    var frame = document.createElement('iframe');
+    frame.setAttribute('src', src + sep + 'autoplay=1');
+    frame.setAttribute('title', btn.getAttribute('data-title') || 'محاضرة');
+    frame.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+    frame.setAttribute('allowfullscreen', '');
+    wrap.appendChild(frame);
+    if (btn.parentNode) btn.parentNode.replaceChild(wrap, btn);
+  }
+  /* نافذة منبثقة لتشغيل محاضرة (تُستخدم في الرئيسية): الإغلاق يوقف التشغيل */
+  function openLecturePlayer(title, src) {
+    if (!src) return;
+    var modal = document.getElementById('sanad-lecture-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'sanad-lecture-modal';
+      modal.className = 'lecture-modal';
+      modal.innerHTML = '<div class="lecture-modal-box"><div class="lecture-modal-head"><h3 id="sanad-lecture-modal-title"></h3><button type="button" class="lecture-modal-close" aria-label="إغلاق">×</button></div><div class="video-wrap"><iframe id="sanad-lecture-modal-frame" src="" title="محاضرة" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div></div>';
+      document.body.appendChild(modal);
+      modal.querySelector('.lecture-modal-close').addEventListener('click', closeLecturePlayer);
+      modal.addEventListener('click', function (e) { if (e.target === modal) closeLecturePlayer(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLecturePlayer(); });
+    }
+    var titleEl = document.getElementById('sanad-lecture-modal-title');
+    if (titleEl) titleEl.textContent = title || 'محاضرة';
+    var frame = document.getElementById('sanad-lecture-modal-frame');
+    if (frame) {
+      var sep = src.indexOf('?') === -1 ? '?' : '&';
+      frame.setAttribute('src', src + sep + 'autoplay=1');
+      frame.setAttribute('title', title || 'محاضرة');
+    }
+    modal.classList.add('open');
+  }
+  function closeLecturePlayer() {
+    var modal = document.getElementById('sanad-lecture-modal');
+    if (!modal) return;
+    var frame = document.getElementById('sanad-lecture-modal-frame');
+    if (frame) frame.setAttribute('src', '');
+    modal.classList.remove('open');
+  }
+  SANAD.lectureEmbedSrc = lectureEmbedSrc;
+  SANAD.lectureThumbHtml = lectureThumbHtml;
+  SANAD.playLectureInPlace = playLectureInPlace;
+  SANAD.openLecturePlayer = openLecturePlayer;
+  SANAD.closeLecturePlayer = closeLecturePlayer;
+
   /* ===== تهيئة الصفحة ===== */
   document.addEventListener('DOMContentLoaded', function () {
     // تمييز الرابط النشط حسب اسم الملف الحالي

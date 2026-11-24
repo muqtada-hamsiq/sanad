@@ -53,6 +53,7 @@
       <a href="exams.html">الامتحانات</a>
       <a href="lessons.html">الدروس</a>
       <a href="teacher.html">المعلم الذكي</a>
+      <a href="revisions.html">المراجعات المركزة</a>
       <a href="schedule.html">الجدول</a>
       <a href="universities.html">الجامعات</a>
       <a href="scholarships.html">المنح</a>
@@ -140,11 +141,10 @@
 
   if (lecHits.length) {
     html += '<h2 class="section-title">المحاضرات</h2><div class="grid">';
-    lecHits.forEach(function (l) {
-      var link = l.youtubeId ? 'https://www.youtube.com/watch?v=' + l.youtubeId : (l.playlistId ? 'https://www.youtube.com/playlist?list=' + l.playlistId : 'lessons.html');
+    lecHits.forEach(function (l, i) {
       html += '<article class="card"><span class="badge teal">محاضرة</span><h3>' + l.title + '</h3>' +
         '<p>المدرس: ' + l.teacher + ' · ' + l.subject + ' · ' + l.grade + '</p>' +
-        '<a class="btn btn-teal" href="' + link + '" target="_blank" rel="noopener">مشاهدة المحاضرة</a></article>';
+        '<button type="button" class="btn btn-teal" data-lec="' + i + '">مشاهدة المحاضرة</button></article>';
     });
     html += '</div>';
   }
@@ -188,6 +188,15 @@
   }
 
   results.innerHTML = html;
+  /* تشغيل المحاضرة داخل الموقع (نافذة منبثقة) — بلا تحويل إلى يوتيوب */
+  results.querySelectorAll('[data-lec]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var l = lecHits[parseInt(btn.getAttribute('data-lec'), 10)];
+      if (!l) return;
+      var src = (window.SANAD && window.SANAD.lectureEmbedSrc) ? window.SANAD.lectureEmbedSrc(l) : '';
+      if (src && window.SANAD.openLecturePlayer) window.SANAD.openLecturePlayer(l.title, src);
+    });
+  });
 })();
 </script>
 </body>

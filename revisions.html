@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>المراجعات المركزة — سند SANAD</title>
+<meta name="description" content="مراجعات مركزة موثقة من قنوات المدرسين الرسمية على يوتيوب — الكتاب كامل بمحاضرة واحدة أو كل فصل بمحاضرة واحدة، تشاهدها داخل الموقع مباشرة.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.rev-filters{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0;align-items:center}
+.rev-filters .form-input{width:auto;min-width:180px;flex:1}
+.rev-filters select.form-input{cursor:pointer}
+.rev-count{color:#5A6B7C;font-size:.95rem;margin:4px 0 0}
+.teacher-card{cursor:pointer}
+.teacher-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(11,42,74,.14)}
+.teacher-card h3{font-size:20px}
+.rev-meta{color:#555;font-size:.9rem;margin:.3rem 0}
+.rev-group-title{font-size:19px;font-weight:800;color:#0B2A4A;margin:26px 0 4px}
+.rev-scope-title{font-size:16px;font-weight:700;color:#0E9AA8;margin:16px 0 10px}
+.back-btn{background:none;border:0;color:#0E9AA8;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;padding:0}
+.back-btn:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="logo" href="index.html">
+      <img class="logo-img" src="logo.jpg" alt="شعار سند SANAD" height="44">
+      <span class="logo-text"><span class="logo-name">سند</span><span class="logo-latin">SANAD</span></span>
+    </a>
+    <nav class="main-nav">
+      <a class="nav-link" href="index.html">الرئيسية</a>
+      <a class="nav-link" href="stages.html">المراحل</a>
+      <a class="nav-link" href="library.html">المكتبة</a>
+      <a class="nav-link" href="exams.html">الامتحانات</a>
+      <a class="nav-link" href="lessons.html">الدروس</a>
+      <a class="nav-link" href="revisions.html">المراجعات المركزة</a>
+      <a class="nav-link" href="teacher.html">المعلم الذكي</a>
+      <a class="nav-link" href="schedule.html">الجدول</a>
+      <a class="nav-link" href="universities.html">الجامعات</a>
+      <a class="nav-link" href="scholarships.html">المنح</a>
+      <a class="nav-link" href="profile.html">ملفي</a>
+      <a class="nav-link" href="search.html">بحث</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <div id="list-view">
+    <h1 class="section-title">المراجعات المركزة</h1>
+    <p>مراجعات موثقة من قنوات المدرسين الرسمية — الكتاب كامل بمحاضرة واحدة، أو كل فصل بمحاضرة واحدة. اختر المدرس لتشاهد كل مراجعاته مقسّمة حسب المادة والفصل، وتشاهدها داخل الموقع مباشرة.</p>
+
+    <div class="rev-filters">
+      <select id="grade-filter" class="form-input" aria-label="الصف"></select>
+      <select id="subject-filter" class="form-input" aria-label="المادة"></select>
+      <input id="teacher-search" class="form-input" type="search" placeholder="ابحث عن مدرس..." aria-label="بحث عن مدرس">
+    </div>
+    <p class="rev-count" id="rev-count"></p>
+
+    <div id="teachers-grid" class="grid"></div>
+    <div id="teachers-empty" class="empty-state" style="display:none">
+      <h2>لا توجد مراجعة مركزة موثقة بعد لهذا الصف</h2>
+      <p>نضيف مراجعات المدرسين المعروفين فور توثيق قنواتهم الرسمية.</p>
+      <a class="btn btn-outline" href="contact.html">اقتراح مراجعة</a>
+    </div>
+  </div>
+
+  <div id="teacher-view" style="display:none">
+    <p><button type="button" class="back-btn" id="back-btn">← العودة إلى المدرسين</button></p>
+    <h1 class="section-title" id="teacher-name"></h1>
+    <p id="teacher-meta"></p>
+    <div id="teacher-groups"></div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <nav class="footer-links">
+      <a href="index.html">الرئيسية</a>
+      <a href="stages.html">المراحل</a>
+      <a href="library.html">المكتبة</a>
+      <a href="exams.html">الامتحانات</a>
+      <a href="lessons.html">الدروس</a>
+      <a href="revisions.html">المراجعات المركزة</a>
+      <a href="teacher.html">المعلم الذكي</a>
+      <a href="schedule.html">الجدول</a>
+      <a href="universities.html">الجامعات</a>
+      <a href="scholarships.html">المنح</a>
+      <a href="profile.html">ملفي</a>
+      <a href="search.html">بحث</a>
+      <a href="about.html">من نحن</a>
+      <a href="contact.html">تواصل معنا</a>
+      <a href="privacy.html">سياسة الخصوصية</a>
+      <a href="terms.html">شروط الاستخدام</a>
+      <a href="copyright.html">حقوق النشر</a>
+      <a href="faq.html">الأسئلة الشائعة</a>
+      <a href="report.html">الإبلاغ عن محتوى</a>
+      <a href="sitemap.html">خريطة المنصة</a>
+    </nav>
+    <p class="footer-note"><span class="footer-tagline">سند — منصة تعليمية عراقية مجانية، التعليم الأساسي فيها مجاني بالكامل</span> · جميع الحقوق محفوظة © <span data-year>2026</span></p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  var content = window.SANAD_CONTENT || { revisions: [] };
+  var data = window.SANAD_DATA || { stages: [] };
+  var revisions = content.revisions || [];
+  var params = new URLSearchParams(window.location.search);
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  var gradeFilter = document.getElementById('grade-filter');
+  var subjectFilter = document.getElementById('subject-filter');
+  var searchInput = document.getElementById('teacher-search');
+  var grid = document.getElementById('teachers-grid');
+  var emptyEl = document.getElementById('teachers-empty');
+  var countEl = document.getElementById('rev-count');
+  var listView = document.getElementById('list-view');
+  var teacherView = document.getElementById('teacher-view');
+
+  /* بناء قائمة الصفوف من المراحل (بدون الجامعات) */
+  var gradeOptions = '<option value="">كل الصفوف</option>';
+  (data.stages || []).forEach(function (stage) {
+    if (!stage.grades || !stage.grades.length) return;
+    gradeOptions += '<optgroup label="' + esc(stage.name) + '">';
+    stage.grades.forEach(function (g) {
+      gradeOptions += '<option value="' + esc(g.id) + '">' + esc(g.name) + '</option>';
+    });
+    gradeOptions += '</optgroup>';
+  });
+  gradeFilter.innerHTML = gradeOptions;
+
+  function subjectsFor(gradeId) {
+    var set = {};
+    revisions.forEach(function (r) {
+      if (gradeId && r.gradeId !== gradeId) return;
+      if (r.subject) set[r.subject] = true;
+    });
+    return Object.keys(set).sort();
+  }
+
+  function renderSubjectOptions() {
+    var gradeId = gradeFilter.value || '';
+    var subjects = subjectsFor(gradeId);
+    var prev = subjectFilter.value || '';
+    var html = '<option value="">كل المواد</option>';
+    subjects.forEach(function (s) {
+      html += '<option value="' + esc(s) + '">' + esc(s) + '</option>';
+    });
+    subjectFilter.innerHTML = html;
+    if (prev && subjects.indexOf(prev) !== -1) subjectFilter.value = prev;
+  }
+
+  function filteredRevisions() {
+    var gradeId = gradeFilter.value || '';
+    var subject = subjectFilter.value || '';
+    return revisions.filter(function (r) {
+      if (gradeId && r.gradeId !== gradeId) return false;
+      if (subject && r.subject !== subject) return false;
+      return true;
+    });
+  }
+
+  function teachersFrom(list) {
+    var map = {};
+    var order = [];
+    list.forEach(function (r) {
+      var t = r.teacher || 'مدرس';
+      if (!map[t]) {
+        map[t] = { name: t, entries: [], subjects: {}, grades: {} };
+        order.push(t);
+      }
+      map[t].entries.push(r);
+      if (r.subject) map[t].subjects[r.subject] = true;
+      if (r.grade) map[t].grades[r.grade] = true;
+    });
+    return order.map(function (t) { return map[t]; });
+  }
+
+  function ytEmbedSrc(r) {
+    if (r.youtubeId) return 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(r.youtubeId) + '?autoplay=1';
+    if (r.playlistId) return 'https://www.youtube-nocookie.com/embed/videoseries?list=' + encodeURIComponent(r.playlistId) + '&autoplay=1';
+    return '';
+  }
+
+  function thumbHtml(r) {
+    var label = r.playlistId ? '<span class="lecture-playlist-label">قائمة تشغيل</span>' : '';
+    var img = r.youtubeId ? '<img src="https://i.ytimg.com/vi/' + esc(r.youtubeId) + '/hqdefault.jpg" alt="" loading="lazy">' : '';
+    return '<button type="button" class="lecture-thumb" data-yt="' + esc(r.youtubeId || '') + '" data-pl="' + esc(r.playlistId || '') + '" aria-label="تشغيل: ' + esc(r.title || 'مراجعة') + '">' + img + label + '<span class="lecture-play"><i></i></span></button>';
+  }
+
+  function entryCard(r) {
+    var el = document.createElement('article');
+    el.className = 'card';
+    var yearBadge = r.year ? '<span class="badge">' + esc(String(r.year)) + '</span> ' : '';
+    var scopeBadge = r.scope === 'book'
+      ? '<span class="badge teal">الكتاب كامل</span> '
+      : '<span class="badge navy">' + esc(r.chapter || 'مراجعة فصل') + '</span> ';
+    var channelLink = r.channelUrl
+      ? '<a class="btn btn-outline" href="' + esc(r.channelUrl) + '" target="_blank" rel="noopener">قناة المدرس</a>' : '';
+    el.innerHTML = thumbHtml(r) +
+      '<h3>' + esc(r.title || 'مراجعة مركزة') + '</h3>' +
+      '<p class="rev-meta">' + esc(r.subject || '') + ' — ' + esc(r.grade || '') + '</p>' +
+      '<p>' + yearBadge + scopeBadge + '</p>' +
+      (channelLink ? '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' + channelLink + '</div>' : '');
+    return el;
+  }
+
+  function wirePlayButtons(root) {
+    root.querySelectorAll('.lecture-thumb').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var src = '';
+        var yt = btn.getAttribute('data-yt');
+        var pl = btn.getAttribute('data-pl');
+        if (yt) src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(yt) + '?autoplay=1';
+        else if (pl) src = 'https://www.youtube-nocookie.com/embed/videoseries?list=' + encodeURIComponent(pl) + '&autoplay=1';
+        if (!src) return;
+        var wrap = document.createElement('div');
+        wrap.className = 'video-wrap';
+        wrap.innerHTML = '<iframe src="' + esc(src) + '" title="مراجعة مركزة" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
+        btn.replaceWith(wrap);
+      });
+    });
+  }
+
+  function renderTeachers() {
+    var query = (searchInput.value || '').trim();
+    var list = filteredRevisions();
+    var teachers = teachersFrom(list).filter(function (t) {
+      return !query || t.name.indexOf(query) !== -1;
+    });
+    countEl.textContent = teachers.length + ' مدرس · ' + list.length + ' مراجعة مركزة';
+    grid.innerHTML = '';
+    teachers.forEach(function (t) {
+      var el = document.createElement('article');
+      el.className = 'card teacher-card';
+      var subjects = Object.keys(t.subjects).join('، ');
+      var grades = Object.keys(t.grades).join('، ');
+      el.innerHTML = '<span class="badge teal">مراجعة مركزة</span>' +
+        '<h3>' + esc(t.name) + '</h3>' +
+        '<p class="rev-meta">' + t.entries.length + ' مراجعة</p>' +
+        (subjects ? '<p class="rev-meta">' + esc(subjects) + '</p>' : '') +
+        (grades ? '<p class="rev-meta">' + esc(grades) + '</p>' : '') +
+        '<span class="btn btn-gold">عرض مراجعات المدرس</span>';
+      el.addEventListener('click', function () { openTeacher(t.name); });
+      grid.appendChild(el);
+    });
+    emptyEl.style.display = teachers.length ? 'none' : '';
+  }
+
+  function openTeacher(name) {
+    var entries = revisions.filter(function (r) { return (r.teacher || '') === name; });
+    if (!entries.length) return;
+    listView.style.display = 'none';
+    teacherView.style.display = '';
+    document.getElementById('teacher-name').textContent = name;
+    var subjects = {};
+    var grades = {};
+    entries.forEach(function (r) {
+      if (r.subject) subjects[r.subject] = true;
+      if (r.grade) grades[r.grade] = true;
+    });
+    document.getElementById('teacher-meta').textContent =
+      entries.length + ' مراجعة مركزة · ' + Object.keys(subjects).join('، ') + ' · ' + Object.keys(grades).join('، ');
+    var groupsEl = document.getElementById('teacher-groups');
+    groupsEl.innerHTML = '';
+    var bySubject = {};
+    var subjectOrder = [];
+    entries.forEach(function (r) {
+      var s = r.subject || 'عام';
+      if (!bySubject[s]) { bySubject[s] = []; subjectOrder.push(s); }
+      bySubject[s].push(r);
+    });
+    subjectOrder.forEach(function (subject) {
+      var list = bySubject[subject];
+      var bookList = list.filter(function (r) { return r.scope === 'book'; });
+      var chapterList = list.filter(function (r) { return r.scope !== 'book'; });
+      var h = document.createElement('h2');
+      h.className = 'rev-group-title';
+      h.textContent = subject;
+      groupsEl.appendChild(h);
+      if (bookList.length) {
+        var hb = document.createElement('h3');
+        hb.className = 'rev-scope-title';
+        hb.textContent = 'الكتاب كامل بمحاضرة واحدة';
+        groupsEl.appendChild(hb);
+        var gb = document.createElement('div');
+        gb.className = 'grid';
+        bookList.forEach(function (r) { gb.appendChild(entryCard(r)); });
+        groupsEl.appendChild(gb);
+      }
+      if (chapterList.length) {
+        var hc = document.createElement('h3');
+        hc.className = 'rev-scope-title';
+        hc.textContent = 'مراجعة حسب الفصل';
+        groupsEl.appendChild(hc);
+        var gc = document.createElement('div');
+        gc.className = 'grid';
+        chapterList.forEach(function (r) { gc.appendChild(entryCard(r)); });
+        groupsEl.appendChild(gc);
+      }
+    });
+    wirePlayButtons(groupsEl);
+    window.scrollTo(0, 0);
+  }
+
+  function showList() {
+    teacherView.style.display = 'none';
+    listView.style.display = '';
+    renderTeachers();
+  }
+
+  document.getElementById('back-btn').addEventListener('click', showList);
+  gradeFilter.addEventListener('change', function () { renderSubjectOptions(); renderTeachers(); });
+  subjectFilter.addEventListener('change', renderTeachers);
+  searchInput.addEventListener('input', renderTeachers);
+
+  renderSubjectOptions();
+  var presetGrade = params.get('grade') || '';
+  var presetSubject = params.get('subject') || '';
+  var presetTeacher = params.get('teacher') || '';
+  if (presetGrade) {
+    gradeFilter.value = presetGrade;
+    renderSubjectOptions();
+  }
+  if (presetSubject) subjectFilter.value = presetSubject;
+  renderTeachers();
+  if (presetTeacher && revisions.some(function (r) { return r.teacher === presetTeacher; })) {
+    openTeacher(presetTeacher);
+  }
+})();
+</script>
+</body>
+</html>
