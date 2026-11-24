@@ -1133,6 +1133,20 @@
       var chSet = {};
       c.lessons.forEach(function (l) { var ch = chapterOfLesson(l); if (ch) chSet[ch.kind + ':' + ch.num] = true; });
       c.chapterCount = Object.keys(chSet).length;
+      /* عدد الفصول المعروضة = فصول الكتاب كلها (حتى الفارغة منها) + أي فصل
+         إضافي له محاضرات خارج الخريطة — ليطابق العدد ما تعرضه صفحة الكورس. */
+      var canon = canonicalChapters(c);
+      if (canon && canon.chapters) {
+        var ckind = canon.kind === 'الوحدة' ? 'unit' : 'ch';
+        var extra = 0;
+        Object.keys(chSet).forEach(function (k) {
+          var parts = k.split(':');
+          var n = parseInt(parts[1], 10);
+          var inCanon = canon.chapters.some(function (cc) { return cc.n === n; });
+          if (parts[0] !== ckind || !inCanon) extra++;
+        });
+        c.chapterCount = canon.chapters.length + extra;
+      }
       c.totalLessons = c.lessons.length;
     });
     list.sort(function (a, b) { return b.totalLessons - a.totalLessons || String(a.teacher).localeCompare(String(b.teacher), 'ar'); });

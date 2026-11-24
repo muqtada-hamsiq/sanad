@@ -287,7 +287,9 @@
     '<span class="pill-subject">' + esc(course.subject) + '</span>' +
     '<span class="pill-grade">' + esc(course.grade) + '</span>' +
     '<span class="pill-grade">' + esc(course.stageName) + '</span>';
-  $('ch-meta').textContent = course.totalLessons + ' محاضرة · ' + course.chapterCount + ' فصلاً' +
+  /* عدد الفصول = عدد كتل الفصول المعروضة فعلاً في الصفحة (يشمل الفارغة)،
+     فيطابق الترويسة القائمة دائماً — بما فيها تبديل العلمي/الأدبي. */
+  $('ch-meta').textContent = course.totalLessons + ' محاضرة · ' + grouped.groups.length + ' فصلاً' +
     (course.isChannel ? ' · محاضرات من القناة الرسمية' : '');
   if (grouped.book) {
     $('ch-book').textContent = 'الكتاب: ' + grouped.book.book + (grouped.book.edition ? ' — ' + grouped.book.edition : '');
